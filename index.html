@@ -777,14 +777,15 @@
       const orderText = buildOrderText(orderData);
       orderOutput.textContent = orderText;
 
-      // 👉 啟用 LINE / 複製按鈕
       const lineBtn = document.getElementById('lineBtn');
       const copyBtn = document.getElementById('copyBtn');
+
       if (lineBtn) {
         lineBtn.disabled = false;
         lineBtn.style.opacity = '1';
         lineBtn.style.cursor = 'pointer';
       }
+
       if (copyBtn) {
         copyBtn.disabled = false;
         copyBtn.style.opacity = '1';
@@ -792,7 +793,6 @@
       }
 
       return orderText;
-    }
     }
 
     document.getElementById('submitBtn').addEventListener('click', () => {
