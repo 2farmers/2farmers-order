@@ -786,7 +786,13 @@
         lineBtn.style.cursor = 'pointer';
       }
       if (copyBtn) {
-        copyBtn.di
+        copyBtn.disabled = false;
+        copyBtn.style.opacity = '1';
+        copyBtn.style.cursor = 'pointer';
+      }
+
+      return orderText;
+    }
     }
 
     document.getElementById('submitBtn').addEventListener('click', () => {
