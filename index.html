@@ -479,6 +479,9 @@
     <div class="section">
       <h2 class="section-title">金額總計</h2>
       <div class="summary-box">
+        <div id="freeShippingHint" style="font-size:0.9rem;color:#466d45;background:#edf4eb;padding:8px 10px;border-radius:10px;">
+          再買 500 元即可免運
+        </div>
         <div class="summary-row">
           <span>商品總金額</span>
           <strong id="subtotal">0 元</strong>
@@ -609,13 +612,25 @@
         document.getElementById(`qty-${product.id}`).value = qty;
       });
 
-      // 滿500免運
       const shippingFee = subtotal >= 500 ? 0 : state.shippingFee;
       const grandTotal = subtotal + shippingFee;
+
       subtotalEl.textContent = formatMoney(subtotal);
-      shippingFeeEl.textContent = formatMoney(subtotal >= 500 ? 0 : state.shippingFee);
+      shippingFeeEl.textContent = formatMoney(shippingFee);
       grandTotalEl.textContent = formatMoney(grandTotal);
       stickyGrandTotalEl.textContent = formatMoney(grandTotal);
+
+      // 👉 免運提示
+      const hintEl = document.getElementById('freeShippingHint');
+      if (subtotal === 0) {
+        hintEl.textContent = '滿 500 元免運費';
+      } else if (subtotal < 500) {
+        const diff = 500 - subtotal;
+        hintEl.textContent = `再買 ${diff} 元即可免運`;
+      } else {
+        hintEl.textContent = '已達免運門檻 🎉';
+      }
+    }
     }
 
     function changeQty(id, diff) {
