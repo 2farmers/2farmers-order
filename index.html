@@ -529,7 +529,7 @@
     <div class="section">
       <h2 class="section-title">訂單內容</h2>
       <div id="orderOutput" class="order-output">送出後會顯示整理好的訂單內容。</div>
-      <div class="hint">可直接複製訂單，或按「LINE 傳送訂單」自動帶入訊息內容。</div>
+      <div class="hint">手機可直接帶入 LINE 訊息；電腦版會自動複製訂單內容，方便貼到 LINE 傳送。</div>
     </div>
   </div>
 
@@ -563,9 +563,9 @@
     const subtotalEl = document.getElementById('subtotal');
     const shippingFeeEl = document.getElementById('shippingFee');
     const grandTotalEl = document.getElementById('grandTotal');
+    
     const orderOutput = document.getElementById('orderOutput');
     const errorMsg = document.getElementById('errorMsg');
-    
 
     function formatMoney(num) {
       return `${num} 元`;
@@ -736,6 +736,10 @@
       return `https://line.me/R/msg/text/?${encodedText}`;
     }
 
+    function isMobileDevice() {
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    }
+
     function prepareOrderText() {
       const orderData = getOrderData();
       const error = validateOrder(orderData);
@@ -757,12 +761,31 @@
       prepareOrderText();
     });
 
-    document.getElementById('lineBtn').addEventListener('click', () => {
+    document.getElementById('lineBtn').addEventListener('click', async () => {
       const orderText = prepareOrderText();
       if (!orderText) return;
 
       const lineUrl = getLineUrl(orderText);
-      window.open(lineUrl, '_blank');
+
+      if (isMobileDevice()) {
+        window.open(lineUrl, '_blank');
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(orderText);
+        errorMsg.style.display = 'block';
+        errorMsg.style.color = '#2d6d34';
+        errorMsg.textContent = '電腦版無法直接帶入 LINE 訊息，已先幫你複製訂單內容。請貼到 LINE 傳送給倆口田官方帳號。';
+      } catch (err) {
+        errorMsg.style.display = 'block';
+        errorMsg.style.color = '#c84a4a';
+        errorMsg.textContent = '電腦版無法直接帶入 LINE 訊息，請先複製訂單內容，再貼到 LINE 傳送。';
+      }
+
+      if (lineTarget.trim()) {
+        window.open(`https://line.me/R/ti/p/@${lineTarget}`, '_blank');
+      }
     });
 
     document.getElementById('copyBtn').addEventListener('click', async () => {
