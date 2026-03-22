@@ -681,8 +681,7 @@
     function buildOrderText(data) {
       const itemLines = data.selectedItems
         .map(item => `- ${item.name}：${item.qty}${item.unit}／${item.total}元`)
-        .join('
-');
+        .join('\\n');
 
       return [
         '【倆口田訂單】',
@@ -698,8 +697,7 @@
         `電話：${data.customerPhone}`,
         `地址：${data.customerAddress}`,
         `備註：${data.customerNote || '無'}`
-      ].join('
-');
+      ].join('\\n');
     }
 
     function getLineUrl(orderText) {
