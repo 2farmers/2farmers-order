@@ -772,16 +772,21 @@
             'Content-Type': 'text/plain;charset=utf-8'
           },
           body: JSON.stringify({
-            name: orderData.customerName,
-            phone: orderData.customerPhone,
-            address: orderData.customerAddress,
-            items: orderData.selectedItems.map(item => `${item.name} x ${item.qty}${item.unit}`).join(', '),
-            subtotal: orderData.subtotal,
-            shipping: orderData.shipping,
-            total: orderData.grandTotal,
-            shippingMethod: orderData.shippingMethod,
-            note: orderData.customerNote || ''
-          })
+  name: orderData.customerName,
+  phone: orderData.customerPhone,
+  address: orderData.customerAddress,
+  itemsText: orderData.selectedItems.map(item => `${item.name} x ${item.qty}${item.unit}`).join(', '),
+  items: orderData.selectedItems.map(item => ({
+    name: item.name,
+    qty: item.qty,
+    unit: item.unit
+  })),
+  subtotal: orderData.subtotal,
+  shipping: orderData.shipping,
+  total: orderData.grandTotal,
+  shippingMethod: orderData.shippingMethod,
+  note: orderData.customerNote || ''
+})
         });
       } catch (err) {
         console.error('寫入 Google Sheet 失敗', err);
