@@ -531,7 +531,9 @@
   </div>
 
   <script>
-    const lineTarget = '';
+    // 👉 在這裡填入你的 LINE 官方帳號 ID（不用加 @）
+    // 例如：@abc123xyz → 只填 abc123xyz
+    const lineTarget = '733fsbwp';
 
     const products = [
       { id: 'zucchini', name: '韓國櫛瓜', price: 60, unit: '條' },
@@ -681,7 +683,7 @@
     function buildOrderText(data) {
       const itemLines = data.selectedItems
         .map(item => `- ${item.name}：${item.qty}${item.unit}／${item.total}元`)
-        .join('\\n');
+        .join('\n');
 
       return [
         '【倆口田訂單】',
@@ -697,7 +699,7 @@
         `電話：${data.customerPhone}`,
         `地址：${data.customerAddress}`,
         `備註：${data.customerNote || '無'}`
-      ].join('\\n');
+      ].join('\n');
     }
 
     function getLineUrl(orderText) {
