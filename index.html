@@ -536,8 +536,8 @@
       <h2 class="section-title">訂單內容</h2>
       <div id="orderOutput" class="order-output">送出後會顯示整理好的訂單內容。</div>
       <div class="actions" style="margin-top:12px;">
-        <button id="lineBtn" class="btn btn-secondary" type="button">LINE 傳送訂單給倆口田</button>
-        <button id="copyBtn" class="btn btn-secondary" type="button">複製訂單內容</button>
+        <button id="lineBtn" class="btn btn-secondary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">LINE 傳送訂單給倆口田</button>
+        <button id="copyBtn" class="btn btn-secondary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">複製訂單內容</button>
       </div>
       <div class="hint">手機可直接帶入 LINE 訊息；電腦版會自動複製訂單內容，請貼到倆口田官方 LINE：@733fsbwp</div>
       <div style="margin-top:8px;">
@@ -776,7 +776,17 @@
       errorMsg.style.display = 'none';
       const orderText = buildOrderText(orderData);
       orderOutput.textContent = orderText;
-      return orderText;
+
+      // 👉 啟用 LINE / 複製按鈕
+      const lineBtn = document.getElementById('lineBtn');
+      const copyBtn = document.getElementById('copyBtn');
+      if (lineBtn) {
+        lineBtn.disabled = false;
+        lineBtn.style.opacity = '1';
+        lineBtn.style.cursor = 'pointer';
+      }
+      if (copyBtn) {
+        copyBtn.di
     }
 
     document.getElementById('submitBtn').addEventListener('click', () => {
