@@ -517,6 +517,7 @@
 
       <div class="actions">
         <button id="submitBtn" class="btn btn-primary">送出訂單</button>
+        <button id="lineBtn" class="btn btn-secondary" type="button">LINE 傳送訂單</button>
         <button id="copyBtn" class="btn btn-secondary" type="button">複製訂單內容</button>
       </div>
       <div id="errorMsg" class="error"></div>
@@ -525,11 +526,13 @@
     <div class="section">
       <h2 class="section-title">訂單內容</h2>
       <div id="orderOutput" class="order-output">送出後會顯示整理好的訂單內容。</div>
-      <div class="hint">可直接複製這段文字，貼到 LINE、Messenger 或人工接單表單。</div>
+      <div class="hint">可直接複製訂單，或按「LINE 傳送訂單」自動帶入訊息內容。</div>
     </div>
   </div>
 
   <script>
+    const lineTarget = '';
+
     const products = [
       { id: 'zucchini', name: '韓國櫛瓜', price: 60, unit: '條' },
       { id: 'tomato', name: '羅馬番茄', price: 55, unit: '斤' },
@@ -678,10 +681,11 @@
     function buildOrderText(data) {
       const itemLines = data.selectedItems
         .map(item => `- ${item.name}：${item.qty}${item.unit}／${item.total}元`)
-        .join('\n');
+        .join('
+');
 
       return [
-        '【訂單內容】',
+        '【倆口田訂單】',
         itemLines,
         '',
         `商品總金額：${data.subtotal}元`,
@@ -694,31 +698,50 @@
         `電話：${data.customerPhone}`,
         `地址：${data.customerAddress}`,
         `備註：${data.customerNote || '無'}`
-      ].join('\n');
+      ].join('
+');
     }
 
-    document.getElementById('submitBtn').addEventListener('click', () => {
+    function getLineUrl(orderText) {
+      const encodedText = encodeURIComponent(orderText);
+      if (lineTarget.trim()) {
+        return `https://line.me/R/oaMessage/@${lineTarget}?${encodedText}`;
+      }
+      return `https://line.me/R/msg/text/?${encodedText}`;
+    }
+
+    function prepareOrderText() {
       const orderData = getOrderData();
       const error = validateOrder(orderData);
 
       if (error) {
         errorMsg.style.display = 'block';
+        errorMsg.style.color = '#c84a4a';
         errorMsg.textContent = error;
-        return;
+        return null;
       }
 
       errorMsg.style.display = 'none';
       const orderText = buildOrderText(orderData);
       orderOutput.textContent = orderText;
+      return orderText;
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      prepareOrderText();
+    });
+
+    document.getElementById('lineBtn').addEventListener('click', () => {
+      const orderText = prepareOrderText();
+      if (!orderText) return;
+
+      const lineUrl = getLineUrl(orderText);
+      window.open(lineUrl, '_blank');
     });
 
     document.getElementById('copyBtn').addEventListener('click', async () => {
-      const text = orderOutput.textContent.trim();
-      if (!text || text === '送出後會顯示整理好的訂單內容。') {
-        errorMsg.style.display = 'block';
-        errorMsg.textContent = '目前還沒有可複製的訂單內容，請先送出訂單。';
-        return;
-      }
+      const text = prepareOrderText();
+      if (!text) return;
 
       try {
         await navigator.clipboard.writeText(text);
