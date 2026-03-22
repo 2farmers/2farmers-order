@@ -493,7 +493,7 @@
         </div>
         <div class="summary-row total">
           <span>最終總金額</span>
-          <span id="grandTotal">150 元</span>
+          <span id="grandTotal">0 元</span>
         </div>
       </div>
     </div>
@@ -626,7 +626,9 @@
       const grandTotal = subtotal + shippingFee;
 
       subtotalEl.textContent = formatMoney(subtotal);
-      shippingFeeEl.textContent = formatMoney(shippingFee);
+      if (subtotal !== 0) {
+        shippingFeeEl.textContent = formatMoney(shippingFee);
+      }
       grandTotalEl.textContent = formatMoney(grandTotal);
       const stickyGrandTotalEl = document.getElementById('stickyGrandTotal');
       if (stickyGrandTotalEl) {
@@ -637,6 +639,7 @@
       const hintEl = document.getElementById('freeShippingHint');
       if (subtotal === 0) {
         hintEl.textContent = '滿 500 元免運費';
+        shippingFeeEl.textContent = '尚未選購商品';
       } else if (subtotal < 500) {
         const diff = 500 - subtotal;
         hintEl.textContent = `再買 ${diff} 元即可免運`;
@@ -821,7 +824,7 @@
     <div class="sticky-inner">
       <div>
         <div class="sticky-total-label">目前總金額</div>
-        <div class="sticky-total-price" id="stickyGrandTotal">150 元</div>
+        <div class="sticky-total-price" id="stickyGrandTotal">0 元</div>
       </div>
       <a class="sticky-btn" href="#order-form">前往填資料</a>
     </div>
