@@ -537,7 +537,7 @@
       <h2 class="section-title">訂單內容</h2>
       <div id="orderOutput" class="order-output">送出後會顯示整理好的訂單內容。</div>
       <div class="actions" style="margin-top:12px;">
-        <button id="lineBtn" class="btn btn-secondary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">LINE 傳送訂單給倆口田</button>
+        <button id="lineBtn" class="btn btn-primary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">LINE 傳送訂單給倆口田</button>
         <button id="copyBtn" class="btn btn-secondary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">複製訂單內容</button>
       </div>
       <div class="hint">手機可直接帶入 LINE 訊息；電腦版會自動複製訂單內容，請貼到倆口田官方 LINE：@733fsbwp</div>
@@ -803,7 +803,11 @@
       const orderText = buildOrderText(orderData);
       orderOutput.textContent = orderText;
 
-      await saveOrderToGoogleSheet(orderData);
+      // 👉 防止重複寫入
+      if (!window.orderSaved) {
+        await saveOrderToGoogleSheet(orderData);
+        window.orderSaved = true;
+      }
 
       const lineBtn = document.getElementById('lineBtn');
       const copyBtn = document.getElementById('copyBtn');
