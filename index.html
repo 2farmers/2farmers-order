@@ -551,6 +551,7 @@
     // 👉 在這裡填入你的 LINE 官方帳號 ID（不用加 @）
     // 例如：@abc123xyz → 只填 abc123xyz
     const lineTarget = '733fsbwp';
+    const gasUrl = 'https://script.google.com/macros/s/AKfycby-wDWGmoovCMVX3cGJkO4DBtFg_g-ZyCAhfLRYp4fXtNw3X4JJsdcQXlbFRmZk-l4T/exec';
 
     const products = [
       { id: 'zucchini', name: '韓國櫛瓜', price: 100, unit: '條', tag: '農夫推薦', desc: '口感細緻、清甜，怎麼料理都好吃' },
@@ -763,7 +764,31 @@
       return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     }
 
-    function prepareOrderText() {
+    async function saveOrderToGoogleSheet(orderData) {
+      try {
+        await fetch(gasUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify({
+            name: orderData.customerName,
+            phone: orderData.customerPhone,
+            address: orderData.customerAddress,
+            items: orderData.selectedItems.map(item => `${item.name} x ${item.qty}${item.unit}`).join(', '),
+            subtotal: orderData.subtotal,
+            shipping: orderData.shipping,
+            total: orderData.grandTotal,
+            shippingMethod: orderData.shippingMethod,
+            note: orderData.customerNote || ''
+          })
+        });
+      } catch (err) {
+        console.error('寫入 Google Sheet 失敗', err);
+      }
+    }
+
+    async function prepareOrderText() {
       const orderData = getOrderData();
       const error = validateOrder(orderData);
 
@@ -777,6 +802,8 @@
       errorMsg.style.display = 'none';
       const orderText = buildOrderText(orderData);
       orderOutput.textContent = orderText;
+
+      await saveOrderToGoogleSheet(orderData);
 
       const lineBtn = document.getElementById('lineBtn');
       const copyBtn = document.getElementById('copyBtn');
@@ -796,12 +823,14 @@
       return orderText;
     }
 
-    document.getElementById('submitBtn').addEventListener('click', () => {
-      prepareOrderText();
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      await prepareOrderText();
     });
 
     document.getElementById('lineBtn').addEventListener('click', async () => {
-      const orderText = prepareOrderText();
+      const orderText = orderOutput.textContent && orderOutput.textContent !== '送出後會顯示整理好的訂單內容。'
+        ? orderOutput.textContent
+        : await prepareOrderText();
       if (!orderText) return;
 
       const lineUrl = getLineUrl(orderText);
@@ -828,7 +857,9 @@
     });
 
     document.getElementById('copyBtn').addEventListener('click', async () => {
-      const text = prepareOrderText();
+      const text = orderOutput.textContent && orderOutput.textContent !== '送出後會顯示整理好的訂單內容。'
+        ? orderOutput.textContent
+        : await prepareOrderText();
       if (!text) return;
 
       try {
