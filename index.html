@@ -153,6 +153,30 @@
       background: #fff;
     }
 
+    .product-card.sold-out {
+      opacity: 0.55;
+      background: #f7f7f7;
+    }
+
+    .sold-out-badge {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 0.75rem;
+      background: #ffe5e5;
+      color: #b42323;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    .sold-out-note {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: #b42323;
+      font-weight: 600;
+    }
+
     .product-top {
       display: flex;
       align-items: start;
@@ -217,6 +241,13 @@
     .qty-input::-webkit-inner-spin-button {
       -webkit-appearance: none;
       margin: 0;
+    }
+
+    .qty-btn:disabled,
+    .qty-input:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      background: #f1f1f1;
     }
 
     .item-total {
@@ -439,7 +470,6 @@
     <div style="background:#fff7e6;border:1px solid #f0e0b2;border-radius:16px;padding:12px 14px;margin-bottom:12px;font-size:0.92rem;">
       🔥 新手推薦：韓國櫛瓜＋羅馬番茄＋高麗菜
       <br>
-      
     </div>
 
     <div class="quick-info">
@@ -548,8 +578,6 @@
   </div>
 
   <script>
-    // 👉 在這裡填入你的 LINE 官方帳號 ID（不用加 @）
-    // 例如：@abc123xyz → 只填 abc123xyz
     const lineTarget = '733fsbwp';
     const gasUrl = 'https://script.google.com/macros/s/AKfycby-wDWGmoovCMVX3cGJkO4DBtFg_g-ZyCAhfLRYp4fXtNw3X4JJsdcQXlbFRmZk-l4T/exec';
 
@@ -558,9 +586,6 @@
       { id: 'cabbage', name: '高麗菜', price: 90, unit: '顆', tag: '農夫推薦' },
       { id: 'tomato', name: '羅馬番茄', price: 120, unit: '斤', tag: '農夫推薦', desc: '肉質紮實、酸甜平衡，適合燉煮與做醬' },
       { id: 'celery', name: '西洋芹', price: 80, unit: '株', desc: '纖維感強、香氣濃，適合榨汁' },
-      { id: 'chard', name: '彩柄菾菜', price: 100, unit: '份' },
-      { id: 'kale', name: '羽衣甘藍（恐龍品種）', price: 65, unit: '份' },
-      { id: 'amaranth', name: '野莧菜', price: 65, unit: '份', tag: '季節限定' },
       { id: 'parsley', name: '歐芹（巴西里／洋香菜）', price: 65, unit: '份', desc: '料理提香必備，清新草本香氣' },
       { id: 'carrot', name: '迷你彩色胡蘿蔔', price: 120, unit: '份(200克)', tag: '限量', desc: '帶有像香水般的清甜香氣，風味細緻' },
       { id: 'beet', name: '甜菜根', price: 100, unit: '顆(約1斤)' },
@@ -568,7 +593,16 @@
       { id: 'paste', name: '羅馬番茄糊', price: 400, unit: '罐(400克)', desc: '以羅馬番茄慢火熬煮，風味濃縮、料理方便' },
       { id: 'sauce', name: '農婦辣醬', price: 150, unit: '瓶(50ml)', desc: '墨西哥辣椒天然發酵' },
       { id: 'perilla', name: '韓國芝麻葉香料粉', price: 65, unit: '罐(8克)' },
-      { id: 'olive', name: 'DORIAN 特級冷壓初榨橄欖油', price: 590, unit: '瓶(1公升)' }
+      { id: 'olive', name: 'DORIAN 特級冷壓初榨橄欖油', price: 590, unit: '瓶(1公升)' },
+
+      { id: 'chard', name: '彩柄菾菜', price: 100, unit: '份', soldOut: true },
+      { id: 'kale', name: '羽衣甘藍（恐龍品種）', price: 65, unit: '份', soldOut: true },
+      { id: 'amaranth', name: '野莧菜', price: 65, unit: '份', tag: '季節限定', soldOut: true }
+    ];
+
+    const sortedProducts = [
+      ...products.filter(product => !product.soldOut),
+      ...products.filter(product => product.soldOut)
     ];
 
     const state = {
@@ -580,7 +614,6 @@
     const subtotalEl = document.getElementById('subtotal');
     const shippingFeeEl = document.getElementById('shippingFee');
     const grandTotalEl = document.getElementById('grandTotal');
-    
     const orderOutput = document.getElementById('orderOutput');
     const errorMsg = document.getElementById('errorMsg');
 
@@ -589,22 +622,24 @@
     }
 
     function renderProducts() {
-      productList.innerHTML = products.map(product => `
-        <div class="product-card">
+      productList.innerHTML = sortedProducts.map(product => `
+        <div class="product-card ${product.soldOut ? 'sold-out' : ''}">
           <div class="product-top">
             <div>
               <div class="product-name">
                 ${product.name}
                 ${product.tag ? `<span style="margin-left:6px;font-size:0.75rem;background:#edf4eb;color:#466d45;padding:2px 6px;border-radius:999px;">${product.tag}</span>` : ''}
+                ${product.soldOut ? `<span class="sold-out-badge">本週已完售</span>` : ''}
               </div>
               ${product.desc ? `<div style="font-size:0.85rem;color:#6b756b;margin-top:4px;">${product.desc}</div>` : ''}
+              ${product.soldOut ? `<div class="sold-out-note">本週已完售，暫停接受訂購</div>` : ''}
               <div class="product-price">${product.price} 元 / ${product.unit}</div>
             </div>
             <div class="item-total" id="total-${product.id}">0 元</div>
           </div>
           <div class="qty-wrap">
             <div class="qty-control">
-              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', -1)">−</button>
+              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', -1)" ${product.soldOut ? 'disabled' : ''}>−</button>
               <input
                 class="qty-input"
                 type="number"
@@ -612,8 +647,9 @@
                 value="0"
                 id="qty-${product.id}"
                 oninput="setQty('${product.id}', this.value)"
+                ${product.soldOut ? 'disabled' : ''}
               />
-              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', 1)">＋</button>
+              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', 1)" ${product.soldOut ? 'disabled' : ''}>＋</button>
             </div>
             <div>小計：<strong>${product.price} × <span id="qty-text-${product.id}">0</span></strong></div>
           </div>
@@ -628,9 +664,14 @@
         const qty = Number(state.quantities[product.id]) || 0;
         const total = qty * product.price;
         subtotal += total;
-        document.getElementById(`total-${product.id}`).textContent = formatMoney(total);
-        document.getElementById(`qty-text-${product.id}`).textContent = qty;
-        document.getElementById(`qty-${product.id}`).value = qty;
+
+        const totalEl = document.getElementById(`total-${product.id}`);
+        const qtyTextEl = document.getElementById(`qty-text-${product.id}`);
+        const qtyInputEl = document.getElementById(`qty-${product.id}`);
+
+        if (totalEl) totalEl.textContent = formatMoney(total);
+        if (qtyTextEl) qtyTextEl.textContent = qty;
+        if (qtyInputEl) qtyInputEl.value = qty;
       });
 
       const shippingFee = subtotal >= 500 ? 0 : state.shippingFee;
@@ -641,12 +682,12 @@
         shippingFeeEl.textContent = formatMoney(shippingFee);
       }
       grandTotalEl.textContent = formatMoney(grandTotal);
+
       const stickyGrandTotalEl = document.getElementById('stickyGrandTotal');
       if (stickyGrandTotalEl) {
         stickyGrandTotalEl.textContent = formatMoney(grandTotal);
       }
 
-      // 👉 免運提示
       const hintEl = document.getElementById('freeShippingHint');
       if (subtotal === 0) {
         hintEl.textContent = '滿 500 元免運費';
@@ -660,6 +701,9 @@
     }
 
     function changeQty(id, diff) {
+      const product = products.find(p => p.id === id);
+      if (product && product.soldOut) return;
+
       const current = Number(state.quantities[id]) || 0;
       const next = Math.max(0, current + diff);
       state.quantities[id] = next;
@@ -667,6 +711,13 @@
     }
 
     function setQty(id, value) {
+      const product = products.find(p => p.id === id);
+      if (product && product.soldOut) {
+        state.quantities[id] = 0;
+        updateTotals();
+        return;
+      }
+
       const parsed = Math.max(0, Number(value) || 0);
       state.quantities[id] = parsed;
       updateTotals();
@@ -684,7 +735,7 @@
 
     function getOrderData() {
       const selectedItems = products
-        .filter(product => Number(state.quantities[product.id]) > 0)
+        .filter(product => !product.soldOut && Number(state.quantities[product.id]) > 0)
         .map(product => {
           const qty = Number(state.quantities[product.id]);
           const total = qty * product.price;
@@ -808,7 +859,6 @@
       const orderText = buildOrderText(orderData);
       orderOutput.textContent = orderText;
 
-      // 👉 防止重複寫入
       if (!window.orderSaved) {
         await saveOrderToGoogleSheet(orderData);
         window.orderSaved = true;
@@ -833,6 +883,7 @@
     }
 
     document.getElementById('submitBtn').addEventListener('click', async () => {
+      window.orderSaved = false;
       await prepareOrderText();
     });
 
@@ -886,6 +937,7 @@
     renderProducts();
     updateTotals();
   </script>
+
   <div class="sticky-bar">
     <div class="sticky-inner">
       <div>
