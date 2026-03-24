@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>農場簡易購物車訂購頁</title>
+  <title>倆口田｜線上下單</title>
   <style>
     :root {
       --bg: #f6f7f3;
@@ -469,7 +469,6 @@
 
     <div style="background:#fff7e6;border:1px solid #f0e0b2;border-radius:16px;padding:12px 14px;margin-bottom:12px;font-size:0.92rem;">
       🔥 新手推薦：韓國櫛瓜＋羅馬番茄＋高麗菜
-      <br>
     </div>
 
     <div class="quick-info">
@@ -518,7 +517,7 @@
       <h2 class="section-title">金額總計</h2>
       <div class="summary-box">
         <div id="freeShippingHint" style="font-size:0.9rem;color:#466d45;background:#edf4eb;padding:8px 10px;border-radius:10px;">
-          再買 500 元即可免運
+          滿 500 元免運費
         </div>
         <div class="summary-row">
           <span>商品總金額</span>
@@ -526,7 +525,7 @@
         </div>
         <div class="summary-row">
           <span>運費（滿500免運）</span>
-          <strong id="shippingFee">65 元</strong>
+          <strong id="shippingFee">尚未選購商品</strong>
         </div>
         <div class="summary-row total">
           <span>最終總金額</span>
@@ -581,32 +580,11 @@
     const lineTarget = '733fsbwp';
     const gasUrl = 'https://script.google.com/macros/s/AKfycby-wDWGmoovCMVX3cGJkO4DBtFg_g-ZyCAhfLRYp4fXtNw3X4JJsdcQXlbFRmZk-l4T/exec';
 
-    const products = [
-      { id: 'zucchini', name: '韓國櫛瓜', price: 100, unit: '條', tag: '農夫推薦', desc: '口感細緻、清甜，怎麼料理都好吃' },
-      { id: 'cabbage', name: '高麗菜', price: 90, unit: '顆', tag: '農夫推薦' },
-      { id: 'tomato', name: '羅馬番茄', price: 120, unit: '斤', tag: '農夫推薦', desc: '肉質紮實、酸甜平衡，適合燉煮與做醬' },
-      { id: 'celery', name: '西洋芹', price: 80, unit: '株', desc: '纖維感強、香氣濃，適合榨汁' },
-      { id: 'parsley', name: '歐芹（巴西里／洋香菜）', price: 65, unit: '份', desc: '料理提香必備，清新草本香氣' },
-      { id: 'beet', name: '甜菜根', price: 100, unit: '顆(約1斤)' },
-      { id: 'kale', name: '羽衣甘藍（恐龍品種）', price: 65, unit: '份' },
-      { id: 'chili', name: '農婦辣粉', price: 80, unit: '罐(12克)', desc: '100% 純朝天椒' },
-      { id: 'paste', name: '羅馬番茄糊', price: 400, unit: '罐(400克)', desc: '以羅馬番茄慢火熬煮，風味濃縮、料理方便' },
-      { id: 'sauce', name: '農婦辣醬', price: 150, unit: '瓶(50ml)', desc: '墨西哥辣椒天然發酵' },
-      { id: 'perilla', name: '韓國芝麻葉香料粉', price: 65, unit: '罐(8克)' },
-      { id: 'olive', name: 'DORIAN 特級冷壓初榨橄欖油', price: 590, unit: '瓶(1公升)' },
-
-      { id: 'carrot', name: '迷你彩色胡蘿蔔', price: 120, unit: '份(200克)', tag: '限量', desc: '帶有像香水般的清甜香氣，風味細緻', soldOut: true, soldOutText: '本週已完售，下一批預計四月初' },
-      { id: 'chard', name: '彩柄菾菜', price: 100, unit: '份', soldOut: true, soldOutText: '本週已完售，暫停接受訂購' },
-      { id: 'amaranth', name: '野莧菜', price: 65, unit: '份', tag: '季節限定', soldOut: true, soldOutText: '本週已完售，暫停接受訂購' }
-    ];
-
-    const sortedProducts = [
-      ...products.filter(product => !product.soldOut),
-      ...products.filter(product => product.soldOut)
-    ];
+    let products = [];
+    let sortedProducts = [];
 
     const state = {
-      quantities: Object.fromEntries(products.map(p => [p.id, 0])),
+      quantities: {},
       shippingFee: 65
     };
 
@@ -678,9 +656,6 @@
       const grandTotal = subtotal + shippingFee;
 
       subtotalEl.textContent = formatMoney(subtotal);
-      if (subtotal !== 0) {
-        shippingFeeEl.textContent = formatMoney(shippingFee);
-      }
       grandTotalEl.textContent = formatMoney(grandTotal);
 
       const stickyGrandTotalEl = document.getElementById('stickyGrandTotal');
@@ -695,8 +670,10 @@
       } else if (subtotal < 500) {
         const diff = 500 - subtotal;
         hintEl.textContent = `再買 ${diff} 元即可免運`;
+        shippingFeeEl.textContent = formatMoney(shippingFee);
       } else {
         hintEl.textContent = '已達免運門檻 🎉';
+        shippingFeeEl.textContent = '0 元';
       }
     }
 
@@ -743,6 +720,8 @@
             name: product.name,
             qty,
             unit: product.unit,
+            price: product.price,
+            amount: total,
             total
           };
         });
@@ -766,18 +745,10 @@
     }
 
     function validateOrder(data) {
-      if (data.selectedItems.length === 0) {
-        return '請至少選擇一項商品。';
-      }
-      if (!data.customerName) {
-        return '請填寫收件人姓名。';
-      }
-      if (!data.customerPhone) {
-        return '請填寫電話。';
-      }
-      if (!data.customerAddress) {
-        return '請填寫地址。';
-      }
+      if (data.selectedItems.length === 0) return '請至少選擇一項商品。';
+      if (!data.customerName) return '請填寫收件人姓名。';
+      if (!data.customerPhone) return '請填寫電話。';
+      if (!data.customerAddress) return '請填寫地址。';
       return '';
     }
 
@@ -823,20 +794,26 @@
             'Content-Type': 'text/plain;charset=utf-8'
           },
           body: JSON.stringify({
-            name: orderData.customerName,
+            customerName: orderData.customerName,
             phone: orderData.customerPhone,
-            address: orderData.customerAddress,
-            itemsText: orderData.selectedItems.map(item => `${item.name} x ${item.qty}${item.unit}`).join(', '),
+            receiverName: orderData.customerName,
+            receiverPhone: orderData.customerPhone,
+            receiverAddress: orderData.customerAddress,
+            note: orderData.customerNote || '',
+            shippingMethod: orderData.shippingMethod,
+            deliveryMethod: orderData.shippingMethod,
+            shipping: orderData.shipping,
+            shippingFee: orderData.shipping,
+            subtotal: orderData.subtotal,
+            total: orderData.grandTotal,
+            itemsText: orderData.selectedItems.map(item => `${item.name} x ${item.qty}${item.unit} = ${item.total}`).join('\n'),
             items: orderData.selectedItems.map(item => ({
               name: item.name,
               qty: item.qty,
-              unit: item.unit
-            })),
-            subtotal: orderData.subtotal,
-            shipping: orderData.shipping,
-            total: orderData.grandTotal,
-            shippingMethod: orderData.shippingMethod,
-            note: orderData.customerNote || ''
+              unit: item.unit,
+              price: item.price,
+              amount: item.amount
+            }))
           })
         });
       } catch (err) {
@@ -867,17 +844,13 @@
       const lineBtn = document.getElementById('lineBtn');
       const copyBtn = document.getElementById('copyBtn');
 
-      if (lineBtn) {
-        lineBtn.disabled = false;
-        lineBtn.style.opacity = '1';
-        lineBtn.style.cursor = 'pointer';
-      }
+      lineBtn.disabled = false;
+      lineBtn.style.opacity = '1';
+      lineBtn.style.cursor = 'pointer';
 
-      if (copyBtn) {
-        copyBtn.disabled = false;
-        copyBtn.style.opacity = '1';
-        copyBtn.style.cursor = 'pointer';
-      }
+      copyBtn.disabled = false;
+      copyBtn.style.opacity = '1';
+      copyBtn.style.cursor = 'pointer';
 
       return orderText;
     }
@@ -891,6 +864,7 @@
       const orderText = orderOutput.textContent && orderOutput.textContent !== '送出後會顯示整理好的訂單內容。'
         ? orderOutput.textContent
         : await prepareOrderText();
+
       if (!orderText) return;
 
       const lineUrl = getLineUrl(orderText);
@@ -920,6 +894,7 @@
       const text = orderOutput.textContent && orderOutput.textContent !== '送出後會顯示整理好的訂單內容。'
         ? orderOutput.textContent
         : await prepareOrderText();
+
       if (!text) return;
 
       try {
@@ -934,8 +909,33 @@
       }
     });
 
-    renderProducts();
-    updateTotals();
+    async function loadProducts() {
+      try {
+        const res = await fetch(gasUrl);
+        const data = await res.json();
+
+        if (data.status !== 'success' || !Array.isArray(data.products)) {
+          throw new Error(data.message || '商品資料格式錯誤');
+        }
+
+        products = data.products;
+        sortedProducts = [
+          ...products.filter(product => !product.soldOut),
+          ...products.filter(product => product.soldOut)
+        ];
+
+        state.quantities = Object.fromEntries(products.map(p => [p.id, 0]));
+
+        renderProducts();
+        updateTotals();
+      } catch (err) {
+        console.error(err);
+        errorMsg.style.display = 'block';
+        errorMsg.textContent = '商品資料載入失敗，請稍後再試。';
+      }
+    }
+
+    loadProducts();
   </script>
 
   <div class="sticky-bar">
