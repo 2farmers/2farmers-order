@@ -918,7 +918,10 @@
           throw new Error(data.message || '商品資料格式錯誤');
         }
 
+        // 這裡 products 已經是後端依 visible 過濾後的結果
         products = data.products;
+
+        // 未完售排前面，完售排後面
         sortedProducts = [
           ...products.filter(product => !product.soldOut),
           ...products.filter(product => product.soldOut)
