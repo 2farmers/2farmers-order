@@ -862,10 +862,11 @@
       const orderText = buildOrderText(orderData);
       orderOutput.textContent = orderText;
 
-      if (!window.orderSaved) {
-        await saveOrderToGoogleSheet(orderData);
-        window.orderSaved = true;
-      }
+     if (!window.orderSaved) {
+  const saveResult = await saveOrderToGoogleSheet(orderData);
+  console.log('saveResult:', saveResult);
+  window.orderSaved = true;
+}
 
       const lineBtn = document.getElementById('lineBtn');
       const copyBtn = document.getElementById('copyBtn');
