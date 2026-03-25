@@ -556,7 +556,7 @@
       </div>
 
       <div class="actions">
-        <button id="submitBtn" class="btn btn-primary">顯示訂單內容（確認後再傳LINE）</button>
+        <button id="submitBtn" class="btn btn-primary" type="button">顯示訂單內容（確認後再傳LINE）</button>
       </div>
       <div id="errorMsg" class="error"></div>
       <div class="hint">請先顯示訂單內容，確認無誤後再點「LINE 傳送訂單給倆口田」。</div>
@@ -582,6 +582,7 @@
 
     let products = [];
     let sortedProducts = [];
+    let isSubmittingOrder = false;
 
     const state = {
       quantities: {},
@@ -594,6 +595,9 @@
     const grandTotalEl = document.getElementById('grandTotal');
     const orderOutput = document.getElementById('orderOutput');
     const errorMsg = document.getElementById('errorMsg');
+    const submitBtn = document.getElementById('submitBtn');
+    const lineBtn = document.getElementById('lineBtn');
+    const copyBtn = document.getElementById('copyBtn');
 
     function formatMoney(num) {
       return `${num} 元`;
@@ -786,130 +790,150 @@
       return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     }
 
+    function setLineButtonsEnabled(enabled) {
+      lineBtn.disabled = !enabled;
+      copyBtn.disabled = !enabled;
+      lineBtn.style.opacity = enabled ? '1' : '0.5';
+      copyBtn.style.opacity = enabled ? '1' : '0.5';
+      lineBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+      copyBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+    }
+
+    function showError(message, color = '#c84a4a') {
+      errorMsg.style.display = 'block';
+      errorMsg.style.color = color;
+      errorMsg.textContent = message;
+    }
+
+    function clearError() {
+      errorMsg.style.display = 'none';
+      errorMsg.textContent = '';
+    }
+
     async function saveOrderToGoogleSheet(orderData) {
-  try {
-    const payload = {
-      customerName: orderData.customerName,
-      phone: orderData.customerPhone,
-      receiverName: orderData.customerName,
-      receiverPhone: orderData.customerPhone,
-      receiverAddress: orderData.customerAddress,
-      note: orderData.customerNote || '',
-      shippingMethod: orderData.shippingMethod,
-      deliveryMethod: orderData.shippingMethod,
-      shipping: orderData.shipping,
-      shippingFee: orderData.shipping,
-      subtotal: orderData.subtotal,
-      total: orderData.grandTotal,
-      itemsText: orderData.selectedItems
-        .map(item => `${item.name} x ${item.qty}${item.unit} = ${item.total}`)
-        .join('\n'),
-      items: orderData.selectedItems.map(item => ({
-        name: item.name,
-        qty: item.qty,
-        unit: item.unit,
-        price: item.price,
-        amount: item.amount
-      }))
-    };
+      try {
+        const payload = {
+          customerName: orderData.customerName,
+          phone: orderData.customerPhone,
+          receiverName: orderData.customerName,
+          receiverPhone: orderData.customerPhone,
+          receiverAddress: orderData.customerAddress,
+          note: orderData.customerNote || '',
+          shippingMethod: orderData.shippingMethod,
+          deliveryMethod: orderData.shippingMethod,
+          shipping: orderData.shipping,
+          shippingFee: orderData.shipping,
+          subtotal: orderData.subtotal,
+          total: orderData.grandTotal,
+          itemsText: orderData.selectedItems
+            .map(item => `${item.name} x ${item.qty}${item.unit} = ${item.total}`)
+            .join('\n'),
+          items: orderData.selectedItems.map(item => ({
+            name: item.name,
+            qty: item.qty,
+            unit: item.unit,
+            price: item.price,
+            amount: item.amount
+          }))
+        };
 
-    console.log('POST payload:', payload);
+        console.log('POST payload:', payload);
 
-    const res = await fetch(gasUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
-      },
-      body: JSON.stringify(payload)
-    });
+        const res = await fetch(gasUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify(payload)
+        });
 
-    const text = await res.text();
-    console.log('POST raw response:', text);
+        const text = await res.text();
+        console.log('POST raw response:', text);
 
-    let data = {};
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      throw new Error('後端回應不是 JSON：' + text);
+        let data = {};
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('後端回應不是 JSON：' + text);
+        }
+
+        if (data.status !== 'success') {
+          throw new Error(data.message || '寫入失敗');
+        }
+
+        return data;
+      } catch (err) {
+        console.error('寫入 Google Sheet 失敗', err);
+        showError('訂單寫入失敗：' + err.message);
+        throw err;
+      }
     }
-
-    if (data.status !== 'success') {
-      throw new Error(data.message || '寫入失敗');
-    }
-
-    return data;
-  } catch (err) {
-    console.error('寫入 Google Sheet 失敗', err);
-    errorMsg.style.display = 'block';
-    errorMsg.style.color = '#c84a4a';
-    errorMsg.textContent = '訂單寫入失敗：' + err.message;
-    throw err;
-  }
-}
 
     async function prepareOrderText() {
       const orderData = getOrderData();
       const error = validateOrder(orderData);
 
       if (error) {
-        errorMsg.style.display = 'block';
-        errorMsg.style.color = '#c84a4a';
-        errorMsg.textContent = error;
+        showError(error);
         return null;
       }
 
-      errorMsg.style.display = 'none';
+      clearError();
+
       const orderText = buildOrderText(orderData);
       orderOutput.textContent = orderText;
-
-     if (!window.orderSaved) {
-  const saveResult = await saveOrderToGoogleSheet(orderData);
-  console.log('saveResult:', saveResult);
-  window.orderSaved = true;
-}
-
-      const lineBtn = document.getElementById('lineBtn');
-      const copyBtn = document.getElementById('copyBtn');
-
-      lineBtn.disabled = false;
-      lineBtn.style.opacity = '1';
-      lineBtn.style.cursor = 'pointer';
-
-      copyBtn.disabled = false;
-      copyBtn.style.opacity = '1';
-      copyBtn.style.cursor = 'pointer';
+      setLineButtonsEnabled(true);
 
       return orderText;
     }
 
-    document.getElementById('submitBtn').addEventListener('click', async () => {
-      window.orderSaved = false;
+    submitBtn.addEventListener('click', async () => {
       await prepareOrderText();
     });
 
-    document.getElementById('lineBtn').addEventListener('click', async () => {
-      const orderText = orderOutput.textContent && orderOutput.textContent !== '送出後會顯示整理好的訂單內容。'
-        ? orderOutput.textContent
-        : await prepareOrderText();
+    lineBtn.addEventListener('click', async () => {
+      if (isSubmittingOrder) return;
 
-      if (!orderText) return;
+      const orderData = getOrderData();
+      const error = validateOrder(orderData);
+
+      if (error) {
+        showError(error);
+        return;
+      }
+
+      const orderText = buildOrderText(orderData);
+      orderOutput.textContent = orderText;
+
+      try {
+        isSubmittingOrder = true;
+        lineBtn.disabled = true;
+        lineBtn.style.opacity = '0.7';
+        lineBtn.textContent = '送單中...';
+
+        await saveOrderToGoogleSheet(orderData);
+      } catch (err) {
+        return;
+      } finally {
+        isSubmittingOrder = false;
+        lineBtn.disabled = false;
+        lineBtn.style.opacity = '1';
+        lineBtn.textContent = 'LINE 傳送訂單給倆口田';
+      }
 
       const lineUrl = getLineUrl(orderText);
 
       if (isMobileDevice()) {
         window.open(lineUrl, '_blank');
+        showError('訂單已寫入系統，請在 LINE 畫面按下送出。', '#2d6d34');
         return;
       }
 
       try {
         await navigator.clipboard.writeText(orderText);
-        errorMsg.style.display = 'block';
-        errorMsg.style.color = '#2d6d34';
-        errorMsg.textContent = '電腦版無法直接帶入 LINE 訊息，已先幫你複製訂單內容。請貼到 LINE 傳送給倆口田官方帳號。';
+        showError('訂單已寫入系統，且已幫你複製訂單內容。請貼到 LINE 傳送給倆口田官方帳號。', '#2d6d34');
       } catch (err) {
-        errorMsg.style.display = 'block';
-        errorMsg.style.color = '#c84a4a';
-        errorMsg.textContent = '電腦版無法直接帶入 LINE 訊息，請先複製訂單內容，再貼到 LINE 傳送。';
+        showError('訂單已寫入系統，但電腦版無法自動複製。請手動複製訂單內容後貼到 LINE。', '#c84a4a');
       }
 
       if (lineTarget.trim()) {
@@ -917,33 +941,7 @@
       }
     });
 
-    document.getElementById('lineBtn').addEventListener('click', async () => {
-  const orderData = getOrderData();
-  const error = validateOrder(orderData);
-  if (error) {
-    errorMsg.style.display = 'block';
-    errorMsg.textContent = error;
-    return;
-  }
-
-  // ✅ 先寫入
-  try {
-    await saveOrderToGoogleSheet(orderData);
-  } catch (err) {
-    return;
-  }
-
-  // ✅ 再開 LINE
-  const orderText = buildOrderText(orderData);
-  const lineUrl = getLineUrl(orderText);
-
-  if (isMobileDevice()) {
-    window.open(lineUrl, '_blank');
-  } else {
-    await navigator.clipboard.writeText(orderText);
-    window.open(`https://line.me/R/ti/p/@${lineTarget}`, '_blank');
-  }
-});
+    copyBtn.addEventListener('click', async () => {
       const text = orderOutput.textContent && orderOutput.textContent !== '送出後會顯示整理好的訂單內容。'
         ? orderOutput.textContent
         : await prepareOrderText();
@@ -952,13 +950,9 @@
 
       try {
         await navigator.clipboard.writeText(text);
-        errorMsg.style.display = 'block';
-        errorMsg.style.color = '#2d6d34';
-        errorMsg.textContent = '訂單內容已複製。';
+        showError('訂單內容已複製。', '#2d6d34');
       } catch (err) {
-        errorMsg.style.display = 'block';
-        errorMsg.style.color = '#c84a4a';
-        errorMsg.textContent = '複製失敗，請手動選取文字複製。';
+        showError('複製失敗，請手動選取文字複製。');
       }
     });
 
@@ -971,10 +965,8 @@
           throw new Error(data.message || '商品資料格式錯誤');
         }
 
-        // 這裡 products 已經是後端依 visible 過濾後的結果
         products = data.products;
 
-        // 未完售排前面，完售排後面
         sortedProducts = [
           ...products.filter(product => !product.soldOut),
           ...products.filter(product => product.soldOut)
@@ -986,8 +978,7 @@
         updateTotals();
       } catch (err) {
         console.error(err);
-        errorMsg.style.display = 'block';
-        errorMsg.textContent = '商品資料載入失敗，請稍後再試。';
+        showError('商品資料載入失敗，請稍後再試。');
       }
     }
 
