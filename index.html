@@ -917,7 +917,33 @@
       }
     });
 
-    document.getElementById('copyBtn').addEventListener('click', async () => {
+    document.getElementById('lineBtn').addEventListener('click', async () => {
+  const orderData = getOrderData();
+  const error = validateOrder(orderData);
+  if (error) {
+    errorMsg.style.display = 'block';
+    errorMsg.textContent = error;
+    return;
+  }
+
+  // ✅ 先寫入
+  try {
+    await saveOrderToGoogleSheet(orderData);
+  } catch (err) {
+    return;
+  }
+
+  // ✅ 再開 LINE
+  const orderText = buildOrderText(orderData);
+  const lineUrl = getLineUrl(orderText);
+
+  if (isMobileDevice()) {
+    window.open(lineUrl, '_blank');
+  } else {
+    await navigator.clipboard.writeText(orderText);
+    window.open(`https://line.me/R/ti/p/@${lineTarget}`, '_blank');
+  }
+});
       const text = orderOutput.textContent && orderOutput.textContent !== '送出後會顯示整理好的訂單內容。'
         ? orderOutput.textContent
         : await prepareOrderText();
