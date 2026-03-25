@@ -721,6 +721,7 @@
           const qty = Number(state.quantities[product.id]);
           const total = qty * product.price;
           return {
+            id: product.id,
             name: product.name,
             qty,
             unit: product.unit,
@@ -829,6 +830,7 @@
             .map(item => `${item.name} x ${item.qty}${item.unit} = ${item.total}`)
             .join('\n'),
           items: orderData.selectedItems.map(item => ({
+            id: item.id,
             name: item.name,
             qty: item.qty,
             unit: item.unit,
