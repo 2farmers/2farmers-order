@@ -1,188 +1,1000 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>倆口田｜線上下單</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>倆口田｜線上下單</title>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --card: #ffffff;
+      --text: #243024;
+      --muted: #6b756b;
+      --line: #dfe5dc;
+      --accent: #3f6b3f;
+      --accent-dark: #2f5230;
+      --soft: #edf4eb;
+      --danger: #c84a4a;
+      --shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+      --radius: 18px;
+    }
 
-<style>
-body { font-family: sans-serif; max-width: 720px; margin: auto; background:#f6f7f3; padding:16px;}
-.product { border-bottom:1px solid #ddd; padding:12px 0;}
-.product.sold-out { opacity:0.5;}
-.stock-low { color:#c84a4a; font-weight:bold;}
-.stock-mid { color:#e6a100;}
-button { background:#3f6b3f; color:white; padding:10px; border:none; width:100%; margin-top:10px;}
-input { width:100%; padding:8px; margin-top:6px;}
-</style>
-</head>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
-<body>
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #f3f6ef 0%, #f8f8f4 100%);
+      color: var(--text);
+      line-height: 1.5;
+    }
 
-<h2>倆口田｜線上下單</h2>
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 16px 100px;
+    }
 
-<div id="productList"></div>
+    .hero {
+      background: linear-gradient(135deg, #4f7d4d, #3f6b3f);
+      color: white;
+      padding: 24px 18px;
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
 
-<h3>收件資料</h3>
-<input id="customerName" placeholder="姓名">
-<input id="customerPhone" placeholder="電話">
-<input id="customerAddress" placeholder="地址">
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.16);
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+    }
 
-<button onclick="prepareOrder()">顯示訂單內容</button>
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 1.7rem;
+    }
 
-<pre id="orderOutput">尚未產生訂單</pre>
+    .hero p {
+      margin: 0;
+      opacity: 0.94;
+      font-size: 0.96rem;
+    }
 
-<button onclick="sendLine()">LINE 傳送訂單</button>
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
 
-<script>
+    .hero-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
 
-const gasUrl = "你的GAS網址";
-const lineId = "733fsbwp";
+    .hero-link.primary {
+      background: #fff;
+      color: var(--accent-dark);
+    }
 
-let products = [];
-let quantities = {};
+    .hero-link.secondary {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.22);
+    }
 
-// ===== 載入商品 =====
-async function loadProducts(){
-  const res = await fetch(gasUrl);
-  const data = await res.json();
+    .quick-info {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
 
-  products = data.products;
+    .info-card {
+      background: rgba(255,255,255,0.85);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
 
-  quantities = Object.fromEntries(products.map(p=>[p.id,0]));
+    .info-title {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
 
-  renderProducts();
-}
+    .info-value {
+      font-size: 0.98rem;
+      font-weight: 800;
+    }
 
-// ===== 渲染商品 =====
-function renderProducts(){
-  const el = document.getElementById('productList');
+    .section {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
 
-  el.innerHTML = products.map(p=>{
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 1.1rem;
+    }
 
-    let stockHtml = '';
+    .section-subtitle {
+      margin: -4px 0 14px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
 
-    if(p.soldOut){
-      stockHtml = `<div class="stock-low">已完售</div>`;
-    }else if(p.remainingQty !== null){
-      if(p.remainingQty <= 5){
-        stockHtml = `<div class="stock-low">⚠️ 只剩 ${p.remainingQty}${p.unit}</div>`;
-      }else if(p.remainingQty <= 10){
-        stockHtml = `<div class="stock-mid">剩 ${p.remainingQty}${p.unit}</div>`;
+    .product-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .product-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .product-card.sold-out {
+      opacity: 0.55;
+      background: #f7f7f7;
+    }
+
+    .sold-out-badge {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 0.75rem;
+      background: #ffe5e5;
+      color: #b42323;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    .sold-out-note {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: #b42323;
+      font-weight: 600;
+    }
+
+    .product-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .product-name {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .product-price {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 2px;
+    }
+
+    .qty-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .qty-control {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--soft);
+    }
+
+    .qty-btn {
+      border: 0;
+      background: transparent;
+      width: 42px;
+      height: 42px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .qty-btn:active { background: rgba(0,0,0,0.05); }
+
+    .qty-input {
+      width: 52px;
+      height: 42px;
+      border: 0;
+      text-align: center;
+      font-size: 1rem;
+      background: white;
+      color: var(--text);
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .qty-btn:disabled,
+    .qty-input:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      background: #f1f1f1;
+    }
+
+    .item-total {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--accent-dark);
+    }
+
+    .shipping-options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #fff;
+    }
+
+    .option input { transform: scale(1.1); }
+
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.97rem;
+    }
+
+    .summary-box {
+      background: #f9fbf8;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.97rem;
+    }
+
+    .summary-row.total {
+      font-size: 1.08rem;
+      font-weight: 800;
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      background: #fff;
+    }
+
+    .field textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      flex: 1 1 220px;
+    }
+
+    .btn-primary:active { background: var(--accent-dark); }
+
+    .btn-secondary {
+      background: #e9efe7;
+      color: var(--text);
+      flex: 1 1 160px;
+    }
+
+    .error {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .order-output {
+      white-space: pre-wrap;
+      background: #fcfdfc;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      font-size: 0.95rem;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-top: 8px;
+    }
+
+    .sticky-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(246, 247, 243, 0.95);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .sticky-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .sticky-total-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .sticky-total-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .sticky-btn {
+      border: 0;
+      background: var(--accent);
+      color: white;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 520px) {
+      .quick-info {
+        grid-template-columns: 1fr;
+      }
+      .sticky-inner {
+        padding: 10px;
+      }
+      .sticky-btn {
+        padding: 12px 14px;
       }
     }
 
-    return `
-      <div class="product ${p.soldOut?'sold-out':''}">
-        <b>${p.name}</b><br>
-        ${p.price}元 / ${p.unit}<br>
-        ${stockHtml}
-
-        <input type="number" min="0" value="${quantities[p.id]}"
-          onchange="setQty('${p.id}', this.value)"
-          ${p.soldOut?'disabled':''}>
-      </div>
-    `;
-  }).join('');
-}
-
-// ===== 設定數量（含限量）=====
-function setQty(id, value){
-  const p = products.find(x=>x.id===id);
-  let qty = Math.max(0, Number(value)||0);
-
-  if(p.remainingQty !== null && qty > p.remainingQty){
-    qty = p.remainingQty;
-    alert(`「${p.name}」最多只能買 ${p.remainingQty}${p.unit}`);
-  }
-
-  quantities[id] = qty;
-  renderProducts();
-}
-
-// ===== 產生訂單 =====
-function prepareOrder(){
-
-  let text = '';
-  let items = [];
-  let total = 0;
-
-  products.forEach(p=>{
-    const qty = quantities[p.id];
-    if(qty>0){
-      items.push({id:p.id, qty});
-      text += `${p.name} x ${qty}\n`;
-      total += p.price * qty;
+    @media (min-width: 680px) {
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .field.full {
+        grid-column: 1 / -1;
+      }
     }
-  });
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-badge">倆口田｜簡易線上下單頁</div>
+      <h1>新鮮蔬菜，直接選、直接下單</h1>
+      <p style="margin-top:6px;font-size:0.9rem;opacity:0.9;">無農藥，無化肥，草生栽培、不耕犁耕作｜季節蔬菜｜直接從田裡到你家</p>
+      <p>這裡是倆口田，把我們田裡正在採收的蔬菜，整理成一個可以直接選購的頁面。慢慢挑、放心選，填好資料後就能把訂單傳給我們，我們會親自幫你準備好。</p>
+      <p style="margin-top:8px;font-weight:600;">📦 本週出貨日：週二、週三、週四</p>
+      <div class="hero-actions">
+        <a class="hero-link primary" href="#products">開始選購</a>
+        <a class="hero-link secondary" href="#order-form">填寫收件資訊</a>
+      </div>
+    </div>
 
-  if(items.length===0){
-    alert("請選商品");
-    return;
-  }
+    <div style="background:#fff7e6;border:1px solid #f0e0b2;border-radius:16px;padding:12px 14px;margin-bottom:12px;font-size:0.92rem;">
+      🔥 新手推薦：韓國櫛瓜＋羅馬番茄＋甜菜根
+    </div>
 
-  const orderText =
-`【倆口田訂單】
+    <div class="quick-info">
+      <div class="info-card">
+        <div class="info-title">下單方式</div>
+        <div class="info-value">購物車式選購</div>
+      </div>
+      <div class="info-card">
+        <div class="info-title">配送方式</div>
+        <div class="info-value">宅配 / 面交</div>
+      </div>
+      <div class="info-card">
+        <div class="info-title">付款說明</div>
+        <div class="info-value">人工確認訂單</div>
+      </div>
+    </div>
 
-${text}
-總金額：${total}元
+    <div class="section" id="products">
+      <h2 class="section-title">商品列表</h2>
+      <div class="section-subtitle">請直接按 + 或輸入數量，系統會自動幫你算金額。</div>
+      <div id="productList" class="product-list"></div>
+    </div>
 
-收件人：${customerName.value}
-電話：${customerPhone.value}
-地址：${customerAddress.value}`;
+    <div class="section">
+      <h2 class="section-title">配送方式</h2>
+      <div class="shipping-options">
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="shipping" value="宅配" data-fee="65" checked />
+            <span>宅配</span>
+          </div>
+          <strong>運費 65 元</strong>
+        </label>
 
-  document.getElementById('orderOutput').textContent = orderText;
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="shipping" value="面交" data-fee="0" />
+            <span>面交</span>
+          </div>
+          <strong>免運</strong>
+        </label>
+      </div>
+    </div>
 
-  window.currentOrder = {
-    items,
-    itemsText: text,
-    total
-  };
-}
+    <div class="section">
+      <h2 class="section-title">金額總計</h2>
+      <div class="summary-box">
+        <div id="freeShippingHint" style="font-size:0.9rem;color:#466d45;background:#edf4eb;padding:8px 10px;border-radius:10px;">
+          滿 500 元免運費
+        </div>
+        <div class="summary-row">
+          <span>商品總金額</span>
+          <strong id="subtotal">0 元</strong>
+        </div>
+        <div class="summary-row">
+          <span>運費（滿500免運）</span>
+          <strong id="shippingFee">尚未選購商品</strong>
+        </div>
+        <div class="summary-row total">
+          <span>最終總金額</span>
+          <span id="grandTotal">0 元</span>
+        </div>
+      </div>
+    </div>
 
-// ===== 傳送 LINE + 寫入 GAS =====
-async function sendLine(){
+    <div class="section" id="order-form">
+      <h2 class="section-title">收件資訊</h2>
+      <div class="form-grid">
+        <div class="field">
+          <label for="customerName">收件人姓名 *</label>
+          <input id="customerName" type="text" placeholder="請輸入姓名" />
+        </div>
+        <div class="field">
+          <label for="customerPhone">電話 *</label>
+          <input id="customerPhone" type="tel" placeholder="請輸入電話" />
+        </div>
+        <div class="field full">
+          <label for="customerAddress">地址 *</label>
+          <input id="customerAddress" type="text" placeholder="請輸入收件地址" />
+        </div>
+        <div class="field full">
+          <label for="customerNote">備註</label>
+          <textarea id="customerNote" placeholder="例如：方便收件時段、想補充的內容"></textarea>
+        </div>
+      </div>
 
-  if(!window.currentOrder){
-    alert("請先產生訂單");
-    return;
-  }
+      <div class="actions">
+        <button id="submitBtn" class="btn btn-primary" type="button">顯示訂單內容（確認後再傳LINE）</button>
+      </div>
+      <div id="errorMsg" class="error"></div>
+      <div class="hint">請先顯示訂單內容，確認無誤後再點「LINE 傳送訂單給倆口田」。</div>
+    </div>
 
-  const payload = {
-    orderId: Date.now().toString(),
-    customerName: customerName.value,
-    phone: customerPhone.value,
-    receiverName: customerName.value,
-    receiverPhone: customerPhone.value,
-    receiverAddress: customerAddress.value,
-    items: window.currentOrder.items,
-    itemsText: window.currentOrder.itemsText,
-    subtotal: window.currentOrder.total,
-    total: window.currentOrder.total
-  };
+    <div class="section">
+      <h2 class="section-title">訂單內容</h2>
+      <div id="orderOutput" class="order-output">送出後會顯示整理好的訂單內容。</div>
+      <div class="actions" style="margin-top:12px;">
+        <button id="lineBtn" class="btn btn-primary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">LINE 傳送訂單給倆口田</button>
+        <button id="copyBtn" class="btn btn-secondary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">複製訂單內容</button>
+      </div>
+      <div class="hint">手機可直接帶入 LINE 訊息；電腦版會自動複製訂單內容，請貼到倆口田官方 LINE：@733fsbwp</div>
+      <div style="margin-top:8px;">
+        <a href="https://line.me/R/ti/p/@733fsbwp" target="_blank" style="display:inline-block;padding:10px 14px;border-radius:999px;background:#06c755;color:#fff;text-decoration:none;font-weight:700;">加入倆口田官方 LINE</a>
+      </div>
+    </div>
+  </div>
 
-  const res = await fetch(gasUrl,{
-    method:'POST',
-    body: JSON.stringify(payload)
-  });
+  <script>
+    const lineTarget = '733fsbwp';
+    const gasUrl = 'https://script.google.com/macros/s/AKfycbxu52TzvV_Ek848NPOYrC3j8xL3B_YQQdFs6-NgKYOQpjcdccifrhWo9C4zT2PQ5SQs/exec';
 
-  const r = await res.json();
+    let products = [];
+    let sortedProducts = [];
+    let isSubmittingOrder = false;
 
-  if(r.status==='duplicate'){
-    alert("訂單已送出，請勿重複");
-    return;
-  }
+    const state = {
+      quantities: {},
+      shippingFee: 65
+    };
 
-  const lineUrl =
-    `https://line.me/R/oaMessage/@${lineId}?` +
-    encodeURIComponent(document.getElementById('orderOutput').textContent);
+    const productList = document.getElementById('productList');
+    const subtotalEl = document.getElementById('subtotal');
+    const shippingFeeEl = document.getElementById('shippingFee');
+    const grandTotalEl = document.getElementById('grandTotal');
+    const orderOutput = document.getElementById('orderOutput');
+    const errorMsg = document.getElementById('errorMsg');
+    const submitBtn = document.getElementById('submitBtn');
+    const lineBtn = document.getElementById('lineBtn');
+    const copyBtn = document.getElementById('copyBtn');
 
-  window.open(lineUrl);
+    function formatMoney(num) {
+      return `${num} 元`;
+    }
 
-}
+    function renderProducts() {
+      productList.innerHTML = sortedProducts.map(product => `
+        <div class="product-card ${product.soldOut ? 'sold-out' : ''}">
+          <div class="product-top">
+            <div>
+              <div class="product-name">
+                ${product.name}
+                ${product.tag ? `<span style="margin-left:6px;font-size:0.75rem;background:#edf4eb;color:#466d45;padding:2px 6px;border-radius:999px;">${product.tag}</span>` : ''}
+                ${product.soldOut ? `<span class="sold-out-badge">本週已完售</span>` : ''}
+              </div>
+              ${product.desc ? `<div style="font-size:0.85rem;color:#6b756b;margin-top:4px;">${product.desc}</div>` : ''}
+              ${product.soldOut ? `<div class="sold-out-note">${product.soldOutText || '本週已完售，暫停接受訂購'}</div>` : ''}
+              <div class="product-price">${product.price} 元 / ${product.unit}</div>
+            </div>
+            <div class="item-total" id="total-${product.id}">0 元</div>
+          </div>
+          <div class="qty-wrap">
+            <div class="qty-control">
+              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', -1)" ${product.soldOut ? 'disabled' : ''}>−</button>
+              <input
+                class="qty-input"
+                type="number"
+                min="0"
+                value="0"
+                id="qty-${product.id}"
+                oninput="setQty('${product.id}', this.value)"
+                ${product.soldOut ? 'disabled' : ''}
+              />
+              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', 1)" ${product.soldOut ? 'disabled' : ''}>＋</button>
+            </div>
+            <div>小計：<strong>${product.price} × <span id="qty-text-${product.id}">0</span></strong></div>
+          </div>
+        </div>
+      `).join('');
+    }
 
-loadProducts();
+    function updateTotals() {
+      let subtotal = 0;
 
-</script>
+      products.forEach(product => {
+        const qty = Number(state.quantities[product.id]) || 0;
+        const total = qty * product.price;
+        subtotal += total;
 
+        const totalEl = document.getElementById(`total-${product.id}`);
+        const qtyTextEl = document.getElementById(`qty-text-${product.id}`);
+        const qtyInputEl = document.getElementById(`qty-${product.id}`);
+
+        if (totalEl) totalEl.textContent = formatMoney(total);
+        if (qtyTextEl) qtyTextEl.textContent = qty;
+        if (qtyInputEl) qtyInputEl.value = qty;
+      });
+
+      const shippingFee = subtotal >= 500 ? 0 : state.shippingFee;
+      const grandTotal = subtotal + shippingFee;
+
+      subtotalEl.textContent = formatMoney(subtotal);
+      grandTotalEl.textContent = formatMoney(grandTotal);
+
+      const stickyGrandTotalEl = document.getElementById('stickyGrandTotal');
+      if (stickyGrandTotalEl) {
+        stickyGrandTotalEl.textContent = formatMoney(grandTotal);
+      }
+
+      const hintEl = document.getElementById('freeShippingHint');
+      if (subtotal === 0) {
+        hintEl.textContent = '滿 500 元免運費';
+        shippingFeeEl.textContent = '尚未選購商品';
+      } else if (subtotal < 500) {
+        const diff = 500 - subtotal;
+        hintEl.textContent = `再買 ${diff} 元即可免運`;
+        shippingFeeEl.textContent = formatMoney(shippingFee);
+      } else {
+        hintEl.textContent = '已達免運門檻 🎉';
+        shippingFeeEl.textContent = '0 元';
+      }
+    }
+
+    function changeQty(id, diff) {
+      const product = products.find(p => p.id === id);
+      if (product && product.soldOut) return;
+
+      const current = Number(state.quantities[id]) || 0;
+      const next = Math.max(0, current + diff);
+      state.quantities[id] = next;
+      updateTotals();
+    }
+
+    function setQty(id, value) {
+      const product = products.find(p => p.id === id);
+      if (product && product.soldOut) {
+        state.quantities[id] = 0;
+        updateTotals();
+        return;
+      }
+
+      const parsed = Math.max(0, Number(value) || 0);
+      state.quantities[id] = parsed;
+      updateTotals();
+    }
+
+    window.changeQty = changeQty;
+    window.setQty = setQty;
+
+    document.querySelectorAll('input[name="shipping"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        state.shippingFee = Number(e.target.dataset.fee) || 0;
+        updateTotals();
+      });
+    });
+
+    function getOrderData() {
+      const selectedItems = products
+        .filter(product => !product.soldOut && Number(state.quantities[product.id]) > 0)
+        .map(product => {
+          const qty = Number(state.quantities[product.id]);
+          const total = qty * product.price;
+          return {
+            id: product.id,
+            name: product.name,
+            qty,
+            unit: product.unit,
+            price: product.price,
+            amount: total,
+            total
+          };
+        });
+
+      const subtotal = selectedItems.reduce((sum, item) => sum + item.total, 0);
+      const shipping = subtotal >= 500 ? 0 : state.shippingFee;
+      const grandTotal = subtotal + shipping;
+      const shippingMethod = document.querySelector('input[name="shipping"]:checked').value;
+
+      return {
+        selectedItems,
+        subtotal,
+        shipping,
+        grandTotal,
+        shippingMethod,
+        customerName: document.getElementById('customerName').value.trim(),
+        customerPhone: document.getElementById('customerPhone').value.trim(),
+        customerAddress: document.getElementById('customerAddress').value.trim(),
+        customerNote: document.getElementById('customerNote').value.trim()
+      };
+    }
+
+    function validateOrder(data) {
+      if (data.selectedItems.length === 0) return '請至少選擇一項商品。';
+      if (!data.customerName) return '請填寫收件人姓名。';
+      if (!data.customerPhone) return '請填寫電話。';
+      if (!data.customerAddress) return '請填寫地址。';
+      return '';
+    }
+
+    function buildOrderText(data) {
+      const itemLines = data.selectedItems
+        .map(item => `- ${item.name}：${item.qty}${item.unit}／${item.total}元`)
+        .join('\n');
+
+      return [
+        '【倆口田訂單】',
+        itemLines,
+        '',
+        `商品總金額：${data.subtotal}元`,
+        `配送方式：${data.shippingMethod}`,
+        `運費：${data.shipping}元`,
+        `最終總金額：${data.grandTotal}元`,
+        '',
+        '【收件資訊】',
+        `收件人姓名：${data.customerName}`,
+        `電話：${data.customerPhone}`,
+        `地址：${data.customerAddress}`,
+        `備註：${data.customerNote || '無'}`
+      ].join('\n');
+    }
+
+    function getLineUrl(orderText) {
+      const encodedText = encodeURIComponent(orderText);
+      if (lineTarget.trim()) {
+        return `https://line.me/R/oaMessage/@${lineTarget}?${encodedText}`;
+      }
+      return `https://line.me/R/msg/text/?${encodedText}`;
+    }
+
+    function isMobileDevice() {
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    }
+
+    function setLineButtonsEnabled(enabled) {
+      lineBtn.disabled = !enabled;
+      copyBtn.disabled = !enabled;
+      lineBtn.style.opacity = enabled ? '1' : '0.5';
+      copyBtn.style.opacity = enabled ? '1' : '0.5';
+      lineBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+      copyBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+    }
+
+    function showError(message, color = '#c84a4a') {
+      errorMsg.style.display = 'block';
+      errorMsg.style.color = color;
+      errorMsg.textContent = message;
+    }
+
+    function clearError() {
+      errorMsg.style.display = 'none';
+      errorMsg.textContent = '';
+    }
+
+    async function saveOrderToGoogleSheet(orderData) {
+      try {
+        const payload = {
+          customerName: orderData.customerName,
+          phone: orderData.customerPhone,
+          receiverName: orderData.customerName,
+          receiverPhone: orderData.customerPhone,
+          receiverAddress: orderData.customerAddress,
+          note: orderData.customerNote || '',
+          shippingMethod: orderData.shippingMethod,
+          deliveryMethod: orderData.shippingMethod,
+          shipping: orderData.shipping,
+          shippingFee: orderData.shipping,
+          subtotal: orderData.subtotal,
+          total: orderData.grandTotal,
+          itemsText: orderData.selectedItems
+            .map(item => `${item.name} x ${item.qty}${item.unit} = ${item.total}`)
+            .join('\n'),
+          items: orderData.selectedItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            qty: item.qty,
+            unit: item.unit,
+            price: item.price,
+            amount: item.amount
+          }))
+        };
+
+        console.log('POST payload:', payload);
+
+        const res = await fetch(gasUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+        console.log('POST raw response:', text);
+
+        let data = {};
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('後端回應不是 JSON：' + text);
+        }
+
+        if (data.status !== 'success') {
+          throw new Error(data.message || '寫入失敗');
+        }
+
+        return data;
+      } catch (err) {
+        console.error('寫入 Google Sheet 失敗', err);
+        showError('訂單寫入失敗：' + err.message);
+        throw err;
+      }
+    }
+
+    async function prepareOrderText() {
+      const orderData = getOrderData();
+      const error = validateOrder(orderData);
+
+      if (error) {
+        showError(error);
+        return null;
+      }
+
+      clearError();
+
+      const orderText = buildOrderText(orderData);
+      orderOutput.textContent = orderText;
+      setLineButtonsEnabled(true);
+
+      return orderText;
+    }
+
+    submitBtn.addEventListener('click', async () => {
+      await prepareOrderText();
+    });
+
+    lineBtn.addEventListener('click', async () => {
+      if (isSubmittingOrder) return;
+
+      const orderData = getOrderData();
+      const error = validateOrder(orderData);
+
+      if (error) {
+        showError(error);
+        return;
+      }
+
+      const orderText = buildOrderText(orderData);
+      orderOutput.textContent = orderText;
+
+      try {
+        isSubmittingOrder = true;
+        lineBtn.disabled = true;
+        lineBtn.style.opacity = '0.7';
+        lineBtn.textContent = '送單中...';
+
+        await saveOrderToGoogleSheet(orderData);
+      } catch (err) {
+        return;
+      } finally {
+        isSubmittingOrder = false;
+        lineBtn.disabled = false;
+        lineBtn.style.opacity = '1';
+        lineBtn.textContent = 'LINE 傳送訂單給倆口田';
+      }
+
+      const lineUrl = getLineUrl(orderText);
+
+      if (isMobileDevice()) {
+        window.open(lineUrl, '_blank');
+        showError('訂單已寫入系統，請在 LINE 畫面按下送出。', '#2d6d34');
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(orderText);
+        showError('訂單已寫入系統，且已幫你複製訂單內容。請貼到 LINE 傳送給倆口田官方帳號。', '#2d6d34');
+      } catch (err) {
+        showError('訂單已寫入系統，但電腦版無法自動複製。請手動複製訂單內容後貼到 LINE。', '#c84a4a');
+      }
+
+      if (lineTarget.trim()) {
+        window.open(`https://line.me/R/ti/p/@${lineTarget}`, '_blank');
+      }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const text = orderOutput.textContent && orderOutput.textContent !== '送出後會顯示整理好的訂單內容。'
+        ? orderOutput.textContent
+        : await prepareOrderText();
+
+      if (!text) return;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        showError('訂單內容已複製。', '#2d6d34');
+      } catch (err) {
+        showError('複製失敗，請手動選取文字複製。');
+      }
+    });
+
+    async function loadProducts() {
+      try {
+        const res = await fetch(gasUrl);
+        const data = await res.json();
+
+        if (data.status !== 'success' || !Array.isArray(data.products)) {
+          throw new Error(data.message || '商品資料格式錯誤');
+        }
+
+        products = data.products;
+
+        sortedProducts = [
+          ...products.filter(product => !product.soldOut),
+          ...products.filter(product => product.soldOut)
+        ];
+
+        state.quantities = Object.fromEntries(products.map(p => [p.id, 0]));
+
+        renderProducts();
+        updateTotals();
+      } catch (err) {
+        console.error(err);
+        showError('商品資料載入失敗，請稍後再試。');
+      }
+    }
+
+    loadProducts();
+  </script>
+
+  <div class="sticky-bar">
+    <div class="sticky-inner">
+      <div>
+        <div class="sticky-total-label">目前總金額</div>
+        <div class="sticky-total-price" id="stickyGrandTotal">0 元</div>
+      </div>
+      <a class="sticky-btn" href="#order-form">前往填資料</a>
+    </div>
+  </div>
 </body>
 </html>
