@@ -15,6 +15,8 @@
       --accent-dark: #2f5230;
       --soft: #edf4eb;
       --danger: #c84a4a;
+      --warning-bg: #fff7e8;
+      --warning-text: #9a5a00;
       --shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
       --radius: 18px;
     }
@@ -170,10 +172,29 @@
       vertical-align: middle;
     }
 
+    .stock-badge {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 0.75rem;
+      background: var(--warning-bg);
+      color: var(--warning-text);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
     .sold-out-note {
       margin-top: 6px;
       font-size: 0.85rem;
       color: #b42323;
+      font-weight: 600;
+    }
+
+    .stock-note {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: var(--warning-text);
       font-weight: 600;
     }
 
@@ -603,47 +624,95 @@
       return `${num} 元`;
     }
 
+    function toNumber(value, fallback = 0) {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : fallback;
+    }
+
+    function getRemainingQty(product) {
+      if (product.remainingQty === null || product.remainingQty === undefined || product.remainingQty === '') {
+        return null;
+      }
+      const qty = toNumber(product.remainingQty, null);
+      return qty === null ? null : Math.max(0, qty);
+    }
+
+    function isSoldOutProduct(product) {
+      const remainingQty = getRemainingQty(product);
+      return !!product.soldOut || remainingQty === 0;
+    }
+
+    function getMaxQty(product) {
+      const remainingQty = getRemainingQty(product);
+      if (remainingQty === null) return null; // 不限量
+      return Math.max(0, remainingQty);
+    }
+
+    function clampQty(product, qty) {
+      const safeQty = Math.max(0, toNumber(qty, 0));
+      const maxQty = getMaxQty(product);
+
+      if (maxQty === null) return safeQty;
+      return Math.min(safeQty, maxQty);
+    }
+
+    function getProductById(id) {
+      return products.find(p => String(p.id) === String(id));
+    }
+
     function renderProducts() {
-      productList.innerHTML = sortedProducts.map(product => `
-        <div class="product-card ${product.soldOut ? 'sold-out' : ''}">
-          <div class="product-top">
-            <div>
-              <div class="product-name">
-                ${product.name}
-                ${product.tag ? `<span style="margin-left:6px;font-size:0.75rem;background:#edf4eb;color:#466d45;padding:2px 6px;border-radius:999px;">${product.tag}</span>` : ''}
-                ${product.soldOut ? `<span class="sold-out-badge">本週已完售</span>` : ''}
+      productList.innerHTML = sortedProducts.map(product => {
+        const soldOut = isSoldOutProduct(product);
+        const remainingQty = getRemainingQty(product);
+        const maxQty = getMaxQty(product);
+        const hasStockLimit = maxQty !== null;
+
+        return `
+          <div class="product-card ${soldOut ? 'sold-out' : ''}">
+            <div class="product-top">
+              <div>
+                <div class="product-name">
+                  ${product.name}
+                  ${product.tag ? `<span style="margin-left:6px;font-size:0.75rem;background:#edf4eb;color:#466d45;padding:2px 6px;border-radius:999px;">${product.tag}</span>` : ''}
+                  ${soldOut ? `<span class="sold-out-badge">本週已完售</span>` : ''}
+                  ${!soldOut && hasStockLimit ? `<span class="stock-badge">剩餘 ${remainingQty}${product.unit}</span>` : ''}
+                </div>
+                ${product.desc ? `<div style="font-size:0.85rem;color:#6b756b;margin-top:4px;">${product.desc}</div>` : ''}
+                ${soldOut ? `<div class="sold-out-note">${product.soldOutText || '本週已完售，暫停接受訂購'}</div>` : ''}
+                ${!soldOut && hasStockLimit ? `<div class="stock-note">本商品數量有限，最多可購買 ${remainingQty}${product.unit}</div>` : ''}
+                <div class="product-price">${product.price} 元 / ${product.unit}</div>
               </div>
-              ${product.desc ? `<div style="font-size:0.85rem;color:#6b756b;margin-top:4px;">${product.desc}</div>` : ''}
-              ${product.soldOut ? `<div class="sold-out-note">${product.soldOutText || '本週已完售，暫停接受訂購'}</div>` : ''}
-              <div class="product-price">${product.price} 元 / ${product.unit}</div>
+              <div class="item-total" id="total-${product.id}">0 元</div>
             </div>
-            <div class="item-total" id="total-${product.id}">0 元</div>
-          </div>
-          <div class="qty-wrap">
-            <div class="qty-control">
-              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', -1)" ${product.soldOut ? 'disabled' : ''}>−</button>
-              <input
-                class="qty-input"
-                type="number"
-                min="0"
-                value="0"
-                id="qty-${product.id}"
-                oninput="setQty('${product.id}', this.value)"
-                ${product.soldOut ? 'disabled' : ''}
-              />
-              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', 1)" ${product.soldOut ? 'disabled' : ''}>＋</button>
+            <div class="qty-wrap">
+              <div class="qty-control">
+                <button class="qty-btn" type="button" onclick="changeQty('${product.id}', -1)" ${soldOut ? 'disabled' : ''}>−</button>
+                <input
+                  class="qty-input"
+                  type="number"
+                  min="0"
+                  ${hasStockLimit ? `max="${maxQty}"` : ''}
+                  value="0"
+                  id="qty-${product.id}"
+                  oninput="setQty('${product.id}', this.value)"
+                  ${soldOut ? 'disabled' : ''}
+                />
+                <button class="qty-btn" type="button" onclick="changeQty('${product.id}', 1)" ${soldOut ? 'disabled' : ''}>＋</button>
+              </div>
+              <div>小計：<strong>${product.price} × <span id="qty-text-${product.id}">0</span></strong></div>
             </div>
-            <div>小計：<strong>${product.price} × <span id="qty-text-${product.id}">0</span></strong></div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function updateTotals() {
       let subtotal = 0;
 
       products.forEach(product => {
-        const qty = Number(state.quantities[product.id]) || 0;
+        const qty = clampQty(product, state.quantities[product.id] || 0);
+        state.quantities[product.id] = qty;
+
         const total = qty * product.price;
         subtotal += total;
 
@@ -682,24 +751,26 @@
     }
 
     function changeQty(id, diff) {
-      const product = products.find(p => p.id === id);
-      if (product && product.soldOut) return;
+      const product = getProductById(id);
+      if (!product || isSoldOutProduct(product)) return;
 
-      const current = Number(state.quantities[id]) || 0;
-      const next = Math.max(0, current + diff);
+      const current = toNumber(state.quantities[id], 0);
+      const next = clampQty(product, current + diff);
       state.quantities[id] = next;
       updateTotals();
     }
 
     function setQty(id, value) {
-      const product = products.find(p => p.id === id);
-      if (product && product.soldOut) {
+      const product = getProductById(id);
+      if (!product) return;
+
+      if (isSoldOutProduct(product)) {
         state.quantities[id] = 0;
         updateTotals();
         return;
       }
 
-      const parsed = Math.max(0, Number(value) || 0);
+      const parsed = clampQty(product, value);
       state.quantities[id] = parsed;
       updateTotals();
     }
@@ -716,9 +787,9 @@
 
     function getOrderData() {
       const selectedItems = products
-        .filter(product => !product.soldOut && Number(state.quantities[product.id]) > 0)
+        .filter(product => !isSoldOutProduct(product) && toNumber(state.quantities[product.id], 0) > 0)
         .map(product => {
-          const qty = Number(state.quantities[product.id]);
+          const qty = clampQty(product, state.quantities[product.id]);
           const total = qty * product.price;
           return {
             id: product.id,
@@ -753,7 +824,7 @@
       if (data.selectedItems.length === 0) return '請至少選擇一項商品。';
       if (!data.customerName) return '請填寫收件人姓名。';
       if (!data.customerPhone) return '請填寫電話。';
-      if (!data.customerAddress) return '請填寫地址。';
+      if (!data.customerAddress && data.shippingMethod !== '面交') return '請填寫地址。';
       return '';
     }
 
@@ -774,7 +845,7 @@
         '【收件資訊】',
         `收件人姓名：${data.customerName}`,
         `電話：${data.customerPhone}`,
-        `地址：${data.customerAddress}`,
+        `地址：${data.customerAddress || '面交自取'}`,
         `備註：${data.customerNote || '無'}`
       ].join('\n');
     }
@@ -818,7 +889,7 @@
           phone: orderData.customerPhone,
           receiverName: orderData.customerName,
           receiverPhone: orderData.customerPhone,
-          receiverAddress: orderData.customerAddress,
+          receiverAddress: orderData.shippingMethod === '面交' ? '面交自取' : orderData.customerAddress,
           note: orderData.customerNote || '',
           shippingMethod: orderData.shippingMethod,
           deliveryMethod: orderData.shippingMethod,
@@ -857,6 +928,10 @@
           data = JSON.parse(text);
         } catch (e) {
           throw new Error('後端回應不是 JSON：' + text);
+        }
+
+        if (data.status === 'duplicate') {
+          throw new Error(data.message || '請勿重複送出相同訂單');
         }
 
         if (data.status !== 'success') {
@@ -967,11 +1042,14 @@
           throw new Error(data.message || '商品資料格式錯誤');
         }
 
-        products = data.products;
+        products = data.products.map(product => ({
+          ...product,
+          soldOut: isSoldOutProduct(product)
+        }));
 
         sortedProducts = [
-          ...products.filter(product => !product.soldOut),
-          ...products.filter(product => product.soldOut)
+          ...products.filter(product => !isSoldOutProduct(product)),
+          ...products.filter(product => isSoldOutProduct(product))
         ];
 
         state.quantities = Object.fromEntries(products.map(p => [p.id, 0]));
