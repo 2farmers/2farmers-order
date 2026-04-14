@@ -499,7 +499,7 @@
       </div>
       <div class="info-card">
         <div class="info-title">配送方式</div>
-        <div class="info-value">宅配 / 面交</div>
+        <div class="info-value">常溫 / 冷凍分流</div>
       </div>
       <div class="info-card">
         <div class="info-title">付款說明</div>
@@ -515,11 +515,12 @@
 
     <div class="section">
       <h2 class="section-title">配送方式</h2>
+      <div id="deliveryHint" class="section-subtitle" style="margin-top:-4px;">常溫商品可選宅配或面交。宅配滿 500 元免運。</div>
       <div class="shipping-options">
         <label class="option">
           <div class="option-label">
             <input type="radio" name="shipping" value="宅配" data-fee="65" checked />
-            <span>宅配</span>
+            <span>宅配（常溫）</span>
           </div>
           <strong>運費 65 元</strong>
         </label>
@@ -527,7 +528,7 @@
         <label class="option">
           <div class="option-label">
             <input type="radio" name="shipping" value="面交" data-fee="0" />
-            <span>面交</span>
+            <span>面交自取</span>
           </div>
           <strong>免運</strong>
         </label>
@@ -538,14 +539,14 @@
       <h2 class="section-title">金額總計</h2>
       <div class="summary-box">
         <div id="freeShippingHint" style="font-size:0.9rem;color:#466d45;background:#edf4eb;padding:8px 10px;border-radius:10px;">
-          滿 500 元免運費
+常溫滿 500 元免運，冷凍滿 1000 元免運
         </div>
         <div class="summary-row">
           <span>商品總金額</span>
           <strong id="subtotal">0 元</strong>
         </div>
         <div class="summary-row">
-          <span>運費（滿500免運）</span>
+          <span id="shippingFeeLabel">運費</span>
           <strong id="shippingFee">尚未選購商品</strong>
         </div>
         <div class="summary-row total">
@@ -659,61 +660,96 @@
     return products.find(p => String(p.id) === String(id));
   }
 
-  function renderProducts() {
-    productList.innerHTML = sortedProducts.map(product => {
-      const soldOut = isSoldOutProduct(product);
-      const remainingQty = getRemainingQty(product);
-      const maxQty = getMaxQty(product);
-      const hasStockLimit = maxQty !== null;
 
-      return `
-        <div class="product-card ${soldOut ? 'sold-out' : ''}">
-          <div class="product-top">
-            <div>
-              <div class="product-name">
-                ${product.name}
-                ${product.tag ? `<span style="margin-left:6px;font-size:0.75rem;background:#edf4eb;color:#466d45;padding:2px 6px;border-radius:999px;">${product.tag}</span>` : ''}
-                ${soldOut ? `<span class="sold-out-badge">本週已完售</span>` : ''}
-                ${!soldOut && hasStockLimit ? `<span style="margin-left:8px;font-size:0.75rem;background:#fff7e8;color:#9a5a00;padding:3px 8px;border-radius:999px;font-weight:700;">剩餘 ${remainingQty}${product.unit}</span>` : ''}
-              </div>
-              ${product.desc ? `<div style="font-size:0.85rem;color:#6b756b;margin-top:4px;">${product.desc}</div>` : ''}
-              ${soldOut ? `<div class="sold-out-note">${product.soldOutText || '本週已完售，暫停接受訂購'}</div>` : ''}
-              ${!soldOut && hasStockLimit ? `<div style="margin-top:6px;font-size:0.85rem;color:#9a5a00;font-weight:600;">本商品數量有限，最多可購買 ${remainingQty}${product.unit}</div>` : ''}
-              <div class="product-price">${product.price} 元 / ${product.unit}</div>
-            </div>
-            <div class="item-total" id="total-${product.id}">0 元</div>
-          </div>
-          <div class="qty-wrap">
-            <div class="qty-control">
-              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', -1)" ${soldOut ? 'disabled' : ''}>−</button>
-              <input
-                class="qty-input"
-                type="number"
-                min="0"
-                ${hasStockLimit ? `max="${maxQty}"` : ''}
-                value="0"
-                id="qty-${product.id}"
-                oninput="setQty('${product.id}', this.value)"
-                ${soldOut ? 'disabled' : ''}
-              />
-              <button class="qty-btn" type="button" onclick="changeQty('${product.id}', 1)" ${soldOut ? 'disabled' : ''}>＋</button>
-            </div>
-            <div>小計：<strong>${product.price} × <span id="qty-text-${product.id}">0</span></strong></div>
-          </div>
-        </div>
-      `;
-    }).join('');
+  function renderProducts() {
+    const normal = sortedProducts.filter(product => product.shippingType !== 'frozen');
+    const frozen = sortedProducts.filter(product => product.shippingType === 'frozen');
+
+    const normalHtml = renderProductGroup(normal, '常溫蔬菜', '常溫商品可與其他常溫商品一起結帳，宅配滿 500 元免運。');
+    const frozenHtml = renderProductGroup(frozen, '冷凍料理', '冷凍商品需獨立下單、冷凍出貨，滿 1000 元免運，未滿運費 250 元。');
+
+    productList.innerHTML = [normalHtml, frozenHtml].filter(Boolean).join('');
   }
 
+  function renderProductGroup(list, title, note) {
+    if (!list.length) return '';
+
+    return `
+      <div style="display:grid;gap:12px;">
+        <div style="margin:4px 0 0;">
+          <div style="font-size:1.02rem;font-weight:800;margin-bottom:6px;">${title}</div>
+          <div style="font-size:0.88rem;color:#6b756b;background:#f7faf6;border:1px solid #dfe5dc;border-radius:12px;padding:10px 12px;">
+            ${note}
+          </div>
+        </div>
+        ${list.map(product => {
+          const soldOut = isSoldOutProduct(product);
+          const remainingQty = getRemainingQty(product);
+          const maxQty = getMaxQty(product);
+          const hasStockLimit = maxQty !== null;
+          const shippingTag = product.shippingType === 'frozen'
+            ? `<span style="margin-left:6px;font-size:0.75rem;background:#eaf3ff;color:#245b9a;padding:2px 6px;border-radius:999px;">冷凍</span>`
+            : `<span style="margin-left:6px;font-size:0.75rem;background:#edf4eb;color:#466d45;padding:2px 6px;border-radius:999px;">常溫</span>`;
+
+          return `
+            <div class="product-card ${soldOut ? 'sold-out' : ''}">
+              <div class="product-top">
+                <div>
+                  <div class="product-name">
+                    ${product.name}
+                    ${shippingTag}
+                    ${product.tag ? `<span style="margin-left:6px;font-size:0.75rem;background:#fff7e8;color:#9a5a00;padding:2px 6px;border-radius:999px;">${product.tag}</span>` : ''}
+                    ${soldOut ? `<span class="sold-out-badge">本週已完售</span>` : ''}
+                    ${!soldOut && hasStockLimit ? `<span style="margin-left:8px;font-size:0.75rem;background:#fff7e8;color:#9a5a00;padding:3px 8px;border-radius:999px;font-weight:700;">剩餘 ${remainingQty}${product.unit}</span>` : ''}
+                  </div>
+                  ${product.desc ? `<div style="font-size:0.85rem;color:#6b756b;margin-top:4px;">${product.desc}</div>` : ''}
+                  ${soldOut ? `<div class="sold-out-note">${product.soldOutText || '本週已完售，暫停接受訂購'}</div>` : ''}
+                  ${!soldOut && hasStockLimit ? `<div style="margin-top:6px;font-size:0.85rem;color:#9a5a00;font-weight:600;">本商品數量有限，最多可購買 ${remainingQty}${product.unit}</div>` : ''}
+                  <div class="product-price">${product.price} 元 / ${product.unit}</div>
+                </div>
+                <div class="item-total" id="total-${product.id}">0 元</div>
+              </div>
+              <div class="qty-wrap">
+                <div class="qty-control">
+                  <button class="qty-btn" type="button" onclick="changeQty('${product.id}', -1)" ${soldOut ? 'disabled' : ''}>−</button>
+                  <input
+                    class="qty-input"
+                    type="number"
+                    min="0"
+                    ${hasStockLimit ? `max="${maxQty}"` : ''}
+                    value="0"
+                    id="qty-${product.id}"
+                    oninput="setQty('${product.id}', this.value)"
+                    ${soldOut ? 'disabled' : ''}
+                  />
+                  <button class="qty-btn" type="button" onclick="changeQty('${product.id}', 1)" ${soldOut ? 'disabled' : ''}>＋</button>
+                </div>
+                <div>小計：<strong>${product.price} × <span id="qty-text-${product.id}">0</span></strong></div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+
+
   function updateTotals() {
-    let subtotal = 0;
+    let normalSubtotal = 0;
+    let frozenSubtotal = 0;
 
     products.forEach(product => {
       const qty = clampQty(product, state.quantities[product.id] || 0);
       state.quantities[product.id] = qty;
 
       const total = qty * product.price;
-      subtotal += total;
+
+      if (product.shippingType === 'frozen') {
+        frozenSubtotal += total;
+      } else {
+        normalSubtotal += total;
+      }
 
       const totalEl = document.getElementById(`total-${product.id}`);
       const qtyTextEl = document.getElementById(`qty-text-${product.id}`);
@@ -724,11 +760,88 @@
       if (qtyInputEl) qtyInputEl.value = qty;
     });
 
-    const shippingFee = subtotal >= 500 ? 0 : state.shippingFee;
+    const hasNormal = normalSubtotal > 0;
+    const hasFrozen = frozenSubtotal > 0;
+    const selectedShipping = document.querySelector('input[name="shipping"]:checked')?.value || '宅配';
+    const deliverySectionHint = document.getElementById('deliveryHint');
+    const homeDeliveryRadio = document.querySelector('input[name="shipping"][value="宅配"]');
+    const faceToFaceRadio = document.querySelector('input[name="shipping"][value="面交"]');
+    const faceToFaceOption = faceToFaceRadio ? faceToFaceRadio.closest('.option') : null;
+
+    if (hasFrozen) {
+      if (faceToFaceRadio) faceToFaceRadio.disabled = true;
+      if (faceToFaceOption) {
+        faceToFaceOption.style.opacity = '0.55';
+        faceToFaceOption.style.cursor = 'not-allowed';
+      }
+      if (selectedShipping === '面交' && homeDeliveryRadio) {
+        homeDeliveryRadio.checked = true;
+      }
+      if (deliverySectionHint) {
+        deliverySectionHint.textContent = hasNormal
+          ? '冷凍商品不能和常溫商品一起下單，也不能選面交。'
+          : '冷凍商品需冷凍宅配，不能選面交。';
+      }
+    } else {
+      if (faceToFaceRadio) faceToFaceRadio.disabled = false;
+      if (faceToFaceOption) {
+        faceToFaceOption.style.opacity = '1';
+        faceToFaceOption.style.cursor = 'pointer';
+      }
+      if (deliverySectionHint) {
+        deliverySectionHint.textContent = '常溫商品可選宅配或面交。宅配滿 500 元免運。';
+      }
+    }
+
+    const shippingMethod = document.querySelector('input[name="shipping"]:checked')?.value || '宅配';
+    let shippingFee = 0;
+    let shippingLabel = '運費';
+    let hintText = '滿 500 元免運費';
+
+    if (!hasNormal && !hasFrozen) {
+      shippingLabel = '運費';
+      shippingFeeEl.textContent = '尚未選購商品';
+      hintText = '常溫滿 500 元免運，冷凍滿 1000 元免運';
+    } else if (hasNormal && hasFrozen) {
+      shippingLabel = '運費';
+      shippingFeeEl.textContent = '請分開下單';
+      hintText = '冷凍商品與常溫商品不能一起結帳';
+    } else if (hasFrozen) {
+      shippingLabel = '冷凍運費';
+      if (frozenSubtotal >= 1000) {
+        shippingFee = 0;
+        shippingFeeEl.textContent = '0 元';
+        hintText = '冷凍商品已達免運門檻 🎉';
+      } else {
+        shippingFee = 250;
+        shippingFeeEl.textContent = formatMoney(shippingFee);
+        hintText = `冷凍商品再買 ${1000 - frozenSubtotal} 元即可免運`;
+      }
+    } else if (shippingMethod === '面交') {
+      shippingLabel = '面交';
+      shippingFee = 0;
+      shippingFeeEl.textContent = '0 元';
+      hintText = '已選擇面交自取';
+    } else if (normalSubtotal >= 500) {
+      shippingLabel = '宅配運費';
+      shippingFee = 0;
+      shippingFeeEl.textContent = '0 元';
+      hintText = '常溫商品已達免運門檻 🎉';
+    } else {
+      shippingLabel = '宅配運費';
+      shippingFee = 65;
+      shippingFeeEl.textContent = formatMoney(shippingFee);
+      hintText = `再買 ${500 - normalSubtotal} 元即可免運`;
+    }
+
+    const subtotal = normalSubtotal + frozenSubtotal;
     const grandTotal = subtotal + shippingFee;
 
     subtotalEl.textContent = formatMoney(subtotal);
     grandTotalEl.textContent = formatMoney(grandTotal);
+
+    const shippingFeeLabelEl = document.getElementById('shippingFeeLabel');
+    if (shippingFeeLabelEl) shippingFeeLabelEl.textContent = shippingLabel;
 
     const stickyGrandTotalEl = document.getElementById('stickyGrandTotal');
     if (stickyGrandTotalEl) {
@@ -736,18 +849,9 @@
     }
 
     const hintEl = document.getElementById('freeShippingHint');
-    if (subtotal === 0) {
-      hintEl.textContent = '滿 500 元免運費';
-      shippingFeeEl.textContent = '尚未選購商品';
-    } else if (subtotal < 500) {
-      const diff = 500 - subtotal;
-      hintEl.textContent = `再買 ${diff} 元即可免運`;
-      shippingFeeEl.textContent = formatMoney(shippingFee);
-    } else {
-      hintEl.textContent = '已達免運門檻 🎉';
-      shippingFeeEl.textContent = '0 元';
-    }
+    if (hintEl) hintEl.textContent = hintText;
   }
+
 
   function changeQty(id, diff) {
     const product = getProductById(id);
@@ -784,6 +888,7 @@
     });
   });
 
+
   function getOrderData() {
     const selectedItems = products
       .filter(product => !isSoldOutProduct(product) && toNumber(state.quantities[product.id], 0) > 0)
@@ -797,21 +902,41 @@
           unit: product.unit,
           price: product.price,
           amount: total,
-          total
+          total,
+          shippingType: product.shippingType || 'normal'
         };
       });
 
-    const subtotal = selectedItems.reduce((sum, item) => sum + item.total, 0);
-    const shipping = subtotal >= 500 ? 0 : state.shippingFee;
-    const grandTotal = subtotal + shipping;
-    const shippingMethod = document.querySelector('input[name="shipping"]:checked').value;
+    const normalSubtotal = selectedItems
+      .filter(item => item.shippingType !== 'frozen')
+      .reduce((sum, item) => sum + item.total, 0);
+
+    const frozenSubtotal = selectedItems
+      .filter(item => item.shippingType === 'frozen')
+      .reduce((sum, item) => sum + item.total, 0);
+
+    const hasNormal = normalSubtotal > 0;
+    const hasFrozen = frozenSubtotal > 0;
+    let shippingMethod = document.querySelector('input[name="shipping"]:checked').value;
+    let shipping = 0;
+
+    if (hasFrozen) {
+      shippingMethod = '冷凍宅配';
+      shipping = frozenSubtotal >= 1000 ? 0 : 250;
+    } else if (shippingMethod === '面交') {
+      shipping = 0;
+    } else {
+      shipping = normalSubtotal >= 500 ? 0 : 65;
+    }
 
     return {
       selectedItems,
-      subtotal,
+      subtotal: normalSubtotal + frozenSubtotal,
       shipping,
-      grandTotal,
+      grandTotal: normalSubtotal + frozenSubtotal + shipping,
       shippingMethod,
+      hasNormal,
+      hasFrozen,
       customerName: document.getElementById('customerName').value.trim(),
       customerPhone: document.getElementById('customerPhone').value.trim(),
       customerAddress: document.getElementById('customerAddress').value.trim(),
@@ -819,17 +944,22 @@
     };
   }
 
+
+
   function validateOrder(data) {
     if (data.selectedItems.length === 0) return '請至少選擇一項商品。';
+    if (data.hasNormal && data.hasFrozen) return '冷凍商品需與常溫商品分開下單。';
     if (!data.customerName) return '請填寫收件人姓名。';
     if (!data.customerPhone) return '請填寫電話。';
+    if (data.hasFrozen && data.shippingMethod !== '冷凍宅配') return '冷凍商品只能使用冷凍宅配。';
     if (!data.customerAddress && data.shippingMethod !== '面交') return '請填寫地址。';
     return '';
   }
 
+
   function buildOrderText(data) {
     const itemLines = data.selectedItems
-      .map(item => `- ${item.name}：${item.qty}${item.unit}／${item.total}元`)
+      .map(item => `- ${item.name}${item.shippingType === 'frozen' ? '（冷凍）' : ''}：${item.qty}${item.unit}／${item.total}元`)
       .join('\n');
 
     return [
@@ -905,7 +1035,8 @@
           qty: item.qty,
           unit: item.unit,
           price: item.price,
-          amount: item.amount
+          amount: item.amount,
+          shippingType: item.shippingType || 'normal'
         }))
       };
 
@@ -1039,6 +1170,7 @@
 
       products = data.products.map(product => ({
         ...product,
+        shippingType: product.shippingType || 'normal',
         soldOut: isSoldOutProduct(product)
       }));
 
