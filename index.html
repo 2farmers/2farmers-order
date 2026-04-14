@@ -593,13 +593,13 @@
       </div>
       <div class="hint">手機可直接帶入 LINE 訊息；電腦版會自動複製訂單內容，請貼到倆口田官方 LINE：@733fsbwp</div>
       <div style="margin-top:8px;">
-        <a href="https://line.me/R/ti/p/@733fsbwp" target="_blank" style="display:inline-block;padding:10px 14px;border-radius:999px;background:#06c755;color:#fff;text-decoration:none;font-weight:700;">加入倆口田官方 LINE</a>
+        <a href="https://line.me/R/ti/p/%40733fsbwp" target="_blank" style="display:inline-block;padding:10px 14px;border-radius:999px;background:#06c755;color:#fff;text-decoration:none;font-weight:700;">加入倆口田官方 LINE</a>
       </div>
     </div>
   </div>
 
   <script>
-  const lineTarget = '733fsbwp';
+  const lineTarget = '@733fsbwp';
   const gasUrl = 'https://script.google.com/macros/s/AKfycbxu52TzvV_Ek848NPOYrC3j8xL3B_YQQdFs6-NgKYOQpjcdccifrhWo9C4zT2PQ5SQs/exec';
 
   let products = [];
@@ -1140,7 +1140,7 @@
     }
 
     if (lineTarget.trim()) {
-      window.open(`https://line.me/R/ti/p/@${lineTarget}`, '_blank');
+      window.open(`https://line.me/R/ti/p/${encodeURIComponent(lineTarget)}`, '_blank');
     }
   });
 
