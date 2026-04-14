@@ -982,7 +982,7 @@
   function getLineUrl(orderText) {
     const encodedText = encodeURIComponent(orderText);
     if (lineTarget.trim()) {
-      return `https://line.me/R/oaMessage/@${lineTarget}?${encodedText}`;
+      return `https://line.me/R/oaMessage/${encodeURIComponent(lineTarget)}/?${encodedText}`;
     }
     return `https://line.me/R/msg/text/?${encodedText}`;
   }
