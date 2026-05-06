@@ -515,7 +515,7 @@
 
     <div class="section">
       <h2 class="section-title">配送方式</h2>
-      <div id="deliveryHint" class="section-subtitle" style="margin-top:-4px;">常溫商品可選宅配或面交。宅配滿 500 元免運。冷藏、冷凍商品需分開下單。</div>
+      <div id="deliveryHint" class="section-subtitle" style="margin-top:-4px;">常溫商品可選宅配或面交。冷藏／冷凍可合併低溫宅配，滿 1000 元免運。</div>
       <div class="shipping-options">
         <label class="option">
           <div class="option-label">
@@ -539,7 +539,7 @@
       <h2 class="section-title">金額總計</h2>
       <div class="summary-box">
         <div id="freeShippingHint" style="font-size:0.9rem;color:#466d45;background:#edf4eb;padding:8px 10px;border-radius:10px;">
-常溫滿 500 元免運，冷藏／冷凍滿 1000 元免運
+常溫滿 500 元免運，低溫（冷藏＋冷凍）滿 1000 元免運
         </div>
         <div class="summary-row">
           <span>商品總金額</span>
@@ -689,8 +689,8 @@
     const frozen = sortedProducts.filter(product => product.shippingType === 'frozen');
 
     const normalHtml = renderProductGroup(normal, '常溫蔬菜', '常溫商品可與其他常溫商品一起結帳，宅配滿 500 元免運。');
-    const chilledHtml = renderProductGroup(chilled, '冷藏料理', '冷藏商品需獨立下單、低溫宅配，滿 1000 元免運，未滿運費 250 元。');
-    const frozenHtml = renderProductGroup(frozen, '冷凍料理', '冷凍商品需獨立下單、冷凍出貨，滿 1000 元免運，未滿運費 250 元。');
+    const chilledHtml = renderProductGroup(chilled, '冷藏料理', '冷藏商品可與冷凍商品合併低溫宅配，滿 1000 元免運，未滿運費 250 元。');
+    const frozenHtml = renderProductGroup(frozen, '冷凍料理', '冷凍商品可與冷藏商品合併低溫宅配，滿 1000 元免運，未滿運費 250 元。');
 
     productList.innerHTML = [normalHtml, chilledHtml, frozenHtml].filter(Boolean).join('');
   }
@@ -785,11 +785,9 @@
       if (qtyInputEl) qtyInputEl.value = qty;
     });
 
+    const lowTempSubtotal = chilledSubtotal + frozenSubtotal;
     const hasNormal = normalSubtotal > 0;
-    const hasChilled = chilledSubtotal > 0;
-    const hasFrozen = frozenSubtotal > 0;
-    const activeTypes = [hasNormal, hasChilled, hasFrozen].filter(Boolean).length;
-    const hasLowTemp = hasChilled || hasFrozen;
+    const hasLowTemp = lowTempSubtotal > 0;
     const selectedShipping = document.querySelector('input[name="shipping"]:checked')?.value || '宅配';
     const deliverySectionHint = document.getElementById('deliveryHint');
     const homeDeliveryRadio = document.querySelector('input[name="shipping"][value="宅配"]');
@@ -806,9 +804,9 @@
         homeDeliveryRadio.checked = true;
       }
       if (deliverySectionHint) {
-        deliverySectionHint.textContent = activeTypes > 1
-          ? '常溫、冷藏、冷凍商品請分開下單，低溫商品不能選面交。'
-          : (hasChilled ? '冷藏商品需低溫宅配，不能選面交。' : '冷凍商品需冷凍宅配，不能選面交。');
+        deliverySectionHint.textContent = hasNormal
+          ? '常溫商品與低溫商品請分開下單。冷藏／冷凍可合併低溫宅配。'
+          : '冷藏／冷凍商品可合併低溫宅配，不能選面交。';
       }
     } else {
       if (faceToFaceRadio) faceToFaceRadio.disabled = false;
@@ -817,43 +815,32 @@
         faceToFaceOption.style.cursor = 'pointer';
       }
       if (deliverySectionHint) {
-        deliverySectionHint.textContent = '常溫商品可選宅配或面交。宅配滿 500 元免運。冷藏、冷凍商品需分開下單。';
+        deliverySectionHint.textContent = '常溫商品可選宅配或面交。冷藏／冷凍可合併低溫宅配，滿 1000 元免運。';
       }
     }
 
     const shippingMethod = document.querySelector('input[name="shipping"]:checked')?.value || '宅配';
     let shippingFee = 0;
     let shippingLabel = '運費';
-    let hintText = '常溫滿 500 元免運，冷藏／冷凍滿 1000 元免運';
+    let hintText = '常溫滿 500 元免運，低溫（冷藏＋冷凍）滿 1000 元免運';
 
-    if (!hasNormal && !hasChilled && !hasFrozen) {
+    if (!hasNormal && !hasLowTemp) {
       shippingLabel = '運費';
       shippingFeeEl.textContent = '尚未選購商品';
-    } else if (activeTypes > 1) {
+    } else if (hasNormal && hasLowTemp) {
       shippingLabel = '運費';
       shippingFeeEl.textContent = '請分開下單';
-      hintText = '常溫、冷藏、冷凍商品請分開下單';
-    } else if (hasFrozen) {
-      shippingLabel = '冷凍運費';
-      if (frozenSubtotal >= 1000) {
+      hintText = '常溫商品與低溫商品請分開下單；冷藏／冷凍可合併';
+    } else if (hasLowTemp) {
+      shippingLabel = '低溫運費';
+      if (lowTempSubtotal >= 1000) {
         shippingFee = 0;
         shippingFeeEl.textContent = '0 元';
-        hintText = '冷凍商品已達免運門檻 🎉';
+        hintText = '低溫商品已達免運門檻 🎉';
       } else {
         shippingFee = 250;
         shippingFeeEl.textContent = formatMoney(shippingFee);
-        hintText = `冷凍商品再買 ${1000 - frozenSubtotal} 元即可免運`;
-      }
-    } else if (hasChilled) {
-      shippingLabel = '冷藏運費';
-      if (chilledSubtotal >= 1000) {
-        shippingFee = 0;
-        shippingFeeEl.textContent = '0 元';
-        hintText = '冷藏商品已達免運門檻 🎉';
-      } else {
-        shippingFee = 250;
-        shippingFeeEl.textContent = formatMoney(shippingFee);
-        hintText = `冷藏商品再買 ${1000 - chilledSubtotal} 元即可免運`;
+        hintText = `低溫商品再買 ${1000 - lowTempSubtotal} 元即可免運`;
       }
     } else if (shippingMethod === '面交') {
       shippingLabel = '面交';
@@ -872,7 +859,7 @@
       hintText = `再買 ${500 - normalSubtotal} 元即可免運`;
     }
 
-    const subtotal = normalSubtotal + chilledSubtotal + frozenSubtotal;
+    const subtotal = normalSubtotal + lowTempSubtotal;
     const grandTotal = subtotal + shippingFee;
 
     subtotalEl.textContent = formatMoney(subtotal);
@@ -889,7 +876,6 @@
     const hintEl = document.getElementById('freeShippingHint');
     if (hintEl) hintEl.textContent = hintText;
   }
-
 
   function changeQty(id, diff) {
     const product = getProductById(id);
@@ -949,27 +935,18 @@
       .filter(item => item.shippingType === 'normal')
       .reduce((sum, item) => sum + item.total, 0);
 
-    const chilledSubtotal = selectedItems
-      .filter(item => item.shippingType === 'chilled')
-      .reduce((sum, item) => sum + item.total, 0);
-
-    const frozenSubtotal = selectedItems
-      .filter(item => item.shippingType === 'frozen')
+    const lowTempSubtotal = selectedItems
+      .filter(item => item.shippingType === 'chilled' || item.shippingType === 'frozen')
       .reduce((sum, item) => sum + item.total, 0);
 
     const hasNormal = normalSubtotal > 0;
-    const hasChilled = chilledSubtotal > 0;
-    const hasFrozen = frozenSubtotal > 0;
-    const activeTypes = [hasNormal, hasChilled, hasFrozen].filter(Boolean).length;
+    const hasLowTemp = lowTempSubtotal > 0;
     let shippingMethod = document.querySelector('input[name="shipping"]:checked').value;
     let shipping = 0;
 
-    if (hasFrozen) {
-      shippingMethod = '冷凍宅配';
-      shipping = frozenSubtotal >= 1000 ? 0 : 250;
-    } else if (hasChilled) {
-      shippingMethod = '冷藏宅配';
-      shipping = chilledSubtotal >= 1000 ? 0 : 250;
+    if (hasLowTemp) {
+      shippingMethod = '低溫宅配';
+      shipping = lowTempSubtotal >= 1000 ? 0 : 250;
     } else if (shippingMethod === '面交') {
       shipping = 0;
     } else {
@@ -978,14 +955,13 @@
 
     return {
       selectedItems,
-      subtotal: normalSubtotal + chilledSubtotal + frozenSubtotal,
+      subtotal: normalSubtotal + lowTempSubtotal,
       shipping,
-      grandTotal: normalSubtotal + chilledSubtotal + frozenSubtotal + shipping,
+      grandTotal: normalSubtotal + lowTempSubtotal + shipping,
       shippingMethod,
       hasNormal,
-      hasChilled,
-      hasFrozen,
-      activeTypes,
+      hasLowTemp,
+      activeTypes: [hasNormal, hasLowTemp].filter(Boolean).length,
       customerName: document.getElementById('customerName').value.trim(),
       customerPhone: document.getElementById('customerPhone').value.trim(),
       customerAddress: document.getElementById('customerAddress').value.trim(),
@@ -997,11 +973,10 @@
 
   function validateOrder(data) {
     if (data.selectedItems.length === 0) return '請至少選擇一項商品。';
-    if (data.activeTypes > 1) return '常溫、冷藏、冷凍商品請分開下單。';
+    if (data.hasNormal && data.hasLowTemp) return '常溫商品與低溫商品請分開下單。冷藏與冷凍可以合併低溫宅配。';
     if (!data.customerName) return '請填寫收件人姓名。';
     if (!data.customerPhone) return '請填寫電話。';
-    if (data.hasFrozen && data.shippingMethod !== '冷凍宅配') return '冷凍商品只能使用冷凍宅配。';
-    if (data.hasChilled && data.shippingMethod !== '冷藏宅配') return '冷藏商品只能使用冷藏宅配。';
+    if (data.hasLowTemp && data.shippingMethod !== '低溫宅配') return '冷藏／冷凍商品只能使用低溫宅配。';
     if (!data.customerAddress && data.shippingMethod !== '面交') return '請填寫地址。';
     return '';
   }
