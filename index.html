@@ -452,6 +452,79 @@
       white-space: nowrap;
     }
 
+
+
+    .partner-box {
+      background: #fbfcfa;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .partner-code-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .partner-code-row input {
+      flex: 1 1 220px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      background: #fff;
+      text-transform: uppercase;
+    }
+
+    .partner-code-row button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      flex: 0 0 auto;
+    }
+
+    .partner-status {
+      display: none;
+      font-size: 0.9rem;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .partner-status.active {
+      display: block;
+      background: #edf4eb;
+      color: #2d6d34;
+      border: 1px solid #cfe2cc;
+      font-weight: 700;
+    }
+
+    .partner-status.error-state {
+      display: block;
+      background: #fff2f2;
+      color: #b42323;
+      border: 1px solid #f2c7c7;
+      font-weight: 700;
+    }
+
+    .price-original {
+      color: var(--muted);
+      text-decoration: line-through;
+      margin-right: 6px;
+    }
+
+    .price-partner {
+      color: var(--accent-dark);
+      font-weight: 800;
+    }
+
     @media (max-width: 520px) {
       .quick-info {
         grid-template-columns: 1fr;
@@ -504,6 +577,21 @@
       <div class="info-card">
         <div class="info-title">付款說明</div>
         <div class="info-value">人工確認訂單</div>
+      </div>
+    </div>
+
+
+    <div class="section" id="partner-section">
+      <h2 class="section-title">合作夥伴代碼</h2>
+      <div class="section-subtitle">一般客人不用填。合作夥伴輸入專屬代碼後，商品價格會自動切換成合作價。</div>
+      <div class="partner-box">
+        <div class="partner-code-row">
+          <input id="partnerCodeInput" type="text" placeholder="請輸入合作夥伴代碼" autocomplete="off" />
+          <button id="applyPartnerCodeBtn" type="button">套用代碼</button>
+          <button id="clearPartnerCodeBtn" type="button" style="background:#e9efe7;color:#243024;">恢復一般價</button>
+        </div>
+        <div id="partnerStatus" class="partner-status"></div>
+        <div class="hint">合作價僅供協助開團、推廣、整理訂單與服務客人的合作夥伴使用，請不要公開轉貼。</div>
       </div>
     </div>
 
@@ -602,13 +690,16 @@
   const lineTarget = '@733fsbwp';
   const gasUrl = 'https://script.google.com/macros/s/AKfycbxu52TzvV_Ek848NPOYrC3j8xL3B_YQQdFs6-NgKYOQpjcdccifrhWo9C4zT2PQ5SQs/exec';
 
+  // 合作夥伴代碼由 Apps Script 後端的「合作夥伴設定」工作表驗證，不再寫死在前台。
+
   let products = [];
   let sortedProducts = [];
   let isSubmittingOrder = false;
 
   const state = {
     quantities: {},
-    shippingFee: 65
+    shippingFee: 65,
+    partner: null
   };
 
   const productList = document.getElementById('productList');
@@ -620,9 +711,39 @@
   const submitBtn = document.getElementById('submitBtn');
   const lineBtn = document.getElementById('lineBtn');
   const copyBtn = document.getElementById('copyBtn');
+  const partnerCodeInput = document.getElementById('partnerCodeInput');
+  const applyPartnerCodeBtn = document.getElementById('applyPartnerCodeBtn');
+  const clearPartnerCodeBtn = document.getElementById('clearPartnerCodeBtn');
+  const partnerStatus = document.getElementById('partnerStatus');
 
   function formatMoney(num) {
     return `${num} 元`;
+  }
+
+  function normalizePartnerCode(code) {
+    return String(code || '').trim().toUpperCase();
+  }
+
+  function getActivePrice(product) {
+    const originalPrice = toNumber(product.price, 0);
+    if (!state.partner || !state.partner.discountRate) return originalPrice;
+    return Math.round(originalPrice * state.partner.discountRate);
+  }
+
+  function getPriceTypeLabel() {
+    return state.partner ? state.partner.priceType : '一般售價';
+  }
+
+  function renderPartnerStatus(message, type = 'active') {
+    if (!partnerStatus) return;
+    partnerStatus.className = `partner-status ${type}`;
+    partnerStatus.textContent = message;
+  }
+
+  function clearPartnerStatus() {
+    if (!partnerStatus) return;
+    partnerStatus.className = 'partner-status';
+    partnerStatus.textContent = '';
   }
 
   function toNumber(value, fallback = 0) {
@@ -683,6 +804,17 @@
     return `<span style="margin-left:6px;font-size:0.75rem;background:#edf4eb;color:#466d45;padding:2px 6px;border-radius:999px;">常溫</span>`;
   }
 
+  function renderProductPrice(product) {
+    const originalPrice = toNumber(product.price, 0);
+    const activePrice = getActivePrice(product);
+
+    if (state.partner && activePrice !== originalPrice) {
+      return `<span class="price-original">原價 ${originalPrice} 元</span><span class="price-partner">合作價 ${activePrice} 元 / ${product.unit}</span>`;
+    }
+
+    return `${originalPrice} 元 / ${product.unit}`;
+  }
+
   function renderProducts() {
     const normal = sortedProducts.filter(product => product.shippingType === 'normal');
     const chilled = sortedProducts.filter(product => product.shippingType === 'chilled');
@@ -727,7 +859,7 @@
                   ${product.desc ? `<div style="font-size:0.85rem;color:#6b756b;margin-top:4px;">${product.desc}</div>` : ''}
                   ${soldOut ? `<div class="sold-out-note">${product.soldOutText || '本週已完售，暫停接受訂購'}</div>` : ''}
                   ${!soldOut && hasStockLimit ? `<div style="margin-top:6px;font-size:0.85rem;color:#9a5a00;font-weight:600;">本商品數量有限，最多可購買 ${remainingQty}${product.unit}</div>` : ''}
-                  <div class="product-price">${product.price} 元 / ${product.unit}</div>
+                  <div class="product-price">${renderProductPrice(product)}</div>
                 </div>
                 <div class="item-total" id="total-${product.id}">0 元</div>
               </div>
@@ -746,7 +878,7 @@
                   />
                   <button class="qty-btn" type="button" onclick="changeQty('${product.id}', 1)" ${soldOut ? 'disabled' : ''}>＋</button>
                 </div>
-                <div>小計：<strong>${product.price} × <span id="qty-text-${product.id}">0</span></strong></div>
+                <div>小計：<strong><span id="unit-price-${product.id}">${getActivePrice(product)}</span> × <span id="qty-text-${product.id}">0</span></strong></div>
               </div>
             </div>
           `;
@@ -766,7 +898,8 @@
       const qty = clampQty(product, state.quantities[product.id] || 0);
       state.quantities[product.id] = qty;
 
-      const total = qty * product.price;
+      const activePrice = getActivePrice(product);
+      const total = qty * activePrice;
 
       if (product.shippingType === 'frozen') {
         frozenSubtotal += total;
@@ -779,8 +912,10 @@
       const totalEl = document.getElementById(`total-${product.id}`);
       const qtyTextEl = document.getElementById(`qty-text-${product.id}`);
       const qtyInputEl = document.getElementById(`qty-${product.id}`);
+      const unitPriceEl = document.getElementById(`unit-price-${product.id}`);
 
       if (totalEl) totalEl.textContent = formatMoney(total);
+      if (unitPriceEl) unitPriceEl.textContent = activePrice;
       if (qtyTextEl) qtyTextEl.textContent = qty;
       if (qtyInputEl) qtyInputEl.value = qty;
     });
@@ -918,16 +1053,23 @@
       .filter(product => !isSoldOutProduct(product) && toNumber(state.quantities[product.id], 0) > 0)
       .map(product => {
         const qty = clampQty(product, state.quantities[product.id]);
-        const total = qty * product.price;
+        const originalPrice = toNumber(product.price, 0);
+        const activePrice = getActivePrice(product);
+        const total = qty * activePrice;
         return {
           id: product.id,
           name: product.name,
           qty,
           unit: product.unit,
-          price: product.price,
+          originalPrice,
+          price: activePrice,
           amount: total,
           total,
-          shippingType: product.shippingType || 'normal'
+          shippingType: product.shippingType || 'normal',
+          priceType: getPriceTypeLabel(),
+          partnerName: state.partner ? state.partner.partnerName : '',
+          partnerCode: state.partner ? state.partner.code : '',
+          discountRate: state.partner ? state.partner.discountRate : 1
         };
       });
 
@@ -965,7 +1107,11 @@
       customerName: document.getElementById('customerName').value.trim(),
       customerPhone: document.getElementById('customerPhone').value.trim(),
       customerAddress: document.getElementById('customerAddress').value.trim(),
-      customerNote: document.getElementById('customerNote').value.trim()
+      customerNote: document.getElementById('customerNote').value.trim(),
+      priceType: getPriceTypeLabel(),
+      partnerName: state.partner ? state.partner.partnerName : '',
+      partnerCode: state.partner ? state.partner.code : '',
+      discountRate: state.partner ? state.partner.discountRate : 1
     };
   }
 
@@ -984,11 +1130,16 @@
 
   function buildOrderText(data) {
     const itemLines = data.selectedItems
-      .map(item => `- ${item.name}（${getShippingTypeLabel(item.shippingType)}）：${item.qty}${item.unit}／${item.total}元`)
+      .map(item => `- ${item.name}（${getShippingTypeLabel(item.shippingType)}）：${item.qty}${item.unit} × ${item.price}元 = ${item.total}元`)
       .join('\n');
+
+    const partnerLines = data.partnerName
+      ? [`價格類型：${data.priceType}`, `合作夥伴：${data.partnerName}`, `合作代碼：${data.partnerCode}`, '']
+      : [`價格類型：${data.priceType}`, ''];
 
     return [
       '【倆口田訂單】',
+      ...partnerLines,
       itemLines,
       '',
       `商品總金額：${data.subtotal}元`,
@@ -1051,6 +1202,10 @@
         shippingFee: orderData.shipping,
         subtotal: orderData.subtotal,
         total: orderData.grandTotal,
+        priceType: orderData.priceType,
+        partnerName: orderData.partnerName,
+        partnerCode: orderData.partnerCode,
+        discountRate: orderData.discountRate,
         itemsText: orderData.selectedItems
           .map(item => `${item.name} x ${item.qty}${item.unit} = ${item.total}`)
           .join('\n'),
@@ -1059,9 +1214,14 @@
           name: item.name,
           qty: item.qty,
           unit: item.unit,
+          originalPrice: item.originalPrice,
           price: item.price,
           amount: item.amount,
-          shippingType: item.shippingType || 'normal'
+          shippingType: item.shippingType || 'normal',
+          priceType: item.priceType,
+          partnerName: item.partnerName,
+          partnerCode: item.partnerCode,
+          discountRate: item.discountRate
         }))
       };
 
@@ -1113,6 +1273,69 @@
     setLineButtonsEnabled(true);
 
     return orderText;
+  }
+
+
+  async function applyPartnerCode() {
+    const code = normalizePartnerCode(partnerCodeInput ? partnerCodeInput.value : '');
+
+    if (!code) {
+      state.partner = null;
+      clearPartnerStatus();
+      renderProducts();
+      updateTotals();
+      return;
+    }
+
+    try {
+      renderPartnerStatus('正在驗證合作夥伴代碼...', 'active');
+
+      const res = await fetch(`${gasUrl}?action=validatePartner&partnerCode=${encodeURIComponent(code)}`);
+      const data = await res.json();
+
+      if (data.status !== 'success' || !data.partner || !data.partner.isPartner) {
+        throw new Error(data.message || '合作夥伴代碼無效或已停用');
+      }
+
+      state.partner = {
+        code: data.partner.partnerCode || code,
+        partnerName: data.partner.partnerName || '合作夥伴',
+        discountRate: Number(data.partner.discountRate || 1),
+        priceType: data.partner.priceType || '合作夥伴價'
+      };
+
+      renderPartnerStatus(`已套用 ${state.partner.partnerName}｜${state.partner.priceType}。訂單會自動記錄合作夥伴與折扣資訊。`, 'active');
+      renderProducts();
+      updateTotals();
+    } catch (err) {
+      state.partner = null;
+      renderPartnerStatus(`合作夥伴代碼無效或已停用，已維持一般售價。${err.message ? '（' + err.message + '）' : ''}`, 'error-state');
+      renderProducts();
+      updateTotals();
+    }
+  }
+
+  if (applyPartnerCodeBtn) {
+    applyPartnerCodeBtn.addEventListener('click', applyPartnerCode);
+  }
+
+  if (partnerCodeInput) {
+    partnerCodeInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        applyPartnerCode();
+      }
+    });
+  }
+
+  if (clearPartnerCodeBtn) {
+    clearPartnerCodeBtn.addEventListener('click', () => {
+      state.partner = null;
+      if (partnerCodeInput) partnerCodeInput.value = '';
+      renderPartnerStatus('已恢復一般售價。', 'active');
+      renderProducts();
+      updateTotals();
+    });
   }
 
   submitBtn.addEventListener('click', async () => {
