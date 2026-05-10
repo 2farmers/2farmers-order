@@ -731,6 +731,23 @@
     return `${num} 元`;
   }
 
+  function normalizeProductImageUrl(url) {
+    const raw = String(url || '').trim();
+    if (!raw) return '';
+
+    let match = raw.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+    }
+
+    match = raw.match(/[?&]id=([^&]+)/);
+    if (raw.includes('drive.google.com') && match && match[1]) {
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+    }
+
+    return raw;
+  }
+
   function normalizePartnerCode(code) {
     return String(code || '').trim().toUpperCase();
   }
@@ -858,7 +875,7 @@
 
           return `
             <div class="product-card ${soldOut ? 'sold-out' : ''}">
-              ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.name}" class="product-img" loading="lazy" decoding="async">` : ''}
+              ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.name}" class="product-img" loading="lazy" decoding="async" onerror="this.style.display='none';">` : ''}
               <div class="product-top">
                 <div>
                   <div class="product-name">
@@ -1430,6 +1447,7 @@
 
       products = data.products.map(product => ({
         ...product,
+        imageUrl: normalizeProductImageUrl(product.imageUrl || product.imageURL || product.image || ''),
         shippingType: normalizeShippingType(product.shippingType || product.category || product.tag),
         soldOut: isSoldOutProduct(product)
       }));
