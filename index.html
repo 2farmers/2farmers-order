@@ -178,6 +178,10 @@
       align-items: start;
     }
 
+    .product-card.no-image {
+      grid-template-columns: 1fr;
+    }
+
     .product-card.sold-out {
       opacity: 0.55;
       background: #f7f7f7;
@@ -574,6 +578,9 @@
         grid-template-columns: 104px minmax(0, 1fr);
         gap: 10px;
       }
+      .product-card.no-image {
+        grid-template-columns: 1fr;
+      }
       .product-img {
         width: 104px;
         height: 104px;
@@ -934,9 +941,11 @@
           const hasStockLimit = maxQty !== null;
           const shippingTag = getShippingTypeTag(product.shippingType);
 
+          const hasImage = !!String(product.imageUrl || '').trim();
+
           return `
-            <div class="product-card ${soldOut ? 'sold-out' : ''}">
-              ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.name}" class="product-img" loading="lazy" decoding="async" onerror="this.style.display='none';">` : ''}
+            <div class="product-card ${hasImage ? 'has-image' : 'no-image'} ${soldOut ? 'sold-out' : ''}">
+              ${hasImage ? `<img src="${product.imageUrl}" alt="${product.name}" class="product-img" loading="lazy" decoding="async" onerror="this.closest('.product-card').classList.remove('has-image');this.closest('.product-card').classList.add('no-image');this.style.display='none';">` : ''}
               <div class="product-top">
                 <div>
                   <div class="product-name">
