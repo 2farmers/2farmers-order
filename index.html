@@ -427,6 +427,23 @@
       flex: 1 1 160px;
     }
 
+    .notice-box {
+      margin-top: 12px;
+      border: 1px solid #cfe2cc;
+      background: #edf4eb;
+      color: #2d6d34;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .notice-box.payment {
+      border-color: #f0e0b2;
+      background: #fff7e6;
+      color: #6f4600;
+    }
+
     .error {
       color: var(--danger);
       font-size: 0.9rem;
@@ -744,21 +761,26 @@
         </div>
       </div>
 
+      <div class="notice-box payment">
+        付款說明：送出訂單後，我們會先確認品項、出貨時間與配送方式。匯款帳號會在收到訂單後，透過 LINE 傳給您；收到貨品前後都可以轉帳。
+      </div>
+
       <div class="actions">
-        <button id="submitBtn" class="btn btn-primary" type="button">顯示訂單內容（確認後再傳LINE）</button>
+        <button id="submitBtn" class="btn btn-primary" type="button">確認訂單並送出</button>
       </div>
       <div id="errorMsg" class="error"></div>
-      <div class="hint">請先顯示訂單內容，確認無誤後再點「LINE 傳送訂單給倆口田」。</div>
+      <div class="hint">送出後訂單會先寫入倆口田後台。LINE 傳送只是方便通知我們；如果 LINE 沒有成功開啟，訂單仍然成立。</div>
     </div>
 
     <div class="section">
       <h2 class="section-title">訂單內容</h2>
-      <div id="orderOutput" class="order-output">送出後會顯示整理好的訂單內容。</div>
+      <div id="orderOutput" class="order-output">送出後會顯示整理好的訂單內容。訂單寫入後台後，才能傳 LINE 或複製內容。</div>
       <div class="actions" style="margin-top:12px;">
         <button id="lineBtn" class="btn btn-primary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">LINE 傳送訂單給倆口田</button>
         <button id="copyBtn" class="btn btn-secondary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">複製訂單內容</button>
+        <button id="continueShoppingBtn" class="btn btn-secondary" type="button" style="display:none;">繼續選購 / 下第二筆</button>
       </div>
-      <div class="hint">手機可直接帶入 LINE 訊息；電腦版會自動複製訂單內容，請貼到倆口田官方 LINE：@733fsbwp</div>
+      <div class="hint">手機可直接帶入 LINE 訊息；電腦版會自動複製訂單內容，請貼到倆口田官方 LINE：@733fsbwp。若 LINE 無法開啟也沒關係，訂單已經在後台。</div>
       <div style="margin-top:8px;">
         <a href="https://line.me/R/ti/p/%40733fsbwp" target="_blank" style="display:inline-block;padding:10px 14px;border-radius:999px;background:#06c755;color:#fff;text-decoration:none;font-weight:700;">加入倆口田官方 LINE</a>
       </div>
@@ -774,6 +796,9 @@
   let products = [];
   let sortedProducts = [];
   let isSubmittingOrder = false;
+  let currentOrderText = '';
+  let currentSavedOrderData = null;
+  let suppressPreparedOrderReset = false;
 
   const state = {
     quantities: {},
@@ -790,6 +815,7 @@
   const submitBtn = document.getElementById('submitBtn');
   const lineBtn = document.getElementById('lineBtn');
   const copyBtn = document.getElementById('copyBtn');
+  const continueShoppingBtn = document.getElementById('continueShoppingBtn');
   const partnerCodeInput = document.getElementById('partnerCodeInput');
   const applyPartnerCodeBtn = document.getElementById('applyPartnerCodeBtn');
   const clearPartnerCodeBtn = document.getElementById('clearPartnerCodeBtn');
@@ -1112,6 +1138,7 @@
   }
 
   function changeQty(id, diff) {
+    clearPreparedOrder();
     const product = getProductById(id);
     if (!product || isSoldOutProduct(product)) return;
 
@@ -1122,6 +1149,7 @@
   }
 
   function setQty(id, value) {
+    clearPreparedOrder();
     const product = getProductById(id);
     if (!product) return;
 
@@ -1141,6 +1169,7 @@
 
   document.querySelectorAll('input[name="shipping"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
+      clearPreparedOrder();
       state.shippingFee = Number(e.target.dataset.fee) || 0;
       updateTotals();
     });
@@ -1246,6 +1275,9 @@
       `運費：${data.shipping}元`,
       `最終總金額：${data.grandTotal}元`,
       '',
+      '【付款說明】',
+      '匯款帳號會在倆口田收到訂單、確認品項與出貨時間後，透過 LINE 提供。收到貨品前後都可以轉帳。',
+      '',
       '【收件資訊】',
       `收件人姓名：${data.customerName}`,
       `電話：${data.customerPhone}`,
@@ -1273,6 +1305,34 @@
     copyBtn.style.opacity = enabled ? '1' : '0.5';
     lineBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
     copyBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  }
+
+  function setSubmitButtonState(isLoading) {
+    submitBtn.disabled = !!isLoading;
+    submitBtn.style.opacity = isLoading ? '0.7' : '1';
+    submitBtn.style.cursor = isLoading ? 'not-allowed' : 'pointer';
+    submitBtn.textContent = isLoading ? '訂單送出中...' : '確認訂單並送出';
+  }
+
+  function clearPreparedOrder() {
+    if (suppressPreparedOrderReset) return;
+    currentOrderText = '';
+    currentSavedOrderData = null;
+    orderOutput.textContent = '送出後會顯示整理好的訂單內容。訂單寫入後台後，才能傳 LINE 或複製內容。';
+    setLineButtonsEnabled(false);
+    if (continueShoppingBtn) continueShoppingBtn.style.display = 'none';
+  }
+
+  function resetCartAfterSuccessfulOrder() {
+    suppressPreparedOrderReset = true;
+    state.quantities = Object.fromEntries(products.map(p => [p.id, 0]));
+    updateTotals();
+    suppressPreparedOrderReset = false;
+  }
+
+  function enableAfterSavedOrder() {
+    setLineButtonsEnabled(true);
+    if (continueShoppingBtn) continueShoppingBtn.style.display = 'inline-block';
   }
 
   function showError(message, color = '#c84a4a') {
@@ -1356,7 +1416,9 @@
     }
   }
 
-  async function prepareOrderText() {
+  async function prepareSavedOrder() {
+    if (isSubmittingOrder) return null;
+
     const orderData = getOrderData();
     const error = validateOrder(orderData);
 
@@ -1369,9 +1431,36 @@
 
     const orderText = buildOrderText(orderData);
     orderOutput.textContent = orderText;
-    setLineButtonsEnabled(true);
 
-    return orderText;
+    try {
+      isSubmittingOrder = true;
+      setSubmitButtonState(true);
+      setLineButtonsEnabled(false);
+
+      await saveOrderToGoogleSheet(orderData);
+
+      currentOrderText = orderText;
+      currentSavedOrderData = orderData;
+      orderOutput.textContent = [
+        '✅ 訂單已成立，倆口田後台已收到資料。',
+        '',
+        orderText,
+        '',
+        '提醒：匯款帳號會在我們確認品項、出貨時間與配送方式後，透過 LINE 傳給您。',
+        '如果 LINE 沒有成功開啟也沒關係，訂單仍然已經成立。'
+      ].join('\n');
+      enableAfterSavedOrder();
+      resetCartAfterSuccessfulOrder();
+      showError('訂單已寫入系統。請接著傳 LINE 通知倆口田；若 LINE 沒有成功開啟，訂單仍然成立。', '#2d6d34');
+
+      return orderText;
+    } catch (err) {
+      setLineButtonsEnabled(false);
+      return null;
+    } finally {
+      isSubmittingOrder = false;
+      setSubmitButtonState(false);
+    }
   }
 
 
@@ -1438,52 +1527,30 @@
   }
 
   submitBtn.addEventListener('click', async () => {
-    await prepareOrderText();
+    await prepareSavedOrder();
   });
 
   lineBtn.addEventListener('click', async () => {
-    if (isSubmittingOrder) return;
+    const orderText = currentOrderText || (orderOutput.textContent && orderOutput.textContent.includes('【倆口田訂單】') ? orderOutput.textContent : '');
 
-    const orderData = getOrderData();
-    const error = validateOrder(orderData);
-
-    if (error) {
-      showError(error);
+    if (!orderText) {
+      showError('請先按「確認訂單並送出」，讓訂單寫入後台。');
       return;
-    }
-
-    const orderText = buildOrderText(orderData);
-    orderOutput.textContent = orderText;
-
-    try {
-      isSubmittingOrder = true;
-      lineBtn.disabled = true;
-      lineBtn.style.opacity = '0.7';
-      lineBtn.textContent = '送單中...';
-
-      await saveOrderToGoogleSheet(orderData);
-    } catch (err) {
-      return;
-    } finally {
-      isSubmittingOrder = false;
-      lineBtn.disabled = false;
-      lineBtn.style.opacity = '1';
-      lineBtn.textContent = 'LINE 傳送訂單給倆口田';
     }
 
     const lineUrl = getLineUrl(orderText);
 
     if (isMobileDevice()) {
       window.open(lineUrl, '_blank');
-      showError('訂單已寫入系統，請在 LINE 畫面按下送出。', '#2d6d34');
+      showError('訂單已在後台。請在 LINE 畫面按下送出，方便我們與您確認訂單。', '#2d6d34');
       return;
     }
 
     try {
       await navigator.clipboard.writeText(orderText);
-      showError('訂單已寫入系統，且已幫你複製訂單內容。請貼到 LINE 傳送給倆口田官方帳號。', '#2d6d34');
+      showError('訂單已在後台，且已幫你複製訂單內容。請貼到 LINE 傳送給倆口田官方帳號。', '#2d6d34');
     } catch (err) {
-      showError('訂單已寫入系統，但電腦版無法自動複製。請手動複製訂單內容後貼到 LINE。', '#c84a4a');
+      showError('訂單已在後台，但電腦版無法自動複製。請手動複製訂單內容後貼到 LINE。', '#c84a4a');
     }
 
     if (lineTarget.trim()) {
@@ -1492,11 +1559,12 @@
   });
 
   copyBtn.addEventListener('click', async () => {
-    const text = orderOutput.textContent && orderOutput.textContent !== '送出後會顯示整理好的訂單內容。'
-      ? orderOutput.textContent
-      : await prepareOrderText();
+    const text = currentOrderText || '';
 
-    if (!text) return;
+    if (!text) {
+      showError('請先按「確認訂單並送出」，讓訂單寫入後台。');
+      return;
+    }
 
     try {
       await navigator.clipboard.writeText(text);
@@ -1504,6 +1572,19 @@
     } catch (err) {
       showError('複製失敗，請手動選取文字複製。');
     }
+  });
+
+  if (continueShoppingBtn) {
+    continueShoppingBtn.addEventListener('click', () => {
+      clearPreparedOrder();
+      clearError();
+      document.getElementById('products').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  ['customerName', 'customerPhone', 'customerAddress', 'customerNote'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', clearPreparedOrder);
   });
 
   async function loadProducts() {
@@ -1528,6 +1609,7 @@
       ];
 
       state.quantities = Object.fromEntries(products.map(p => [p.id, 0]));
+      setLineButtonsEnabled(false);
 
       renderProducts();
       updateTotals();
