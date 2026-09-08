@@ -29,7 +29,7 @@ function setup() {
   let mode = 'success';
   let release;
   const context = vm.createContext({ document, console, navigator: { userAgent: 'unit-test' }, window: { addEventListener() {} }, fetch: async (url, options = {}) => {
-    if (options.method !== 'POST') return { json: async () => ({ status: 'success', partner: { isPartner: true, partnerCode: 'TEST', partnerName: '測試', discountRate: 0.8 } }) };
+    if (options.method !== 'POST') return { json: async () => ({ status: 'success', products: [] }) };
     requests.push(JSON.parse(options.body));
     if (mode === 'network') throw Error('simulated disconnect');
     if (mode === 'pending') await new Promise(resolve => { release = resolve; });
@@ -101,11 +101,10 @@ function setup() {
   console.log('PASS network uncertainty, duplicate response, rejection recovery, absent server ID');
   const p = setup(); p.qty('veg', 1); await p.run('prepareSavedOrder()');
   assert.equal(p.requests.length, 0); assert.equal(p.get('errorMsg').textContent, '請填寫收件人姓名。');
-  p.get('partnerCodeInput').value = 'TEST'; await p.run('applyPartnerCode()');
-  assert.equal(p.get('grandTotal').textContent, '145 元');
+  assert.equal(p.get('grandTotal').textContent, '165 元');
   p.qty('veg', 100); assert.equal(p.run('state.quantities.veg'), 20);
   p.qty('veg', 0); assert.equal(p.get('submitBtn').disabled, true);
-  console.log('PASS required fields, partner price, stock cap, removal; no network used.');
+  console.log('PASS required fields, standard price, stock cap, removal; no network used.');
   const r = setup();r.qty('veg',2);r.customer();
   r.run(`fetch = async () => ({text: async () => JSON.stringify({status:'success',orderId:'AUTHORITATIVE',subtotal:240,shipping:65,total:305,shippingMethod:'宅配',items:[{id:'veg',name:'蔬菜新名稱',qty:2,unit:'份',price:120,amount:240,shippingType:'normal'}]})});`);
   await r.run('prepareSavedOrder()');
