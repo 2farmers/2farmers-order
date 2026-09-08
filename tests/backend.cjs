@@ -69,8 +69,9 @@ function setup() {
 }
 {
   const t=setup();
-  const order=t.post([{id:'dumpling',qty:1,shippingType:'normal',price:1}]);
+  const order=t.post([{id:'dumpling',qty:1,shippingType:'normal',price:1}],{partnerCode:'TEST',discountRate:0.1});
   assert.equal(order.status,'success'); assert.equal(order.shipping,250);assert.equal(order.total,500);assert.equal(order.items[0].price,250);assert.equal(order.items[0].shippingType,'frozen');
+  assert.equal(order.priceType,'一般售價');assert.equal(order.partnerCode,'');assert.equal(order.discountRate,1);
   assert.match(order.orderId,/20260908-/);
   assert.equal(t.objects('訂單總表').length,1);
   assert.equal(t.objects('商品主檔')[1].soldQty,0,'new order does not reserve stock');
