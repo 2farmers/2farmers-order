@@ -322,6 +322,17 @@
       color: var(--accent-dark);
     }
 
+    .cart-item { padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .cart-item-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; overflow-wrap: anywhere; }
+    .cart-group { border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin: 12px 0; }
+    .cart-group.active { border: 2px solid var(--accent); }
+    .cart-group h3 { margin: 0 0 8px; font-size: 1rem; }
+    .cart-shipping { margin-top: 12px; font-weight: 700; }
+    .cart-group button { min-height: 44px; }
+    .receipt { border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+    .receipt pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+    .receipt summary { cursor: pointer; font-weight: 700; }
+    .section { scroll-margin-top: 16px; }
     .shipping-options {
       display: grid;
       gap: 10px;
@@ -697,14 +708,22 @@
       <div id="productList" class="product-list"></div>
     </div>
 
+    <div class="section" id="cart">
+      <h2 class="section-title">確認購物車</h2>
+      <p class="section-subtitle">確認品項與數量後，再填寫收件資訊。</p>
+      <div id="cartNotice" class="notice-box" hidden></div>
+      <div id="cartItems"></div>
+      <a class="hero-link" href="#products">繼續挑選商品</a>
+    </div>
+
     <div class="section">
-      <h2 class="section-title">配送方式</h2>
+      <h2 class="section-title">本筆配送方式</h2>
       <div id="deliveryHint" class="section-subtitle" style="margin-top:-4px;">常溫商品可選宅配或面交。冷藏／冷凍可合併低溫宅配，滿 1000 元免運。</div>
       <div class="shipping-options">
         <label class="option">
           <div class="option-label">
             <input type="radio" name="shipping" value="宅配" data-fee="65" checked />
-            <span>宅配（常溫）</span>
+            <span id="homeDeliveryLabel">宅配（常溫）</span>
           </div>
           <strong>常溫 65 元／低溫 250 元</strong>
         </label>
@@ -720,7 +739,7 @@
     </div>
 
     <div class="section">
-      <h2 class="section-title">金額總計</h2>
+      <h2 class="section-title">本筆金額總計</h2>
       <div class="summary-box">
         <div id="freeShippingHint" style="font-size:0.9rem;color:#466d45;background:#edf4eb;padding:8px 10px;border-radius:10px;">
 常溫滿 500 元免運，低溫（冷藏＋冷凍）滿 1000 元免運
@@ -734,7 +753,7 @@
           <strong id="shippingFee">尚未選購商品</strong>
         </div>
         <div class="summary-row total">
-          <span>最終總金額</span>
+          <span>本筆應付金額</span>
           <span id="grandTotal">0 元</span>
         </div>
       </div>
@@ -745,15 +764,15 @@
       <div class="form-grid">
         <div class="field">
           <label for="customerName">收件人姓名 *</label>
-          <input id="customerName" type="text" placeholder="請輸入姓名" />
+          <input id="customerName" autocomplete="name" type="text" placeholder="請輸入姓名" />
         </div>
         <div class="field">
           <label for="customerPhone">電話 *</label>
-          <input id="customerPhone" type="tel" placeholder="請輸入電話" />
+          <input id="customerPhone" autocomplete="tel" type="tel" placeholder="請輸入電話" />
         </div>
         <div class="field full">
           <label for="customerAddress">地址 *</label>
-          <input id="customerAddress" type="text" placeholder="請輸入收件地址" />
+          <input id="customerAddress" autocomplete="street-address" type="text" placeholder="請輸入收件地址" />
         </div>
         <div class="field full">
           <label for="customerNote">備註</label>
@@ -769,18 +788,19 @@
         <button id="submitBtn" class="btn btn-primary" type="button">確認訂單並送出</button>
       </div>
       <div id="errorMsg" class="error"></div>
-      <div class="hint">送出後訂單會先寫入倆口田後台。LINE 傳送只是方便通知我們；如果 LINE 沒有成功開啟，訂單仍然成立。</div>
+      <div class="hint">送出後訂單會先寫入倆口田後台。請接著傳 LINE 訊息，讓我們能在 LINE 找到您並提供匯款資訊；若尚未傳送，訂單資料仍已收到，請勿重複下單。</div>
     </div>
 
     <div class="section">
-      <h2 class="section-title">訂單內容</h2>
-      <div id="orderOutput" class="order-output">送出後會顯示整理好的訂單內容。訂單寫入後台後，才能傳 LINE 或複製內容。</div>
+      <h2 class="section-title">已送出的訂單</h2>
+      <div id="savedOrders" aria-live="polite"></div>
+      <div id="orderOutput" class="order-output" role="status">送出後會顯示整理好的訂單內容。訂單寫入後台後，才能傳 LINE 或複製內容。</div>
       <div class="actions" style="margin-top:12px;">
         <button id="lineBtn" class="btn btn-primary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">LINE 傳送訂單給倆口田</button>
         <button id="copyBtn" class="btn btn-secondary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">複製訂單內容</button>
         <button id="continueShoppingBtn" class="btn btn-secondary" type="button" style="display:none;">繼續選購 / 下第二筆</button>
       </div>
-      <div class="hint">手機可直接帶入 LINE 訊息；電腦版會自動複製訂單內容，請貼到倆口田官方 LINE：@733fsbwp。若 LINE 無法開啟也沒關係，訂單已經在後台。</div>
+      <div class="hint">手機可直接帶入 LINE 訊息；電腦版會自動複製訂單內容，請貼到倆口田官方 LINE：@733fsbwp。若 LINE 無法開啟，請複製訂單並透過官方 LINE 聯絡我們；請勿重新下單。</div>
       <div style="margin-top:8px;">
         <a href="https://line.me/R/ti/p/%40733fsbwp" target="_blank" style="display:inline-block;padding:10px 14px;border-radius:999px;background:#06c755;color:#fff;text-decoration:none;font-weight:700;">加入倆口田官方 LINE</a>
       </div>
@@ -798,11 +818,79 @@
   let isSubmittingOrder = false;
   let currentOrderText = '';
   let currentSavedOrderData = null;
-  let suppressPreparedOrderReset = false;
+  let isValidatingPartner = false;
+  let checkoutGroup = 'normal';
+  const savedOrders = [];
+  let unresolvedSubmission = false;
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function itemGroup(item) {
+    return item.shippingType === 'chilled' || item.shippingType === 'frozen' ? 'lowTemp' : 'normal';
+  }
+
+  function getCartGroups() {
+    const groups = { normal: { label: '常溫', items: [], subtotal: 0 }, lowTemp: { label: '低溫（冷藏／冷凍）', items: [], subtotal: 0 } };
+    products.forEach(product => {
+      const qty = isSoldOutProduct(product) ? 0 : clampQty(product, state.quantities[product.id] || 0);
+      if (!qty) return;
+      const group = groups[itemGroup(product)];
+      group.items.push({ product, qty });
+      group.subtotal += qty * getActivePrice(product);
+    });
+    const pickup = state.normalShippingMethod === '面交';
+    groups.normal.shipping = !groups.normal.items.length || pickup || groups.normal.subtotal >= 500 ? 0 : 65;
+    groups.lowTemp.shipping = !groups.lowTemp.items.length || groups.lowTemp.subtotal >= 1000 ? 0 : 250;
+    return groups;
+  }
+
+  function renderCart(groups) {
+    const keys = Object.keys(groups).filter(key => groups[key].items.length);
+    const notice = document.getElementById('cartNotice');
+    notice.hidden = keys.length < 2;
+    notice.textContent = '購物車含常溫與低溫商品，將分成兩筆訂單、各自計算運費。收件資料只要填一次；送出本筆後，另一筆商品會保留，請再確認送出。';
+    document.getElementById('cartItems').innerHTML = keys.length ? keys.map(key => {
+      const group = groups[key];
+      return `<div class="cart-group ${key === checkoutGroup ? 'active' : ''}">
+        <h3>${group.label}商品 ${key === checkoutGroup ? '・本次送出' : '・待送出'}</h3>
+        ${group.items.map(({product, qty}) => `<div class="cart-item">
+          <div class="cart-item-top"><span>${escapeHtml(product.name)}（${escapeHtml(product.unit)}）</span><strong>${formatMoney(qty * getActivePrice(product))}</strong></div>
+          <div class="qty-control">
+            <button class="qty-btn" type="button" data-cart-id="${escapeHtml(product.id)}" data-diff="-1" aria-label="減少 ${escapeHtml(product.name)}">−</button>
+            <span style="padding:0 16px">${qty}</span>
+            <button class="qty-btn" type="button" data-cart-id="${escapeHtml(product.id)}" data-diff="1" aria-label="增加 ${escapeHtml(product.name)}">＋</button>
+          </div>
+          <button class="btn-secondary" type="button" data-remove-id="${escapeHtml(product.id)}" style="border:0;border-radius:10px;padding:8px 12px;margin-left:8px">移除</button>
+        </div>`).join('')}
+        <div class="cart-shipping">商品 ${formatMoney(group.subtotal)} ＋ ${key === 'normal' && state.normalShippingMethod === '面交' ? '面交' : '運費'} ${formatMoney(group.shipping)} ＝ ${formatMoney(group.subtotal + group.shipping)}</div>
+        ${key !== checkoutGroup ? `<button class="btn btn-secondary" type="button" data-checkout-group="${key}" style="margin-top:8px">改先送出${group.label}訂單</button>` : ''}
+      </div>`;
+    }).join('') : '<p class="hint">購物車還沒有商品，請先挑選喜歡的品項。</p>';
+    const count = keys.reduce((sum, key) => sum + groups[key].items.length, 0);
+    const total = keys.reduce((sum, key) => sum + groups[key].subtotal + groups[key].shipping, 0);
+    document.getElementById('stickyGrandTotal').textContent = formatMoney(total);
+    document.getElementById('stickyCartBtn').textContent = `查看購物車・${count}項`;
+    setSubmitButtonState(isSubmittingOrder);
+  }
+
+  document.getElementById('cartItems').addEventListener('click', event => {
+    if (isSubmittingOrder) return;
+    const button = event.target.closest('button');
+    if (!button) return;
+    if (button.dataset.cartId !== undefined) changeQty(button.dataset.cartId, Number(button.dataset.diff));
+    if (button.dataset.removeId !== undefined) setQty(button.dataset.removeId, 0);
+    if (button.dataset.checkoutGroup) {
+      checkoutGroup = button.dataset.checkoutGroup;
+      updateTotals();
+    }
+  });
 
   const state = {
     quantities: {},
     shippingFee: 65,
+    normalShippingMethod: '宅配',
     partner: null
   };
 
@@ -1015,129 +1103,39 @@
 
 
   function updateTotals() {
-    let normalSubtotal = 0;
-    let chilledSubtotal = 0;
-    let frozenSubtotal = 0;
-
     products.forEach(product => {
-      const qty = clampQty(product, state.quantities[product.id] || 0);
+      const qty = isSoldOutProduct(product) ? 0 : clampQty(product, state.quantities[product.id] || 0);
       state.quantities[product.id] = qty;
-
-      const activePrice = getActivePrice(product);
-      const total = qty * activePrice;
-
-      if (product.shippingType === 'frozen') {
-        frozenSubtotal += total;
-      } else if (product.shippingType === 'chilled') {
-        chilledSubtotal += total;
-      } else {
-        normalSubtotal += total;
-      }
-
-      const totalEl = document.getElementById(`total-${product.id}`);
-      const qtyTextEl = document.getElementById(`qty-text-${product.id}`);
-      const qtyInputEl = document.getElementById(`qty-${product.id}`);
-      const unitPriceEl = document.getElementById(`unit-price-${product.id}`);
-
-      if (totalEl) totalEl.textContent = formatMoney(total);
-      if (unitPriceEl) unitPriceEl.textContent = activePrice;
-      if (qtyTextEl) qtyTextEl.textContent = qty;
-      if (qtyInputEl) qtyInputEl.value = qty;
+      const price = getActivePrice(product);
+      const values = { [`total-${product.id}`]: formatMoney(qty * price), [`qty-text-${product.id}`]: qty, [`unit-price-${product.id}`]: price };
+      Object.entries(values).forEach(([id, value]) => { const el = document.getElementById(id); if (el) el.textContent = value; });
+      const input = document.getElementById(`qty-${product.id}`);
+      if (input) input.value = qty;
     });
-
-    const lowTempSubtotal = chilledSubtotal + frozenSubtotal;
-    const hasNormal = normalSubtotal > 0;
-    const hasLowTemp = lowTempSubtotal > 0;
-    const selectedShipping = document.querySelector('input[name="shipping"]:checked')?.value || '宅配';
-    const deliverySectionHint = document.getElementById('deliveryHint');
-    const homeDeliveryRadio = document.querySelector('input[name="shipping"][value="宅配"]');
-    const faceToFaceRadio = document.querySelector('input[name="shipping"][value="面交"]');
-    const faceToFaceOption = faceToFaceRadio ? faceToFaceRadio.closest('.option') : null;
-
-    if (hasLowTemp) {
-      if (faceToFaceRadio) faceToFaceRadio.disabled = true;
-      if (faceToFaceOption) {
-        faceToFaceOption.style.opacity = '0.55';
-        faceToFaceOption.style.cursor = 'not-allowed';
-      }
-      if (selectedShipping === '面交' && homeDeliveryRadio) {
-        homeDeliveryRadio.checked = true;
-      }
-      if (deliverySectionHint) {
-        deliverySectionHint.textContent = hasNormal
-          ? '常溫商品與低溫商品請分開下單。冷藏／冷凍可合併低溫宅配。'
-          : '冷藏／冷凍商品可合併低溫宅配，不能選面交。';
-      }
-    } else {
-      if (faceToFaceRadio) faceToFaceRadio.disabled = false;
-      if (faceToFaceOption) {
-        faceToFaceOption.style.opacity = '1';
-        faceToFaceOption.style.cursor = 'pointer';
-      }
-      if (deliverySectionHint) {
-        deliverySectionHint.textContent = '常溫商品可選宅配或面交。冷藏／冷凍可合併低溫宅配，滿 1000 元免運。';
-      }
-    }
-
-    const shippingMethod = document.querySelector('input[name="shipping"]:checked')?.value || '宅配';
-    let shippingFee = 0;
-    let shippingLabel = '運費';
-    let hintText = '常溫滿 500 元免運，低溫（冷藏＋冷凍）滿 1000 元免運';
-
-    if (!hasNormal && !hasLowTemp) {
-      shippingLabel = '運費';
-      shippingFeeEl.textContent = '尚未選購商品';
-    } else if (hasNormal && hasLowTemp) {
-      shippingLabel = '運費';
-      shippingFeeEl.textContent = '請分開下單';
-      hintText = '常溫商品與低溫商品請分開下單；冷藏／冷凍可合併';
-    } else if (hasLowTemp) {
-      shippingLabel = '低溫運費';
-      if (lowTempSubtotal >= 1000) {
-        shippingFee = 0;
-        shippingFeeEl.textContent = '0 元';
-        hintText = '低溫商品已達免運門檻 🎉';
-      } else {
-        shippingFee = 250;
-        shippingFeeEl.textContent = formatMoney(shippingFee);
-        hintText = `低溫商品再買 ${1000 - lowTempSubtotal} 元即可免運`;
-      }
-    } else if (shippingMethod === '面交') {
-      shippingLabel = '面交';
-      shippingFee = 0;
-      shippingFeeEl.textContent = '0 元';
-      hintText = '已選擇面交自取';
-    } else if (normalSubtotal >= 500) {
-      shippingLabel = '宅配運費';
-      shippingFee = 0;
-      shippingFeeEl.textContent = '0 元';
-      hintText = '常溫商品已達免運門檻 🎉';
-    } else {
-      shippingLabel = '宅配運費';
-      shippingFee = 65;
-      shippingFeeEl.textContent = formatMoney(shippingFee);
-      hintText = `再買 ${500 - normalSubtotal} 元即可免運`;
-    }
-
-    const subtotal = normalSubtotal + lowTempSubtotal;
-    const grandTotal = subtotal + shippingFee;
-
-    subtotalEl.textContent = formatMoney(subtotal);
-    grandTotalEl.textContent = formatMoney(grandTotal);
-
-    const shippingFeeLabelEl = document.getElementById('shippingFeeLabel');
-    if (shippingFeeLabelEl) shippingFeeLabelEl.textContent = shippingLabel;
-
-    const stickyGrandTotalEl = document.getElementById('stickyGrandTotal');
-    if (stickyGrandTotalEl) {
-      stickyGrandTotalEl.textContent = formatMoney(grandTotal);
-    }
-
-    const hintEl = document.getElementById('freeShippingHint');
-    if (hintEl) hintEl.textContent = hintText;
+    let groups = getCartGroups();
+    if (!groups[checkoutGroup].items.length) checkoutGroup = groups.normal.items.length ? 'normal' : 'lowTemp';
+    const lowTemp = checkoutGroup === 'lowTemp' && groups.lowTemp.items.length > 0;
+    const pickup = document.querySelector('input[name="shipping"][value="面交"]');
+    pickup.disabled = lowTemp;
+    pickup.closest('.option').style.opacity = lowTemp ? '0.55' : '1';
+    if (!lowTemp) document.querySelector(`input[name="shipping"][value="${state.normalShippingMethod}"]`).checked = true;
+    if (lowTemp && pickup.checked) document.querySelector('input[name="shipping"][value="宅配"]').checked = true;
+    groups = getCartGroups();
+    const group = groups[checkoutGroup];
+    const hasItems = group.items.length > 0;
+    document.getElementById('homeDeliveryLabel').textContent = lowTemp ? '低溫宅配' : '宅配（常溫）';
+    document.getElementById('deliveryHint').textContent = lowTemp ? '本筆為低溫訂單，冷藏／冷凍合併宅配，滿 1000 元免運，未滿 250 元。' : '本筆常溫商品可選宅配或面交，宅配滿 500 元免運，未滿 65 元。';
+    document.querySelector('label[for="customerAddress"]').textContent = pickup.checked ? '地址（面交免填）' : '地址 *';
+    subtotalEl.textContent = formatMoney(group.subtotal);
+    shippingFeeEl.textContent = hasItems ? formatMoney(group.shipping) : '尚未選購商品';
+    document.getElementById('shippingFeeLabel').textContent = pickup.checked ? '面交' : (lowTemp ? '低溫運費' : '常溫運費');
+    grandTotalEl.textContent = formatMoney(group.subtotal + group.shipping);
+    document.getElementById('freeShippingHint').textContent = !hasItems ? '常溫滿 500 元免運，低溫滿 1000 元免運' : pickup.checked ? '本筆已選擇面交自取' : group.shipping === 0 ? '本筆已達免運門檻 🎉' : `本筆${lowTemp ? '低溫' : '常溫'}商品再買 ${(lowTemp ? 1000 : 500) - group.subtotal} 元即可免運`;
+    renderCart(groups);
   }
 
   function changeQty(id, diff) {
+    if (isSubmittingOrder) return;
     clearPreparedOrder();
     const product = getProductById(id);
     if (!product || isSoldOutProduct(product)) return;
@@ -1149,6 +1147,7 @@
   }
 
   function setQty(id, value) {
+    if (isSubmittingOrder) return;
     clearPreparedOrder();
     const product = getProductById(id);
     if (!product) return;
@@ -1171,6 +1170,7 @@
     radio.addEventListener('change', (e) => {
       clearPreparedOrder();
       state.shippingFee = Number(e.target.dataset.fee) || 0;
+      if (checkoutGroup === 'normal') state.normalShippingMethod = e.target.value;
       updateTotals();
     });
   });
@@ -1178,7 +1178,7 @@
 
   function getOrderData() {
     const selectedItems = products
-      .filter(product => !isSoldOutProduct(product) && toNumber(state.quantities[product.id], 0) > 0)
+      .filter(product => itemGroup(product) === checkoutGroup && !isSoldOutProduct(product) && toNumber(state.quantities[product.id], 0) > 0)
       .map(product => {
         const qty = clampQty(product, state.quantities[product.id]);
         const originalPrice = toNumber(product.price, 0);
@@ -1308,26 +1308,80 @@
   }
 
   function setSubmitButtonState(isLoading) {
-    submitBtn.disabled = !!isLoading;
-    submitBtn.style.opacity = isLoading ? '0.7' : '1';
-    submitBtn.style.cursor = isLoading ? 'not-allowed' : 'pointer';
-    submitBtn.textContent = isLoading ? '訂單送出中...' : '確認訂單並送出';
+    const hasItems = getCartGroups()[checkoutGroup].items.length > 0;
+    submitBtn.disabled = !!isLoading || isValidatingPartner || unresolvedSubmission || !hasItems;
+    submitBtn.style.opacity = submitBtn.disabled ? '0.7' : '1';
+    submitBtn.style.cursor = submitBtn.disabled ? 'not-allowed' : 'pointer';
+    const group = checkoutGroup === 'normal' ? '常溫' : '低溫';
+    submitBtn.textContent = isLoading ? '訂單送出中...' : isValidatingPartner ? '合作價驗證中...' : unresolvedSubmission ? '請先聯絡倆口田確認本筆訂單' : `確認並送出${group}訂單`;
+    ['products', 'cart', 'partner-section'].forEach(id => { document.getElementById(id).inert = !!isLoading; });
+    document.querySelectorAll('#order-form input, #order-form textarea').forEach(el => { el.readOnly = !!isLoading; });
+    document.querySelector('.shipping-options').inert = !!isLoading;
   }
+
+
 
   function clearPreparedOrder() {
-    if (suppressPreparedOrderReset) return;
-    currentOrderText = '';
-    currentSavedOrderData = null;
-    orderOutput.textContent = '送出後會顯示整理好的訂單內容。訂單寫入後台後，才能傳 LINE 或複製內容。';
-    setLineButtonsEnabled(false);
-    if (continueShoppingBtn) continueShoppingBtn.style.display = 'none';
+    // A saved receipt belongs to an already submitted order, not to the editable cart.
+    if (unresolvedSubmission) return;
+    if (!currentSavedOrderData) {
+      currentOrderText = '';
+      setLineButtonsEnabled(false);
+    }
   }
 
-  function resetCartAfterSuccessfulOrder() {
-    suppressPreparedOrderReset = true;
-    state.quantities = Object.fromEntries(products.map(p => [p.id, 0]));
+  function resetCartAfterSuccessfulOrder(orderData) {
+    orderData.selectedItems.forEach(item => {
+      state.quantities[item.id] = 0;
+      const product = getProductById(item.id);
+      const remaining = product ? getRemainingQty(product) : null;
+      if (remaining !== null) product.remainingQty = Math.max(0, remaining - item.qty);
+    });
+    renderProducts();
     updateTotals();
-    suppressPreparedOrderReset = false;
+  }
+
+  function renderSavedOrders() {
+    const container = document.getElementById('savedOrders');
+    container.replaceChildren();
+    savedOrders.forEach(receipt => {
+      const card = document.createElement('div');
+      card.className = 'receipt';
+      const title = document.createElement('p');
+      title.textContent = `✅ ${receipt.data.hasLowTemp ? '低溫' : '常溫'}訂單已收到・${formatMoney(receipt.data.grandTotal)}`;
+      const reference = document.createElement('p');
+      reference.textContent = receipt.orderId ? `訂單編號：${receipt.orderId}` : '系統未提供訂單編號，聯絡時請附上以下訂單內容。';
+      if (receipt.data.priceChanged) reference.textContent += ' 金額已依後台最新價格更新，請查看明細並聯絡確認。';
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.textContent = '查看已送出的訂單明細';
+      const pre = document.createElement('pre');
+      pre.textContent = receipt.text;
+      details.append(summary, pre);
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      const line = document.createElement('a');
+      line.className = 'btn btn-primary';
+      line.style.textDecoration = 'none';
+      line.textContent = '傳 LINE 聯絡農夫';
+      line.href = getLineUrl(receipt.text);
+      line.target = '_blank';
+      line.rel = 'noopener noreferrer';
+      const copy = document.createElement('button');
+      copy.className = 'btn btn-secondary';
+      copy.type = 'button';
+      copy.textContent = '複製本筆訂單';
+      copy.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(receipt.text); copy.textContent = '已複製'; }
+        catch { details.open = true; copy.textContent = '請選取上方明細複製'; }
+      });
+      actions.append(line, copy);
+      const hint = document.createElement('p');
+      hint.className = 'hint';
+      hint.textContent = '下一步：請在 LINE 按下送出，我們才能在 LINE 找到您並提供匯款資訊。無法開啟時，請複製本筆訂單，加入官方 LINE @733fsbwp 後貼上。資料已收到，請勿重複下單。';
+      card.append(title, reference, details, actions, hint);
+      container.append(card);
+    });
   }
 
   function enableAfterSavedOrder() {
@@ -1402,22 +1456,61 @@
       }
 
       if (data.status === 'duplicate') {
-        throw new Error(data.message || '請勿重複送出相同訂單');
+        throw Object.assign(new Error(data.message || '系統偵測到重複訂單，請聯絡倆口田確認，勿再送出。'), { uncertain: true });
       }
 
       if (data.status !== 'success') {
-        throw new Error(data.message || '寫入失敗');
+        throw Object.assign(new Error(data.message || '寫入結果待確認'), { rejected: data.status === 'error' && data.retrySafe === true });
       }
 
       return data;
     } catch (err) {
-      showError('訂單寫入失敗：' + err.message);
       throw err;
     }
   }
 
+  function reconcileSavedOrder(sent, response) {
+    const number = (value, fallback) => {
+      if (value === undefined || value === null) return fallback;
+      const result = Number(value);
+      if (!Number.isFinite(result) || result < 0) throw new Error('後台金額格式錯誤');
+      return result;
+    };
+    const saved = { ...sent,
+      subtotal: number(response.subtotal, sent.subtotal),
+      shipping: number(response.shipping, sent.shipping),
+      grandTotal: number(response.total, sent.grandTotal),
+      shippingMethod: response.shippingMethod || sent.shippingMethod,
+      priceType: response.priceType || sent.priceType,
+      partnerName: response.partnerName ?? sent.partnerName,
+      partnerCode: response.partnerCode ?? sent.partnerCode,
+      discountRate: number(response.discountRate, sent.discountRate)
+    };
+    if (Math.abs(saved.subtotal + saved.shipping - saved.grandTotal) > 0.001) throw new Error('後台金額加總不符');
+    if (Array.isArray(response.items)) {
+      if (response.items.length !== sent.selectedItems.length) throw new Error('後台品項數量不符');
+      const seen = new Set();
+      saved.selectedItems = response.items.map(item => {
+        const original = sent.selectedItems.find(i => String(i.id) === String(item.id));
+        if (!original || seen.has(String(item.id)) || Number(item.qty) !== original.qty) throw new Error('後台品項不符');
+        seen.add(String(item.id));
+        const price = number(item.price, original.price);
+        const total = number(item.amount ?? item.total, price * original.qty);
+        if (Math.abs(price * original.qty - total) > 0.001) throw new Error('後台品項金額不符');
+        return { ...original, ...item, price, total, amount: total };
+      });
+      const sum = saved.selectedItems.reduce((total, item) => total + item.total, 0);
+      if (Math.abs(sum - saved.subtotal) > 0.001) throw new Error('後台商品加總不符');
+      saved.hasNormal = saved.selectedItems.some(item => item.shippingType === 'normal');
+      saved.hasLowTemp = saved.selectedItems.some(item => item.shippingType === 'chilled' || item.shippingType === 'frozen');
+    }
+    saved.priceChanged = saved.grandTotal !== sent.grandTotal || saved.subtotal !== sent.subtotal || saved.shipping !== sent.shipping || saved.selectedItems.some(item => item.price !== sent.selectedItems.find(original => String(original.id) === String(item.id)).price);
+    saved.estimatedItems = !Array.isArray(response.items) && saved.priceChanged;
+    return saved;
+  }
+
   async function prepareSavedOrder() {
-    if (isSubmittingOrder) return null;
+    if (isSubmittingOrder || isValidatingPartner || unresolvedSubmission) return null;
 
     const orderData = getOrderData();
     const error = validateOrder(orderData);
@@ -1437,25 +1530,42 @@
       setSubmitButtonState(true);
       setLineButtonsEnabled(false);
 
-      await saveOrderToGoogleSheet(orderData);
+      const response = await saveOrderToGoogleSheet(orderData);
+      const savedData = reconcileSavedOrder(orderData, response);
+      const rawId = response.orderId ?? response.orderNumber ?? response.orderNo;
+      const orderId = typeof rawId === 'string' || typeof rawId === 'number' ? String(rawId) : '';
+      const savedText = [orderId ? `訂單編號：${orderId}` : '', savedData.priceChanged ? '金額已依後台最新價格更新，請與倆口田確認。' : '', savedData.estimatedItems ? '以下品項單價為送出時估算；實際商品合計與應付金額以本筆後台回傳為準，請聯絡確認明細。' : '', buildOrderText(savedData)].filter(Boolean).join('\n');
+      savedOrders.push({ data: savedData, orderId, text: savedText });
+      renderSavedOrders();
 
-      currentOrderText = orderText;
-      currentSavedOrderData = orderData;
+      currentOrderText = savedText;
+      currentSavedOrderData = savedData;
       orderOutput.textContent = [
-        '✅ 訂單已成立，倆口田後台已收到資料。',
+        '✅ 本筆訂單已收到，請透過上方按鈕傳 LINE 聯絡農夫。',
         '',
-        orderText,
+        orderId ? `訂單編號：${orderId}` : '',
+        savedData.priceChanged ? `金額已依後台更新：${formatMoney(savedData.grandTotal)}。請查看本筆明細並與倆口田確認。` : '',
         '',
         '提醒：匯款帳號會在我們確認品項、出貨時間與配送方式後，透過 LINE 傳給您。',
-        '如果 LINE 沒有成功開啟也沒關係，訂單仍然已經成立。'
+        '尚未傳 LINE 時，我們無法直接對應您的 LINE 帳號。請複製訂單聯絡官方 LINE，勿重複下單。'
       ].join('\n');
       enableAfterSavedOrder();
-      resetCartAfterSuccessfulOrder();
-      showError('訂單已寫入系統。請接著傳 LINE 通知倆口田；若 LINE 沒有成功開啟，訂單仍然成立。', '#2d6d34');
+      resetCartAfterSuccessfulOrder(orderData);
+      const pending = Object.values(getCartGroups()).some(group => group.items.length);
+      showError(pending ? '本筆訂單已收到。另一溫層商品仍在購物車，收件資料已保留，請確認後再送出另一筆。' : '本筆訂單已收到。請接著傳 LINE 聯絡農夫，確認出貨與匯款資訊。', '#2d6d34');
+      document.getElementById('savedOrders').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-      return orderText;
+      return savedText;
     } catch (err) {
-      setLineButtonsEnabled(false);
+      if (err.rejected) {
+        showError('本筆訂單未完成：' + err.message + '。商品及收件資料已保留。');
+      } else {
+        unresolvedSubmission = true;
+        showError('尚無法確認本筆是否已收到，請勿重新送出。請複製下方待確認內容，透過官方 LINE @733fsbwp 聯絡倆口田查詢。');
+        currentOrderText = '【請協助查詢：送出結果待確認，請勿另建新單】\n' + orderText;
+        orderOutput.textContent = currentOrderText;
+        setLineButtonsEnabled(true);
+      }
       return null;
     } finally {
       isSubmittingOrder = false;
@@ -1465,6 +1575,7 @@
 
 
   async function applyPartnerCode() {
+    if (isSubmittingOrder || isValidatingPartner) return;
     const code = normalizePartnerCode(partnerCodeInput ? partnerCodeInput.value : '');
 
     if (!code) {
@@ -1476,6 +1587,9 @@
     }
 
     try {
+      isValidatingPartner = true;
+      setSubmitButtonState(false);
+      clearPartnerCodeBtn.disabled = true;
       renderPartnerStatus('正在驗證合作夥伴代碼...', 'active');
 
       const res = await fetch(`${gasUrl}?action=validatePartner&partnerCode=${encodeURIComponent(code)}`);
@@ -1500,6 +1614,10 @@
       renderPartnerStatus(`合作夥伴代碼無效或已停用，已維持一般售價。${err.message ? '（' + err.message + '）' : ''}`, 'error-state');
       renderProducts();
       updateTotals();
+    } finally {
+      isValidatingPartner = false;
+      clearPartnerCodeBtn.disabled = false;
+      setSubmitButtonState(false);
     }
   }
 
@@ -1518,6 +1636,7 @@
 
   if (clearPartnerCodeBtn) {
     clearPartnerCodeBtn.addEventListener('click', () => {
+      if (isSubmittingOrder) return;
       state.partner = null;
       if (partnerCodeInput) partnerCodeInput.value = '';
       renderPartnerStatus('已恢復一般售價。', 'active');
@@ -1542,15 +1661,15 @@
 
     if (isMobileDevice()) {
       window.open(lineUrl, '_blank');
-      showError('訂單已在後台。請在 LINE 畫面按下送出，方便我們與您確認訂單。', '#2d6d34');
+      showError(unresolvedSubmission ? '本筆送出結果待確認，請在 LINE 傳送查詢內容，勿重複下單。' : '訂單已收到。請在 LINE 畫面按下送出，方便我們與您確認訂單。', '#2d6d34');
       return;
     }
 
     try {
       await navigator.clipboard.writeText(orderText);
-      showError('訂單已在後台，且已幫你複製訂單內容。請貼到 LINE 傳送給倆口田官方帳號。', '#2d6d34');
+      showError(unresolvedSubmission ? '已複製待確認內容，請貼到官方 LINE 查詢本筆是否收到，勿重複下單。' : '訂單已收到，且已幫你複製訂單內容。請貼到 LINE 傳送給倆口田官方帳號。', '#2d6d34');
     } catch (err) {
-      showError('訂單已在後台，但電腦版無法自動複製。請手動複製訂單內容後貼到 LINE。', '#c84a4a');
+      showError('無法自動複製。請手動複製下方內容後貼到官方 LINE 聯絡我們，勿重複下單。', '#c84a4a');
     }
 
     if (lineTarget.trim()) {
@@ -1578,7 +1697,8 @@
     continueShoppingBtn.addEventListener('click', () => {
       clearPreparedOrder();
       clearError();
-      document.getElementById('products').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const pending = Object.values(getCartGroups()).some(group => group.items.length);
+      document.getElementById(pending ? 'cart' : 'products').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
 
@@ -1619,16 +1739,16 @@
     }
   }
 
-    loadProducts();
+    window.addEventListener('DOMContentLoaded', loadProducts);
   </script>
 
   <div class="sticky-bar">
     <div class="sticky-inner">
       <div>
-        <div class="sticky-total-label">目前總金額</div>
+        <div class="sticky-total-label">待送出訂單合計（含運費）</div>
         <div class="sticky-total-price" id="stickyGrandTotal">0 元</div>
       </div>
-      <a class="sticky-btn" href="#order-form">前往填資料</a>
+      <a class="sticky-btn" id="stickyCartBtn" href="#cart">查看購物車・0項</a>
     </div>
   </div>
 </body>
