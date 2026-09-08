@@ -29,7 +29,7 @@ const products = [
         }
         posts.push(JSON.parse(request.postData()));
         if (mode === 'network') return route.abort('failed');
-        const body = mode === 'reject' ? { status: 'error', message: '庫存不足' }
+        const body = mode === 'reject' ? { status: 'error', retrySafe: true, message: '庫存不足' }
           : mode === 'duplicate' ? { status: 'duplicate' }
           : mode === 'no-id' ? { status: 'success' }
           : { status: 'success', orderId: 'TEST-' + posts.length };
