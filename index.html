@@ -1351,6 +1351,7 @@
       title.textContent = `✅ ${receipt.data.hasLowTemp ? '低溫' : '常溫'}訂單已收到・${formatMoney(receipt.data.grandTotal)}`;
       const reference = document.createElement('p');
       reference.textContent = receipt.orderId ? `訂單編號：${receipt.orderId}` : '系統未提供訂單編號，聯絡時請附上以下訂單內容。';
+      if (receipt.data.priceChanged) reference.textContent += ' 金額已依後台最新價格更新，請查看明細並聯絡確認。';
       const details = document.createElement('details');
       const summary = document.createElement('summary');
       summary.textContent = '查看已送出的訂單明細';
@@ -1459,13 +1460,53 @@
       }
 
       if (data.status !== 'success') {
-        throw Object.assign(new Error(data.message || '寫入失敗'), { rejected: true });
+        throw Object.assign(new Error(data.message || '寫入結果待確認'), { rejected: data.status === 'error' && data.retrySafe === true });
       }
 
       return data;
     } catch (err) {
       throw err;
     }
+  }
+
+  function reconcileSavedOrder(sent, response) {
+    const number = (value, fallback) => {
+      if (value === undefined || value === null) return fallback;
+      const result = Number(value);
+      if (!Number.isFinite(result) || result < 0) throw new Error('後台金額格式錯誤');
+      return result;
+    };
+    const saved = { ...sent,
+      subtotal: number(response.subtotal, sent.subtotal),
+      shipping: number(response.shipping, sent.shipping),
+      grandTotal: number(response.total, sent.grandTotal),
+      shippingMethod: response.shippingMethod || sent.shippingMethod,
+      priceType: response.priceType || sent.priceType,
+      partnerName: response.partnerName ?? sent.partnerName,
+      partnerCode: response.partnerCode ?? sent.partnerCode,
+      discountRate: number(response.discountRate, sent.discountRate)
+    };
+    if (Math.abs(saved.subtotal + saved.shipping - saved.grandTotal) > 0.001) throw new Error('後台金額加總不符');
+    if (Array.isArray(response.items)) {
+      if (response.items.length !== sent.selectedItems.length) throw new Error('後台品項數量不符');
+      const seen = new Set();
+      saved.selectedItems = response.items.map(item => {
+        const original = sent.selectedItems.find(i => String(i.id) === String(item.id));
+        if (!original || seen.has(String(item.id)) || Number(item.qty) !== original.qty) throw new Error('後台品項不符');
+        seen.add(String(item.id));
+        const price = number(item.price, original.price);
+        const total = number(item.amount ?? item.total, price * original.qty);
+        if (Math.abs(price * original.qty - total) > 0.001) throw new Error('後台品項金額不符');
+        return { ...original, ...item, price, total, amount: total };
+      });
+      const sum = saved.selectedItems.reduce((total, item) => total + item.total, 0);
+      if (Math.abs(sum - saved.subtotal) > 0.001) throw new Error('後台商品加總不符');
+      saved.hasNormal = saved.selectedItems.some(item => item.shippingType === 'normal');
+      saved.hasLowTemp = saved.selectedItems.some(item => item.shippingType === 'chilled' || item.shippingType === 'frozen');
+    }
+    saved.priceChanged = saved.grandTotal !== sent.grandTotal || saved.subtotal !== sent.subtotal || saved.shipping !== sent.shipping || saved.selectedItems.some(item => item.price !== sent.selectedItems.find(original => String(original.id) === String(item.id)).price);
+    saved.estimatedItems = !Array.isArray(response.items) && saved.priceChanged;
+    return saved;
   }
 
   async function prepareSavedOrder() {
@@ -1490,18 +1531,20 @@
       setLineButtonsEnabled(false);
 
       const response = await saveOrderToGoogleSheet(orderData);
+      const savedData = reconcileSavedOrder(orderData, response);
       const rawId = response.orderId ?? response.orderNumber ?? response.orderNo;
       const orderId = typeof rawId === 'string' || typeof rawId === 'number' ? String(rawId) : '';
-      const savedText = orderId ? `訂單編號：${orderId}\n${orderText}` : orderText;
-      savedOrders.push({ data: orderData, orderId, text: savedText });
+      const savedText = [orderId ? `訂單編號：${orderId}` : '', savedData.priceChanged ? '金額已依後台最新價格更新，請與倆口田確認。' : '', savedData.estimatedItems ? '以下品項單價為送出時估算；實際商品合計與應付金額以本筆後台回傳為準，請聯絡確認明細。' : '', buildOrderText(savedData)].filter(Boolean).join('\n');
+      savedOrders.push({ data: savedData, orderId, text: savedText });
       renderSavedOrders();
 
       currentOrderText = savedText;
-      currentSavedOrderData = orderData;
+      currentSavedOrderData = savedData;
       orderOutput.textContent = [
         '✅ 本筆訂單已收到，請透過上方按鈕傳 LINE 聯絡農夫。',
         '',
         orderId ? `訂單編號：${orderId}` : '',
+        savedData.priceChanged ? `金額已依後台更新：${formatMoney(savedData.grandTotal)}。請查看本筆明細並與倆口田確認。` : '',
         '',
         '提醒：匯款帳號會在我們確認品項、出貨時間與配送方式後，透過 LINE 傳給您。',
         '尚未傳 LINE 時，我們無法直接對應您的 LINE 帳號。請複製訂單聯絡官方 LINE，勿重複下單。'
@@ -1512,7 +1555,7 @@
       showError(pending ? '本筆訂單已收到。另一溫層商品仍在購物車，收件資料已保留，請確認後再送出另一筆。' : '本筆訂單已收到。請接著傳 LINE 聯絡農夫，確認出貨與匯款資訊。', '#2d6d34');
       document.getElementById('savedOrders').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-      return orderText;
+      return savedText;
     } catch (err) {
       if (err.rejected) {
         showError('本筆訂單未完成：' + err.message + '。商品及收件資料已保留。');
