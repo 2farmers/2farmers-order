@@ -31,6 +31,7 @@ function setup() {
       return this;
     }
     setValue(value) { return this.setValues([[value]]); }
+    copyTo(destination) { destination.setValues(this.getValues()); return this; }
     setNote(value) { this.note=value; return this; }
     getSheet() { return this.sheet; }
     getRow() { return this.r; }
@@ -45,6 +46,7 @@ function setup() {
     getLastColumn(){return Math.max(0,...this.rows.map(r=>r.length));}
     getRange(...args){return new Range(this,...args);}
     getDataRange(){return this.getRange(1,1,Math.max(1,this.getLastRow()),Math.max(1,this.getLastColumn()));}
+    deleteRow(row){assert.equal(held,true,'deletes must hold script lock');this.rows.splice(row-1,1);events.push(['delete',this.name,row]);}
   }
   const book = {getSheetByName:name=>sheets.get(name),insertSheet:name=>{const s=new Sheet(name);sheets.set(name,s);return s;},toast:message=>events.push(['toast',message])};
   sheets.set('商品主檔',new Sheet('商品主檔',[
@@ -64,8 +66,8 @@ function setup() {
     orders.rows[row-1][col-1]='已確認';
     context.onEdit({range:orders.getRange(row,col),value:'已確認'});
   };
-  const status=(row,value,oldValue)=>{
-    const orders=sheets.get('訂單總表'), col=orders.rows[0].indexOf('狀態')+1;
+  const status=(row,value,oldValue,sheetName='訂單總表')=>{
+    const orders=sheets.get(sheetName), col=orders.rows[0].indexOf('狀態')+1;
     orders.rows[row-1][col-1]=value;
     context.onEdit({range:orders.getRange(row,col),value,oldValue});
   };
@@ -151,11 +153,11 @@ console.log('All backend tests passed. No live Google calls.');
   assert.equal(t.objects('商品主檔')[0].soldQty,2);
   t.status(2,'取消','已確認');
   assert.equal(t.objects('商品主檔')[0].soldQty,0);
-  t.status(2,'取消','取消');
+  t.status(2,'取消','取消','已完成訂單');
   assert.equal(t.objects('商品主檔')[0].soldQty,0);
-  assert.equal(JSON.parse(t.objects('訂單總表')[0]['確認處理']).cancellation.phase,'done');
-  t.status(2,'已確認','取消');
-  assert.equal(t.objects('訂單總表')[0]['狀態'],'新訂單');
+  assert.equal(JSON.parse(t.objects('已完成訂單')[0]['確認處理']).cancellation.phase,'done');
+  t.status(2,'已確認','取消','已完成訂單');
+  assert.equal(t.objects('已完成訂單')[0]['狀態'],'取消');
   assert.equal(t.objects('商品主檔')[0].soldQty,0);
   console.log('PASS cancellation restores inventory once and canceled order cannot be reconfirmed');
 }
@@ -172,5 +174,20 @@ console.log('All backend tests passed. No live Google calls.');
 {
   const t=setup();t.post([{id:'veg',qty:2}]);t.status(2,'取消','新訂單');
   assert.equal(t.objects('商品主檔')[0].soldQty,0);
+  assert.equal(t.objects('訂單總表').length,0);
+  assert.equal(t.objects('已完成訂單')[0]['狀態'],'取消');
   console.log('PASS canceling an unconfirmed order does not change inventory');
+}
+
+{
+  const t=setup();t.post([{id:'veg',qty:2}]);t.confirm(2);
+  t.status(2,'已完成','已確認');
+  assert.equal(t.objects('訂單總表').length,0);
+  assert.equal(t.objects('已完成訂單')[0]['狀態'],'已完成');
+  assert.equal(t.objects('出貨明細')[0]['狀態'],'已完成');
+  t.status(2,'取消','已完成','已完成訂單');
+  assert.equal(t.objects('商品主檔')[0].soldQty,0);
+  assert.equal(t.objects('已完成訂單')[0]['狀態'],'取消');
+  assert.equal(t.objects('記帳總表')[0]['狀態'],'取消');
+  console.log('PASS completed orders move to archive and can later be canceled safely');
 }
