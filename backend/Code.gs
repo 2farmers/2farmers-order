@@ -17,6 +17,48 @@ const DEFAULT_WEBSITE_SETTINGS = {
   shippingDays: '週一、週二、週三、週四'
 };
 
+// Run once from the Apps Script editor after installing this version.
+function setupOrderSystem() {
+  const lock = LockService.getScriptLock();
+  try {
+    if (!lock.tryLock(20000)) throw new Error('系統忙碌，請稍後再試');
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const settingsSheet = getOrCreateSheet_(SHEET_SETTINGS);
+    const settingRows = [
+      ['設定鍵', '設定值', '說明'],
+      ['normalShippingFee', DEFAULT_WEBSITE_SETTINGS.normalShippingFee, '常溫宅配運費'],
+      ['normalFreeShippingThreshold', DEFAULT_WEBSITE_SETTINGS.normalFreeShippingThreshold, '常溫免運門檻'],
+      ['lowTempShippingFee', DEFAULT_WEBSITE_SETTINGS.lowTempShippingFee, '低溫宅配運費'],
+      ['lowTempFreeShippingThreshold', DEFAULT_WEBSITE_SETTINGS.lowTempFreeShippingThreshold, '低溫免運門檻'],
+      ['shippingDays', DEFAULT_WEBSITE_SETTINGS.shippingDays, '網站顯示的本週出貨日']
+    ];
+    if (settingsSheet.getLastRow() === 0 || settingsSheet.getRange(1, 1).getValue() === '') {
+      settingsSheet.getRange(1, 1, settingRows.length, settingRows[0].length).setValues(settingRows);
+      settingsSheet.setFrozenRows(1);
+      settingsSheet.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#d1e6c7');
+      settingsSheet.autoResizeColumns(1, 3);
+    }
+
+    const orderSheet = getOrCreateSheet_(SHEET_ORDERS);
+    ensureHeaders_(orderSheet, ['付款狀態', '匯款末五碼', '確認處理']);
+    const headers = getHeaders_(orderSheet);
+    const paymentCol = headers.indexOf('付款狀態') + 1;
+    const bankCol = headers.indexOf('匯款末五碼') + 1;
+    const rows = Math.max(1, orderSheet.getMaxRows() - 1);
+    const rule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['未付款', '已付款', '退款'], true)
+      .setAllowInvalid(false)
+      .build();
+    orderSheet.getRange(2, paymentCol, rows, 1).setDataValidation(rule);
+    orderSheet.getRange(2, bankCol, rows, 1).setNumberFormat('@');
+    orderSheet.getRange(1, paymentCol, 1, 2).setFontWeight('bold').setBackground('#d1e6c7');
+    SpreadsheetApp.flush();
+    ss.toast('訂單系統設定完成');
+  } finally {
+    if (lock.hasLock()) lock.releaseLock();
+  }
+}
+
 function doGet(e) {
   try {
     return jsonOutput_({
