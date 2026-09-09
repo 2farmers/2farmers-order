@@ -21,12 +21,7 @@ const products = [
       const request = route.request();
       if (request.url() === 'https://checkout.test/') return route.fulfill({ contentType: 'text/html', body: html });
       if (request.url().startsWith('https://script.google.com/')) {
-        if (request.method() !== 'POST') {
-          const body = request.url().includes('validatePartner')
-            ? { status: 'success', partner: { isPartner: true, partnerCode: 'TEST', partnerName: '測試夥伴', discountRate: 0.8 } }
-            : { status: 'success', products };
-          return route.fulfill({ json: body });
-        }
+        if (request.method() !== 'POST') return route.fulfill({ json: { status: 'success', products } });
         posts.push(JSON.parse(request.postData()));
         if (mode === 'network') return route.abort('failed');
         const body = mode === 'reject' ? { status: 'error', retrySafe: true, message: '庫存不足' }
@@ -119,10 +114,7 @@ const products = [
   await qty(p, 'veg', 1);
   await p.locator('#submitBtn').click();
   await text(p, 'errorMsg', '請填寫收件人姓名。');
-  await p.locator('#partnerCodeInput').fill('TEST');
-  await p.locator('#applyPartnerCodeBtn').click();
-  await p.waitForFunction(() => !isValidatingPartner && state.partner);
-  await text(p, 'grandTotal', '145 元');
+  await text(p, 'grandTotal', '165 元');
   await p.locator('[data-cart-id="veg"][data-diff="1"]').click();
   await text(p, 'grandTotal', '225 元');
   await p.locator('[data-remove-id="veg"]').click();
@@ -133,7 +125,7 @@ const products = [
     await qty(p, 'dumpling', 2);
     assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'overflow at ' + width);
   }
-  console.log('PASS: validation, partner pricing, cart controls, 360/390/760/1280 layouts');
+  console.log('PASS: validation, standard pricing, cart controls, 360/390/760/1280 layouts');
   assert.deepEqual(errors, []);
   await browser.close();
   console.log('All checkout tests passed; zero production requests.');

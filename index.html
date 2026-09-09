@@ -527,77 +527,6 @@
 
 
 
-    .partner-box {
-      background: #fbfcfa;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .partner-code-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .partner-code-row input {
-      flex: 1 1 220px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 1rem;
-      background: #fff;
-      text-transform: uppercase;
-    }
-
-    .partner-code-row button {
-      border: 0;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 0.95rem;
-      font-weight: 800;
-      cursor: pointer;
-      background: var(--accent);
-      color: #fff;
-      flex: 0 0 auto;
-    }
-
-    .partner-status {
-      display: none;
-      font-size: 0.9rem;
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-
-    .partner-status.active {
-      display: block;
-      background: #edf4eb;
-      color: #2d6d34;
-      border: 1px solid #cfe2cc;
-      font-weight: 700;
-    }
-
-    .partner-status.error-state {
-      display: block;
-      background: #fff2f2;
-      color: #b42323;
-      border: 1px solid #f2c7c7;
-      font-weight: 700;
-    }
-
-    .price-original {
-      color: var(--muted);
-      text-decoration: line-through;
-      margin-right: 6px;
-    }
-
-    .price-partner {
-      color: var(--accent-dark);
-      font-weight: 800;
-    }
-
     @media (max-width: 520px) {
       .quick-info {
         grid-template-columns: 1fr;
@@ -687,20 +616,6 @@
       </div>
     </div>
 
-
-    <div class="section" id="partner-section">
-      <h2 class="section-title">合作夥伴代碼</h2>
-      <div class="section-subtitle">一般客人不用填。合作夥伴輸入專屬代碼後，商品價格會自動切換成合作價。</div>
-      <div class="partner-box">
-        <div class="partner-code-row">
-          <input id="partnerCodeInput" type="text" placeholder="請輸入合作夥伴代碼" autocomplete="off" />
-          <button id="applyPartnerCodeBtn" type="button">套用代碼</button>
-          <button id="clearPartnerCodeBtn" type="button" style="background:#e9efe7;color:#243024;">恢復一般價</button>
-        </div>
-        <div id="partnerStatus" class="partner-status"></div>
-        <div class="hint">合作價僅供協助開團、推廣、整理訂單與服務客人的合作夥伴使用，請不要公開轉貼。</div>
-      </div>
-    </div>
 
     <div class="section" id="products">
       <h2 class="section-title">商品列表</h2>
@@ -811,14 +726,11 @@
   const lineTarget = '@733fsbwp';
   const gasUrl = 'https://script.google.com/macros/s/AKfycbxu52TzvV_Ek848NPOYrC3j8xL3B_YQQdFs6-NgKYOQpjcdccifrhWo9C4zT2PQ5SQs/exec';
 
-  // 合作夥伴代碼由 Apps Script 後端的「合作夥伴設定」工作表驗證，不再寫死在前台。
-
   let products = [];
   let sortedProducts = [];
   let isSubmittingOrder = false;
   let currentOrderText = '';
   let currentSavedOrderData = null;
-  let isValidatingPartner = false;
   let checkoutGroup = 'normal';
   const savedOrders = [];
   let unresolvedSubmission = false;
@@ -890,8 +802,7 @@
   const state = {
     quantities: {},
     shippingFee: 65,
-    normalShippingMethod: '宅配',
-    partner: null
+    normalShippingMethod: '宅配'
   };
 
   const productList = document.getElementById('productList');
@@ -904,10 +815,6 @@
   const lineBtn = document.getElementById('lineBtn');
   const copyBtn = document.getElementById('copyBtn');
   const continueShoppingBtn = document.getElementById('continueShoppingBtn');
-  const partnerCodeInput = document.getElementById('partnerCodeInput');
-  const applyPartnerCodeBtn = document.getElementById('applyPartnerCodeBtn');
-  const clearPartnerCodeBtn = document.getElementById('clearPartnerCodeBtn');
-  const partnerStatus = document.getElementById('partnerStatus');
 
   function formatMoney(num) {
     return `${num} 元`;
@@ -930,30 +837,12 @@
     return raw;
   }
 
-  function normalizePartnerCode(code) {
-    return String(code || '').trim().toUpperCase();
-  }
-
   function getActivePrice(product) {
-    const originalPrice = toNumber(product.price, 0);
-    if (!state.partner || !state.partner.discountRate) return originalPrice;
-    return Math.round(originalPrice * state.partner.discountRate);
+    return toNumber(product.price, 0);
   }
 
   function getPriceTypeLabel() {
-    return state.partner ? state.partner.priceType : '一般售價';
-  }
-
-  function renderPartnerStatus(message, type = 'active') {
-    if (!partnerStatus) return;
-    partnerStatus.className = `partner-status ${type}`;
-    partnerStatus.textContent = message;
-  }
-
-  function clearPartnerStatus() {
-    if (!partnerStatus) return;
-    partnerStatus.className = 'partner-status';
-    partnerStatus.textContent = '';
+    return '一般售價';
   }
 
   function toNumber(value, fallback = 0) {
@@ -1016,12 +905,6 @@
 
   function renderProductPrice(product) {
     const originalPrice = toNumber(product.price, 0);
-    const activePrice = getActivePrice(product);
-
-    if (state.partner && activePrice !== originalPrice) {
-      return `<span class="price-original">原價 ${originalPrice} 元</span><span class="price-partner">合作價 ${activePrice} 元 / ${product.unit}</span>`;
-    }
-
     return `${originalPrice} 元 / ${product.unit}`;
   }
 
@@ -1193,11 +1076,7 @@
           price: activePrice,
           amount: total,
           total,
-          shippingType: product.shippingType || 'normal',
-          priceType: getPriceTypeLabel(),
-          partnerName: state.partner ? state.partner.partnerName : '',
-          partnerCode: state.partner ? state.partner.code : '',
-          discountRate: state.partner ? state.partner.discountRate : 1
+          shippingType: product.shippingType || 'normal'
         };
       });
 
@@ -1235,11 +1114,7 @@
       customerName: document.getElementById('customerName').value.trim(),
       customerPhone: document.getElementById('customerPhone').value.trim(),
       customerAddress: document.getElementById('customerAddress').value.trim(),
-      customerNote: document.getElementById('customerNote').value.trim(),
-      priceType: getPriceTypeLabel(),
-      partnerName: state.partner ? state.partner.partnerName : '',
-      partnerCode: state.partner ? state.partner.code : '',
-      discountRate: state.partner ? state.partner.discountRate : 1
+      customerNote: document.getElementById('customerNote').value.trim()
     };
   }
 
@@ -1261,13 +1136,8 @@
       .map(item => `- ${item.name}（${getShippingTypeLabel(item.shippingType)}）：${item.qty}${item.unit} × ${item.price}元 = ${item.total}元`)
       .join('\n');
 
-    const partnerLines = data.partnerName
-      ? [`價格類型：${data.priceType}`, `合作夥伴：${data.partnerName}`, `合作代碼：${data.partnerCode}`, '']
-      : [`價格類型：${data.priceType}`, ''];
-
     return [
       '【倆口田訂單】',
-      ...partnerLines,
       itemLines,
       '',
       `商品總金額：${data.subtotal}元`,
@@ -1309,12 +1179,12 @@
 
   function setSubmitButtonState(isLoading) {
     const hasItems = getCartGroups()[checkoutGroup].items.length > 0;
-    submitBtn.disabled = !!isLoading || isValidatingPartner || unresolvedSubmission || !hasItems;
+    submitBtn.disabled = !!isLoading || unresolvedSubmission || !hasItems;
     submitBtn.style.opacity = submitBtn.disabled ? '0.7' : '1';
     submitBtn.style.cursor = submitBtn.disabled ? 'not-allowed' : 'pointer';
     const group = checkoutGroup === 'normal' ? '常溫' : '低溫';
-    submitBtn.textContent = isLoading ? '訂單送出中...' : isValidatingPartner ? '合作價驗證中...' : unresolvedSubmission ? '請先聯絡倆口田確認本筆訂單' : `確認並送出${group}訂單`;
-    ['products', 'cart', 'partner-section'].forEach(id => { document.getElementById(id).inert = !!isLoading; });
+    submitBtn.textContent = isLoading ? '訂單送出中...' : unresolvedSubmission ? '請先聯絡倆口田確認本筆訂單' : `確認並送出${group}訂單`;
+    ['products', 'cart'].forEach(id => { document.getElementById(id).inert = !!isLoading; });
     document.querySelectorAll('#order-form input, #order-form textarea').forEach(el => { el.readOnly = !!isLoading; });
     document.querySelector('.shipping-options').inert = !!isLoading;
   }
@@ -1415,10 +1285,6 @@
         shippingFee: orderData.shipping,
         subtotal: orderData.subtotal,
         total: orderData.grandTotal,
-        priceType: orderData.priceType,
-        partnerName: orderData.partnerName,
-        partnerCode: orderData.partnerCode,
-        discountRate: orderData.discountRate,
         itemsText: orderData.selectedItems
           .map(item => `${item.name} x ${item.qty}${item.unit} = ${item.total}`)
           .join('\n'),
@@ -1430,11 +1296,7 @@
           originalPrice: item.originalPrice,
           price: item.price,
           amount: item.amount,
-          shippingType: item.shippingType || 'normal',
-          priceType: item.priceType,
-          partnerName: item.partnerName,
-          partnerCode: item.partnerCode,
-          discountRate: item.discountRate
+          shippingType: item.shippingType || 'normal'
         }))
       };
 
@@ -1480,11 +1342,7 @@
       subtotal: number(response.subtotal, sent.subtotal),
       shipping: number(response.shipping, sent.shipping),
       grandTotal: number(response.total, sent.grandTotal),
-      shippingMethod: response.shippingMethod || sent.shippingMethod,
-      priceType: response.priceType || sent.priceType,
-      partnerName: response.partnerName ?? sent.partnerName,
-      partnerCode: response.partnerCode ?? sent.partnerCode,
-      discountRate: number(response.discountRate, sent.discountRate)
+      shippingMethod: response.shippingMethod || sent.shippingMethod
     };
     if (Math.abs(saved.subtotal + saved.shipping - saved.grandTotal) > 0.001) throw new Error('後台金額加總不符');
     if (Array.isArray(response.items)) {
@@ -1510,7 +1368,7 @@
   }
 
   async function prepareSavedOrder() {
-    if (isSubmittingOrder || isValidatingPartner || unresolvedSubmission) return null;
+    if (isSubmittingOrder || unresolvedSubmission) return null;
 
     const orderData = getOrderData();
     const error = validateOrder(orderData);
@@ -1573,77 +1431,6 @@
     }
   }
 
-
-  async function applyPartnerCode() {
-    if (isSubmittingOrder || isValidatingPartner) return;
-    const code = normalizePartnerCode(partnerCodeInput ? partnerCodeInput.value : '');
-
-    if (!code) {
-      state.partner = null;
-      clearPartnerStatus();
-      renderProducts();
-      updateTotals();
-      return;
-    }
-
-    try {
-      isValidatingPartner = true;
-      setSubmitButtonState(false);
-      clearPartnerCodeBtn.disabled = true;
-      renderPartnerStatus('正在驗證合作夥伴代碼...', 'active');
-
-      const res = await fetch(`${gasUrl}?action=validatePartner&partnerCode=${encodeURIComponent(code)}`);
-      const data = await res.json();
-
-      if (data.status !== 'success' || !data.partner || !data.partner.isPartner) {
-        throw new Error(data.message || '合作夥伴代碼無效或已停用');
-      }
-
-      state.partner = {
-        code: data.partner.partnerCode || code,
-        partnerName: data.partner.partnerName || '合作夥伴',
-        discountRate: Number(data.partner.discountRate || 1),
-        priceType: data.partner.priceType || '合作夥伴價'
-      };
-
-      renderPartnerStatus(`已套用 ${state.partner.partnerName}｜${state.partner.priceType}。訂單會自動記錄合作夥伴與折扣資訊。`, 'active');
-      renderProducts();
-      updateTotals();
-    } catch (err) {
-      state.partner = null;
-      renderPartnerStatus(`合作夥伴代碼無效或已停用，已維持一般售價。${err.message ? '（' + err.message + '）' : ''}`, 'error-state');
-      renderProducts();
-      updateTotals();
-    } finally {
-      isValidatingPartner = false;
-      clearPartnerCodeBtn.disabled = false;
-      setSubmitButtonState(false);
-    }
-  }
-
-  if (applyPartnerCodeBtn) {
-    applyPartnerCodeBtn.addEventListener('click', applyPartnerCode);
-  }
-
-  if (partnerCodeInput) {
-    partnerCodeInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        applyPartnerCode();
-      }
-    });
-  }
-
-  if (clearPartnerCodeBtn) {
-    clearPartnerCodeBtn.addEventListener('click', () => {
-      if (isSubmittingOrder) return;
-      state.partner = null;
-      if (partnerCodeInput) partnerCodeInput.value = '';
-      renderPartnerStatus('已恢復一般售價。', 'active');
-      renderProducts();
-      updateTotals();
-    });
-  }
 
   submitBtn.addEventListener('click', async () => {
     await prepareSavedOrder();

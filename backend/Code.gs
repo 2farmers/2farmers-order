@@ -7,29 +7,10 @@ const SHEET_PRODUCTS = '商品主檔';
 const SHEET_ORDERS = '訂單總表';
 const SHEET_DETAILS = '出貨明細';
 const SHEET_ACCOUNTING = '記帳總表';
-const SHEET_PARTNERS = '合作夥伴設定';
-
 const DUPLICATE_MINUTES = 10;
 
 function doGet(e) {
   try {
-    const params = (e && e.parameter) ? e.parameter : {};
-    const action = String(params.action || '').trim();
-
-    if (action === 'validatePartner') {
-      const partnerInfo = getPartnerInfo_(params.partnerCode || '');
-      return jsonOutput_({
-        status: 'success',
-        partner: {
-          partnerName: partnerInfo.partnerName,
-          partnerCode: partnerInfo.partnerCode,
-          discountRate: partnerInfo.discountRate,
-          priceType: partnerInfo.priceType,
-          isPartner: partnerInfo.isPartner
-        }
-      });
-    }
-
     return jsonOutput_({
       status: 'success',
       products: getProducts_()
@@ -49,8 +30,7 @@ function doPost(e) {
     if (!lock.tryLock(20000)) throw new Error('系統忙碌，請稍後再試');
     const rawPayload = JSON.parse(e && e.postData && e.postData.contents || '{}');
     if (!Array.isArray(rawPayload.items) || !rawPayload.items.length) throw new Error('沒有訂購商品');
-    const partnerInfo = getPartnerInfo_(rawPayload.partnerCode || '');
-    const payload = applyPricingAndTotals_(rawPayload, partnerInfo);
+    const payload = applyPricingAndTotals_(rawPayload);
     if (!String(payload.receiverName).trim()) throw new Error('請填寫收件人姓名');
     if (!String(payload.receiverPhone).trim()) throw new Error('請填寫電話');
     if (payload.shippingMethod !== '面交' && !String(payload.receiverAddress).trim()) throw new Error('請填寫地址');
@@ -222,63 +202,10 @@ function writeConfirmationRow_(sheet, orderId, key, rowObject) {
 }
 
 // ===============================
-// 合作夥伴設定與後端重新計價
+// 後端重新計價
 // ===============================
 
-function getPartnerInfo_(partnerCode) {
-  const code = normalizePartnerCode_(partnerCode);
-
-  if (!code) {
-    return {
-      isPartner: false,
-      partnerCode: '',
-      partnerName: '',
-      discountRate: 1,
-      priceType: '一般售價'
-    };
-  }
-
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PARTNERS);
-  if (!sheet) throw new Error('找不到合作夥伴設定工作表');
-
-  const values = sheet.getDataRange().getValues();
-  if (values.length < 2) throw new Error('合作夥伴設定沒有資料');
-
-  const headers = values[0].map(h => String(h).trim());
-  const codeCol = headers.indexOf('partnerCode');
-  const nameCol = headers.indexOf('partnerName');
-  const discountCol = headers.indexOf('discountRate');
-  const priceTypeCol = headers.indexOf('priceType');
-  const activeCol = headers.indexOf('active');
-
-  if (codeCol === -1) throw new Error('合作夥伴設定缺少 partnerCode 欄位');
-  if (nameCol === -1) throw new Error('合作夥伴設定缺少 partnerName 欄位');
-  if (discountCol === -1) throw new Error('合作夥伴設定缺少 discountRate 欄位');
-  if (priceTypeCol === -1) throw new Error('合作夥伴設定缺少 priceType 欄位');
-  if (activeCol === -1) throw new Error('合作夥伴設定缺少 active 欄位');
-
-  const matchedRow = values.slice(1).find(row => normalizePartnerCode_(row[codeCol]) === code);
-  if (!matchedRow) throw new Error('合作夥伴代碼不存在');
-
-  if (!toBoolean_(matchedRow[activeCol])) {
-    throw new Error('合作夥伴代碼已停用');
-  }
-
-  const discountRate = toNumber_(matchedRow[discountCol], 1);
-  if (discountRate <= 0 || discountRate > 1) {
-    throw new Error('合作夥伴折扣率設定錯誤，請確認 discountRate 介於 0 到 1 之間');
-  }
-
-  return {
-    isPartner: true,
-    partnerCode: code,
-    partnerName: String(matchedRow[nameCol] || '').trim(),
-    discountRate,
-    priceType: String(matchedRow[priceTypeCol] || '').trim() || '合作夥伴價'
-  };
-}
-
-function applyPricingAndTotals_(rawPayload, partnerInfo) {
+function applyPricingAndTotals_(rawPayload) {
   const products = getProducts_();
   const productsMap = buildProductsMap_(products);
 
@@ -293,7 +220,7 @@ function applyPricingAndTotals_(rawPayload, partnerInfo) {
 
     const originalPrice = Number(product.price);
     if (!Number.isFinite(originalPrice) || originalPrice < 0) throw new Error('商品價格設定錯誤：' + product.name);
-    const dealPrice = roundPrice_(originalPrice * partnerInfo.discountRate);
+    const dealPrice = roundPrice_(originalPrice);
     const amount = dealPrice * qty;
     if (!Number.isFinite(amount)) throw new Error('商品金額過大：' + product.name);
     const shippingType = normalizeShippingType_(product.shippingType);
@@ -310,10 +237,10 @@ function applyPricingAndTotals_(rawPayload, partnerInfo) {
       total: amount,
       shippingType,
       accountCategory: product.accountCategory || '其他收入',
-      priceType: partnerInfo.priceType,
-      partnerName: partnerInfo.partnerName,
-      partnerCode: partnerInfo.partnerCode,
-      discountRate: partnerInfo.discountRate
+      priceType: '一般售價',
+      partnerName: '',
+      partnerCode: '',
+      discountRate: 1
     };
   });
 
@@ -362,19 +289,15 @@ function applyPricingAndTotals_(rawPayload, partnerInfo) {
     grandTotal: total,
     items: pricedItems,
     itemsText: buildItemsText_(pricedItems),
-    priceType: partnerInfo.priceType,
-    partnerName: partnerInfo.partnerName,
-    partnerCode: partnerInfo.partnerCode,
-    discountRate: partnerInfo.discountRate
+    priceType: '一般售價',
+    partnerName: '',
+    partnerCode: '',
+    discountRate: 1
   };
 }
 
 function roundPrice_(value) {
   return Math.round(Number(value || 0));
-}
-
-function normalizePartnerCode_(value) {
-  return String(value || '').trim().toUpperCase();
 }
 
 // ===============================
