@@ -5,6 +5,7 @@
 
 const SHEET_PRODUCTS = '商品主檔';
 const SHEET_ORDERS = '訂單總表';
+const SHEET_ARCHIVE = '已完成訂單';
 const SHEET_DETAILS = '出貨明細';
 const SHEET_ACCOUNTING = '記帳總表';
 const SHEET_SETTINGS = '網站設定';
@@ -41,17 +42,11 @@ function setupOrderSystem() {
 
     const orderSheet = getOrCreateSheet_(SHEET_ORDERS);
     ensureHeaders_(orderSheet, ['付款狀態', '匯款末五碼', '確認處理']);
-    const headers = getHeaders_(orderSheet);
-    const paymentCol = headers.indexOf('付款狀態') + 1;
-    const bankCol = headers.indexOf('匯款末五碼') + 1;
-    const rows = Math.max(1, orderSheet.getMaxRows() - 1);
-    const rule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(['未付款', '已付款', '退款'], true)
-      .setAllowInvalid(false)
-      .build();
-    orderSheet.getRange(2, paymentCol, rows, 1).setDataValidation(rule);
-    orderSheet.getRange(2, bankCol, rows, 1).setNumberFormat('@');
-    orderSheet.getRange(1, paymentCol, 1, 2).setFontWeight('bold').setBackground('#d1e6c7');
+    configurePaymentColumns_(orderSheet);
+    const archiveSheet = getOrCreateSheet_(SHEET_ARCHIVE);
+    ensureHeaders_(archiveSheet, getHeaders_(orderSheet));
+    configurePaymentColumns_(archiveSheet);
+    archiveCompletedOrders_(orderSheet);
     SpreadsheetApp.flush();
     ss.toast('訂單系統設定完成');
   } finally {
@@ -115,11 +110,12 @@ function doPost(e) {
 function onEdit(e) {
   if (!e || !e.range) return;
   const sheet = e.range.getSheet();
-  if (sheet.getName() !== SHEET_ORDERS) return;
+  if (![SHEET_ORDERS, SHEET_ARCHIVE].includes(sheet.getName())) return;
   const headers = getHeaders_(sheet);
   const statusCol = headers.indexOf('狀態') + 1;
   if (!statusCol || e.range.getColumn() > statusCol || e.range.getColumn() + e.range.getNumColumns() <= statusCol) return;
   const lock = LockService.getScriptLock();
+  const rowsToArchive = [];
   try {
     if (!lock.tryLock(10000)) throw new Error('系統忙碌，請稍後重新設定訂單狀態');
     for (let row = Math.max(2, e.range.getRow()); row < e.range.getRow() + e.range.getNumRows(); row++) {
@@ -131,7 +127,7 @@ function onEdit(e) {
           cell.setNote('');
         } catch (err) {
           cell.setNote('確認未完成：' + err.message + '。排除問題後，再選一次「已確認」可接續處理。');
-          cell.setValue('新訂單');
+          cell.setValue(sheet.getName() === SHEET_ARCHIVE ? (e.oldValue || '取消') : '新訂單');
           SpreadsheetApp.getActiveSpreadsheet().toast('訂單第 ' + row + ' 列確認未完成：' + err.message);
           continue;
         }
@@ -148,8 +144,10 @@ function onEdit(e) {
         }
       }
       if (['已確認', '備貨中', '已出貨', '已完成', '取消'].includes(status)) syncOrderStatus_(sheet, row, status);
+      if (sheet.getName() === SHEET_ORDERS && ['已完成', '取消'].includes(status)) rowsToArchive.push(row);
     }
     SpreadsheetApp.flush();
+    rowsToArchive.sort((a, b) => b - a).forEach(row => archiveOrder_(sheet, row));
   } catch (err) {
     e.range.setNote('處理未完成：' + err.message + '。請重新設定狀態。');
     SpreadsheetApp.getActiveSpreadsheet().toast('狀態同步失敗：' + err.message);
@@ -158,6 +156,52 @@ function onEdit(e) {
       try { SpreadsheetApp.flush(); } finally { lock.releaseLock(); }
     }
   }
+}
+
+function configurePaymentColumns_(sheet) {
+  ensureHeaders_(sheet, ['付款狀態', '匯款末五碼', '確認處理']);
+  const headers = getHeaders_(sheet);
+  const paymentCol = headers.indexOf('付款狀態') + 1;
+  const bankCol = headers.indexOf('匯款末五碼') + 1;
+  const rows = Math.max(1, sheet.getMaxRows() - 1);
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['未付款', '已付款', '退款'], true)
+    .setAllowInvalid(false)
+    .build();
+  sheet.getRange(2, paymentCol, rows, 1).setDataValidation(rule);
+  sheet.getRange(2, bankCol, rows, 1).setNumberFormat('@');
+  sheet.getRange(1, paymentCol, 1, 2).setFontWeight('bold').setBackground('#d1e6c7');
+}
+
+function archiveCompletedOrders_(orderSheet) {
+  if (orderSheet.getLastRow() < 2) return;
+  const headers = getHeaders_(orderSheet);
+  const statusCol = headers.indexOf('狀態');
+  if (statusCol < 0) return;
+  const rows = orderSheet.getRange(2, 1, orderSheet.getLastRow() - 1, orderSheet.getLastColumn()).getValues();
+  rows.map((row, index) => ({ row: index + 2, status: String(row[statusCol] || '').trim() }))
+    .filter(item => ['已完成', '取消'].includes(item.status))
+    .sort((a, b) => b.row - a.row)
+    .forEach(item => archiveOrder_(orderSheet, item.row));
+}
+
+function archiveOrder_(orderSheet, rowNumber) {
+  const orderId = String(getOrderFromRow_(orderSheet, rowNumber).orderId || '').trim();
+  if (!orderId) throw new Error('訂單缺少訂單編號，無法封存');
+  const archiveSheet = getOrCreateSheet_(SHEET_ARCHIVE);
+  const headers = getHeaders_(orderSheet);
+  ensureHeaders_(archiveSheet, headers);
+  const archiveHeaders = getHeaders_(archiveSheet);
+  if (archiveHeaders.join('\u0001') !== headers.join('\u0001')) throw new Error('已完成訂單的欄位順序不一致，請先檢查');
+  const idCol = headers.indexOf('訂單編號') + 1;
+  const existing = archiveSheet.getLastRow() < 2 ? -1 : archiveSheet.getRange(2, idCol, archiveSheet.getLastRow() - 1, 1).getValues()
+    .findIndex(row => String(row[0] || '').trim() === orderId);
+  const targetRow = existing >= 0 ? existing + 2 : findNextRowByColumn_(archiveSheet, idCol);
+  orderSheet.getRange(rowNumber, 1, 1, orderSheet.getLastColumn())
+    .copyTo(archiveSheet.getRange(targetRow, 1, 1, orderSheet.getLastColumn()));
+  SpreadsheetApp.flush();
+  orderSheet.deleteRow(rowNumber);
+  SpreadsheetApp.flush();
 }
 
 // Called while holding the script lock. New orders carry a resumable confirmation journal.
