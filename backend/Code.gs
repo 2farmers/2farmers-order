@@ -7,13 +7,64 @@ const SHEET_PRODUCTS = '商品主檔';
 const SHEET_ORDERS = '訂單總表';
 const SHEET_DETAILS = '出貨明細';
 const SHEET_ACCOUNTING = '記帳總表';
+const SHEET_SETTINGS = '網站設定';
 const DUPLICATE_MINUTES = 10;
+const DEFAULT_WEBSITE_SETTINGS = {
+  normalShippingFee: 65,
+  normalFreeShippingThreshold: 500,
+  lowTempShippingFee: 250,
+  lowTempFreeShippingThreshold: 1000,
+  shippingDays: '週一、週二、週三、週四'
+};
+
+// Run once from the Apps Script editor after installing this version.
+function setupOrderSystem() {
+  const lock = LockService.getScriptLock();
+  try {
+    if (!lock.tryLock(20000)) throw new Error('系統忙碌，請稍後再試');
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const settingsSheet = getOrCreateSheet_(SHEET_SETTINGS);
+    const settingRows = [
+      ['設定鍵', '設定值', '說明'],
+      ['normalShippingFee', DEFAULT_WEBSITE_SETTINGS.normalShippingFee, '常溫宅配運費'],
+      ['normalFreeShippingThreshold', DEFAULT_WEBSITE_SETTINGS.normalFreeShippingThreshold, '常溫免運門檻'],
+      ['lowTempShippingFee', DEFAULT_WEBSITE_SETTINGS.lowTempShippingFee, '低溫宅配運費'],
+      ['lowTempFreeShippingThreshold', DEFAULT_WEBSITE_SETTINGS.lowTempFreeShippingThreshold, '低溫免運門檻'],
+      ['shippingDays', DEFAULT_WEBSITE_SETTINGS.shippingDays, '網站顯示的本週出貨日']
+    ];
+    if (settingsSheet.getLastRow() === 0 || settingsSheet.getRange(1, 1).getValue() === '') {
+      settingsSheet.getRange(1, 1, settingRows.length, settingRows[0].length).setValues(settingRows);
+      settingsSheet.setFrozenRows(1);
+      settingsSheet.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#d1e6c7');
+      settingsSheet.autoResizeColumns(1, 3);
+    }
+
+    const orderSheet = getOrCreateSheet_(SHEET_ORDERS);
+    ensureHeaders_(orderSheet, ['付款狀態', '匯款末五碼', '確認處理']);
+    const headers = getHeaders_(orderSheet);
+    const paymentCol = headers.indexOf('付款狀態') + 1;
+    const bankCol = headers.indexOf('匯款末五碼') + 1;
+    const rows = Math.max(1, orderSheet.getMaxRows() - 1);
+    const rule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['未付款', '已付款', '退款'], true)
+      .setAllowInvalid(false)
+      .build();
+    orderSheet.getRange(2, paymentCol, rows, 1).setDataValidation(rule);
+    orderSheet.getRange(2, bankCol, rows, 1).setNumberFormat('@');
+    orderSheet.getRange(1, paymentCol, 1, 2).setFontWeight('bold').setBackground('#d1e6c7');
+    SpreadsheetApp.flush();
+    ss.toast('訂單系統設定完成');
+  } finally {
+    if (lock.hasLock()) lock.releaseLock();
+  }
+}
 
 function doGet(e) {
   try {
     return jsonOutput_({
       status: 'success',
-      products: getProducts_()
+      products: getProducts_(),
+      settings: getWebsiteSettings_()
     });
   } catch (err) {
     return jsonOutput_({
@@ -85,6 +136,17 @@ function onEdit(e) {
           continue;
         }
       }
+      if (status === '取消') {
+        try {
+          cancelOrder_(sheet, row);
+          cell.setNote('');
+        } catch (err) {
+          cell.setNote('取消未完成：' + err.message + '。排除問題後，再選一次「取消」可接續處理。');
+          cell.setValue(e.oldValue || '已確認');
+          SpreadsheetApp.getActiveSpreadsheet().toast('訂單第 ' + row + ' 列取消未完成：' + err.message);
+          continue;
+        }
+      }
       if (['已確認', '備貨中', '已出貨', '已完成', '取消'].includes(status)) syncOrderStatus_(sheet, row, status);
     }
     SpreadsheetApp.flush();
@@ -106,6 +168,7 @@ function confirmOrder_(orderSheet, rowNumber) {
   const journalCol = getHeaders_(orderSheet).indexOf('確認處理') + 1;
   const journalCell = orderSheet.getRange(rowNumber, journalCol);
   let journal = readConfirmationJournal_(journalCell.getValue());
+  if (journal && journal.cancellation && journal.cancellation.phase === 'done') throw new Error('此訂單已取消並回補庫存，不可再次確認；請建立新訂單');
   if (journal && journal.phase === 'done') return;
   const fingerprint = JSON.stringify([order.items, order.subtotal, order.shipping, order.total, order.receiverName, order.receiverPhone, order.receiverAddress]);
   if (journal && journal.fingerprint !== fingerprint) throw new Error('確認處理中訂單內容已被修改，請先核對原始訂單');
@@ -143,6 +206,39 @@ function confirmOrder_(orderSheet, rowNumber) {
   SpreadsheetApp.flush();
 }
 
+function cancelOrder_(orderSheet, rowNumber) {
+  ensureHeaders_(orderSheet, ['確認處理']);
+  const order = getOrderFromRow_(orderSheet, rowNumber);
+  if (!order.orderId) throw new Error('訂單缺少訂單編號');
+  const journalCol = getHeaders_(orderSheet).indexOf('確認處理') + 1;
+  const journalCell = orderSheet.getRange(rowNumber, journalCol);
+  const journal = readConfirmationJournal_(journalCell.getValue());
+  if (!journal) return;
+  if (journal.phase !== 'done') throw new Error('請先完成此訂單的確認處理');
+  if (journal.cancellation && journal.cancellation.phase === 'done') return;
+
+  if (!journal.cancellation) {
+    const currentMap = buildProductsMap_(getProducts_());
+    journal.cancellation = {
+      phase: 'prepared',
+      inventory: aggregateItems_(order.items).map(item => {
+        const product = currentMap[String(item.id)];
+        if (!product) throw new Error('找不到商品：' + item.id);
+        const after = product.soldQty - item.qty;
+        if (after < 0) throw new Error('商品 ' + product.name + ' 的已售數量不足以回補，請先核對庫存');
+        return { id: product.id, before: product.soldQty, after };
+      })
+    };
+    journalCell.setValue(JSON.stringify(journal));
+    SpreadsheetApp.flush();
+  }
+  applyInventoryJournal_(journal.cancellation.inventory);
+  SpreadsheetApp.flush();
+  journal.cancellation.phase = 'done';
+  journalCell.setValue(JSON.stringify(journal));
+  SpreadsheetApp.flush();
+}
+
 function readConfirmationJournal_(value) {
   if (!value) return null;
   let journal;
@@ -171,7 +267,7 @@ function applyInventoryJournal_(entries) {
   const idCol = headers.indexOf('id'), soldCol = headers.indexOf('soldQty');
   if (idCol < 0 || soldCol < 0) throw new Error('商品主檔缺少 id 或 soldQty');
   entries.forEach(entry => {
-    if (!Number.isFinite(entry.before) || !Number.isFinite(entry.after) || entry.after < entry.before) throw new Error('庫存處理紀錄格式錯誤');
+    if (!Number.isFinite(entry.before) || !Number.isFinite(entry.after) || entry.before < 0 || entry.after < 0) throw new Error('庫存處理紀錄格式錯誤');
     const row = values.findIndex((value, index) => index > 0 && String(value[idCol]).trim() === entry.id);
     if (row < 0) throw new Error('找不到商品：' + entry.id);
     const current = toNumber_(values[row][soldCol], 0);
@@ -208,6 +304,7 @@ function writeConfirmationRow_(sheet, orderId, key, rowObject) {
 function applyPricingAndTotals_(rawPayload) {
   const products = getProducts_();
   const productsMap = buildProductsMap_(products);
+  const settings = getWebsiteSettings_();
 
   const pricedItems = aggregateItems_(rawPayload.items).map(item => {
     const product = productsMap[String(item.id)];
@@ -264,12 +361,12 @@ function applyPricingAndTotals_(rawPayload) {
 
   if (hasLowTemp) {
     shippingMethod = '低溫宅配';
-    shipping = lowTempSubtotal >= 1000 ? 0 : 250;
+    shipping = lowTempSubtotal >= settings.lowTempFreeShippingThreshold ? 0 : settings.lowTempShippingFee;
   } else if (shippingMethod === '面交') {
     shipping = 0;
   } else {
     shippingMethod = '宅配';
-    shipping = normalSubtotal >= 500 ? 0 : 65;
+    shipping = normalSubtotal >= settings.normalFreeShippingThreshold ? 0 : settings.normalShippingFee;
   }
 
   const subtotal = normalSubtotal + lowTempSubtotal;
@@ -388,6 +485,8 @@ function writeOrder_(orderId, now, payload) {
     '商品JSON',
     '備註',
     '狀態',
+    '付款狀態',
+    '匯款末五碼',
     '確認處理'
   ];
 
@@ -411,6 +510,8 @@ function writeOrder_(orderId, now, payload) {
     '商品JSON': JSON.stringify(payload.items || []),
     '備註': payload.note || '',
     '狀態': '新訂單',
+    '付款狀態': '未付款',
+    '匯款末五碼': '',
     '確認處理': ''
   });
 }
@@ -834,7 +935,34 @@ function buildItemsText_(items) {
 
 function createOrderId_() {
   const now = new Date();
-  return Utilities.formatDate(now, 'Asia/Taipei', 'yyyyMMddHHmmss') + '-' + Utilities.getUuid();
+  const prefix = Utilities.formatDate(now, 'Asia/Taipei', 'yyMMdd-HHmmss');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ORDERS);
+  const existing = sheet && sheet.getLastRow() > 1 ? new Set(sheet.getDataRange().getValues().slice(1).map(row => String(row[0]))) : new Set();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const suffix = String(Utilities.getUuid()).replace(/[^a-z0-9]/gi, '').slice(0, 4).toUpperCase().padEnd(4, '0');
+    const id = prefix + '-' + suffix;
+    if (!existing.has(id)) return id;
+  }
+  throw new Error('無法產生唯一訂單編號，請重新送出');
+}
+
+function getWebsiteSettings_() {
+  const settings = { ...DEFAULT_WEBSITE_SETTINGS };
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SETTINGS);
+  if (!sheet || sheet.getLastRow() < 2) return settings;
+  const values = sheet.getDataRange().getValues();
+  values.slice(1).forEach(row => {
+    const key = String(row[0] || '').trim();
+    if (!Object.prototype.hasOwnProperty.call(settings, key)) return;
+    if (key === 'shippingDays') {
+      const value = String(row[1] || '').trim();
+      if (value) settings[key] = value;
+      return;
+    }
+    const value = Number(row[1]);
+    if (Number.isFinite(value) && value >= 0) settings[key] = value;
+  });
+  return settings;
 }
 
 function getOrCreateSheet_(name) {
