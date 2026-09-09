@@ -54,7 +54,7 @@ function setup() {
   ]));
   const context=vm.createContext({console,Date,SpreadsheetApp:{getActiveSpreadsheet:()=>book,flush:()=>{assert.equal(held,true);events.push(['flush']);}},
     LockService:{getScriptLock:()=>({tryLock:()=>{if(busy||held)return false;held=true;events.push(['lock']);return true;},hasLock:()=>held,releaseLock:()=>{held=false;events.push(['release']);}})},
-    Utilities:{formatDate:()=> '20260908',getUuid:()=>String(++nextId)},
+    Utilities:{formatDate:(_date,_tz,pattern)=> pattern === 'yyMMdd-HHmmss' ? '260908-123456' : '20260908',getUuid:()=>String(++nextId)},
     ContentService:{MimeType:{JSON:'json'},createTextOutput:text=>({setMimeType:()=>JSON.parse(text)})}
   });
   vm.runInContext(source,context);
@@ -64,15 +64,20 @@ function setup() {
     orders.rows[row-1][col-1]='已確認';
     context.onEdit({range:orders.getRange(row,col),value:'已確認'});
   };
+  const status=(row,value,oldValue)=>{
+    const orders=sheets.get('訂單總表'), col=orders.rows[0].indexOf('狀態')+1;
+    orders.rows[row-1][col-1]=value;
+    context.onEdit({range:orders.getRange(row,col),value,oldValue});
+  };
   const objects=name=>{const s=sheets.get(name);return s ? s.rows.slice(1).map(row=>Object.fromEntries(s.rows[0].map((h,i)=>[h,row[i]]))):[];};
-  return {context,post,confirm,objects,sheets,events,setBusy:v=>{busy=v;},fail:(sheet,after=false,col=null)=>{failure={sheet,after,col};}};
+  return {context,post,confirm,status,objects,sheets,events,setBusy:v=>{busy=v;},fail:(sheet,after=false,col=null)=>{failure={sheet,after,col};}};
 }
 {
   const t=setup();
   const order=t.post([{id:'dumpling',qty:1,shippingType:'normal',price:1}],{partnerCode:'TEST',discountRate:0.1});
   assert.equal(order.status,'success'); assert.equal(order.shipping,250);assert.equal(order.total,500);assert.equal(order.items[0].price,250);assert.equal(order.items[0].shippingType,'frozen');
   assert.equal(order.priceType,'一般售價');assert.equal(order.partnerCode,'');assert.equal(order.discountRate,1);
-  assert.match(order.orderId,/20260908-/);
+  assert.match(order.orderId,/^260908-123456-[A-Z0-9]{4}$/);
   assert.equal(t.objects('訂單總表').length,1);
   assert.equal(t.objects('商品主檔')[1].soldQty,0,'new order does not reserve stock');
   assert.equal(t.post([{id:'dumpling',qty:1}]).status,'duplicate');
@@ -130,3 +135,42 @@ console.log('PASS resume after details/accounting/inventory failures, including 
   console.log('PASS legacy records with unproven completion require manual review');
 }
 console.log('All backend tests passed. No live Google calls.');
+
+{
+  const t=setup();
+  const settings=t.context.SpreadsheetApp.getActiveSpreadsheet().insertSheet('網站設定');
+  settings.rows=[['設定鍵','設定值'],['normalShippingFee',80],['normalFreeShippingThreshold',300],['lowTempShippingFee',300],['lowTempFreeShippingThreshold',700],['shippingDays','週二、週四']];
+  const result=t.post([{id:'veg',qty:2}]);
+  assert.equal(result.shipping,80);assert.equal(result.total,280);
+  assert.equal(t.context.doGet({}).settings.shippingDays,'週二、週四');
+  console.log('PASS website settings control authoritative shipping and shipping-day text');
+}
+
+{
+  const t=setup();t.post([{id:'veg',qty:2}]);t.confirm(2);
+  assert.equal(t.objects('商品主檔')[0].soldQty,2);
+  t.status(2,'取消','已確認');
+  assert.equal(t.objects('商品主檔')[0].soldQty,0);
+  t.status(2,'取消','取消');
+  assert.equal(t.objects('商品主檔')[0].soldQty,0);
+  assert.equal(JSON.parse(t.objects('訂單總表')[0]['確認處理']).cancellation.phase,'done');
+  t.status(2,'已確認','取消');
+  assert.equal(t.objects('訂單總表')[0]['狀態'],'新訂單');
+  assert.equal(t.objects('商品主檔')[0].soldQty,0);
+  console.log('PASS cancellation restores inventory once and canceled order cannot be reconfirmed');
+}
+
+{
+  const t=setup();t.post([{id:'veg',qty:2}]);t.confirm(2);
+  t.fail('商品主檔',true,7);t.status(2,'取消','已確認');
+  assert.equal(t.objects('商品主檔')[0].soldQty,0);
+  t.status(2,'取消','已確認');
+  assert.equal(t.objects('商品主檔')[0].soldQty,0);
+  console.log('PASS interrupted cancellation resumes without double restock');
+}
+
+{
+  const t=setup();t.post([{id:'veg',qty:2}]);t.status(2,'取消','新訂單');
+  assert.equal(t.objects('商品主檔')[0].soldQty,0);
+  console.log('PASS canceling an unconfirmed order does not change inventory');
+}
