@@ -640,7 +640,7 @@
             <input type="radio" name="shipping" value="宅配" checked />
             <span id="homeDeliveryLabel">宅配（常溫）</span>
           </div>
-          <strong id="shippingRateText">常溫 65 元／低溫 250 元</strong>
+          <strong id="shippingRateText">運費載入中</strong>
         </label>
 
         <label class="option">
@@ -748,6 +748,35 @@
     return item.shippingType === 'chilled' || item.shippingType === 'frozen' ? 'lowTemp' : 'normal';
   }
 
+  // Only enable tiered pricing when the deployed backend advertises support.
+  function hasTieredLowTempShipping() {
+    return Number(websiteSettings.shippingPolicyVersion) === 2;
+  }
+
+  function getLowTempShipping(subtotal) {
+    if (subtotal >= websiteSettings.lowTempFreeShippingThreshold) return 0;
+    if (hasTieredLowTempShipping() && subtotal >= websiteSettings.lowTempDiscountThreshold) {
+      return websiteSettings.lowTempDiscountFee;
+    }
+    return websiteSettings.lowTempShippingFee;
+  }
+
+  function getLowTempShippingDescription() {
+    const s = websiteSettings;
+    if (!hasTieredLowTempShipping()) return `低溫宅配滿 ${s.lowTempFreeShippingThreshold} 元免運，未滿運費 ${s.lowTempShippingFee} 元。`;
+    return `低溫宅配運費 ${s.lowTempShippingFee} 元，滿 ${s.lowTempDiscountThreshold} 元運費優惠 ${s.lowTempDiscountFee} 元，滿 ${s.lowTempFreeShippingThreshold} 元免運。`;
+  }
+
+  function getLowTempShippingHint(subtotal) {
+    const s = websiteSettings;
+    if (subtotal >= s.lowTempFreeShippingThreshold) return '本筆已達免運門檻 🎉';
+    if (hasTieredLowTempShipping()) {
+      if (subtotal < s.lowTempDiscountThreshold) return `本筆低溫商品再買 ${s.lowTempDiscountThreshold - subtotal} 元，運費降為 ${s.lowTempDiscountFee} 元；滿 ${s.lowTempFreeShippingThreshold} 元免運。`;
+      return `本筆已享運費優惠 ${s.lowTempDiscountFee} 元，倆口田補貼 ${s.lowTempShippingFee - s.lowTempDiscountFee} 元；再買 ${s.lowTempFreeShippingThreshold - subtotal} 元免運。`;
+    }
+    return `本筆低溫商品再買 ${s.lowTempFreeShippingThreshold - subtotal} 元即可免運`;
+  }
+
   function getCartGroups() {
     const groups = { normal: { label: '常溫', items: [], subtotal: 0 }, lowTemp: { label: '低溫（冷藏／冷凍）', items: [], subtotal: 0 } };
     products.forEach(product => {
@@ -759,7 +788,7 @@
     });
     const pickup = state.normalShippingMethod === '面交';
     groups.normal.shipping = !groups.normal.items.length || pickup || groups.normal.subtotal >= websiteSettings.normalFreeShippingThreshold ? 0 : websiteSettings.normalShippingFee;
-    groups.lowTemp.shipping = !groups.lowTemp.items.length || groups.lowTemp.subtotal >= websiteSettings.lowTempFreeShippingThreshold ? 0 : websiteSettings.lowTempShippingFee;
+    groups.lowTemp.shipping = !groups.lowTemp.items.length ? 0 : getLowTempShipping(groups.lowTemp.subtotal);
     return groups;
   }
 
@@ -919,7 +948,7 @@
     const frozen = sortedProducts.filter(product => product.shippingType === 'frozen');
 
     const normalHtml = renderProductGroup(normal, '常溫蔬菜', `常溫商品可與其他常溫商品一起結帳，宅配滿 ${websiteSettings.normalFreeShippingThreshold} 元免運。`);
-    const lowTempDescription = `可與冷藏／冷凍商品合併低溫宅配，滿 ${websiteSettings.lowTempFreeShippingThreshold} 元免運，未滿運費 ${websiteSettings.lowTempShippingFee} 元。`;
+    const lowTempDescription = `冷藏／冷凍商品可合併下單。${getLowTempShippingDescription()}`;
     const chilledHtml = renderProductGroup(chilled, '冷藏料理', lowTempDescription);
     const frozenHtml = renderProductGroup(frozen, '冷凍料理', lowTempDescription);
 
@@ -1013,14 +1042,14 @@
     const group = groups[checkoutGroup];
     const hasItems = group.items.length > 0;
     document.getElementById('homeDeliveryLabel').textContent = lowTemp ? '低溫宅配' : '宅配（常溫）';
-    document.getElementById('deliveryHint').textContent = lowTemp ? `本筆為低溫訂單，冷藏／冷凍合併宅配，滿 ${websiteSettings.lowTempFreeShippingThreshold} 元免運，未滿 ${websiteSettings.lowTempShippingFee} 元。` : `本筆常溫商品可選宅配或面交，宅配滿 ${websiteSettings.normalFreeShippingThreshold} 元免運，未滿 ${websiteSettings.normalShippingFee} 元。`;
+    document.getElementById('deliveryHint').textContent = lowTemp ? `本筆為低溫訂單，冷藏／冷凍合併宅配。${getLowTempShippingDescription()}` : `本筆常溫商品可選宅配或面交，宅配滿 ${websiteSettings.normalFreeShippingThreshold} 元免運，未滿 ${websiteSettings.normalShippingFee} 元。`;
     document.querySelector('label[for="customerAddress"]').textContent = pickup.checked ? '地址（面交免填）' : '地址 *';
     subtotalEl.textContent = formatMoney(group.subtotal);
     shippingFeeEl.textContent = hasItems ? formatMoney(group.shipping) : '尚未選購商品';
     document.getElementById('shippingFeeLabel').textContent = pickup.checked ? '面交' : (lowTemp ? '低溫運費' : '常溫運費');
     grandTotalEl.textContent = formatMoney(group.subtotal + group.shipping);
     const threshold = lowTemp ? websiteSettings.lowTempFreeShippingThreshold : websiteSettings.normalFreeShippingThreshold;
-    document.getElementById('freeShippingHint').textContent = !hasItems ? `常溫滿 ${websiteSettings.normalFreeShippingThreshold} 元免運，低溫滿 ${websiteSettings.lowTempFreeShippingThreshold} 元免運` : pickup.checked ? '本筆已選擇面交自取' : group.shipping === 0 ? '本筆已達免運門檻 🎉' : `本筆${lowTemp ? '低溫' : '常溫'}商品再買 ${threshold - group.subtotal} 元即可免運`;
+    document.getElementById('freeShippingHint').textContent = !hasItems ? `常溫滿 ${websiteSettings.normalFreeShippingThreshold} 元免運。${getLowTempShippingDescription()}` : pickup.checked ? '本筆已選擇面交自取' : lowTemp ? getLowTempShippingHint(group.subtotal) : group.shipping === 0 ? '本筆已達免運門檻 🎉' : `本筆${lowTemp ? '低溫' : '常溫'}商品再買 ${threshold - group.subtotal} 元即可免運`;
     renderCart(groups);
   }
 
@@ -1102,7 +1131,7 @@
 
     if (hasLowTemp) {
       shippingMethod = '低溫宅配';
-      shipping = lowTempSubtotal >= websiteSettings.lowTempFreeShippingThreshold ? 0 : websiteSettings.lowTempShippingFee;
+      shipping = getLowTempShipping(lowTempSubtotal);
     } else if (shippingMethod === '面交') {
       shipping = 0;
     } else {
@@ -1514,7 +1543,7 @@
         websiteSettings = { ...websiteSettings, ...data.settings };
       }
       document.getElementById('shippingDaysText').textContent = `📦 本週出貨日：${websiteSettings.shippingDays}`;
-      document.getElementById('shippingRateText').textContent = `常溫 ${websiteSettings.normalShippingFee} 元／低溫 ${websiteSettings.lowTempShippingFee} 元`;
+      document.getElementById('shippingRateText').textContent = `常溫 ${websiteSettings.normalShippingFee} 元／低溫 ${websiteSettings.lowTempShippingFee} 元（滿額優惠見下方）`;
 
       products = data.products.map(product => ({
         ...product,
@@ -1553,3 +1582,4 @@
   </div>
 </body>
 </html>
+
