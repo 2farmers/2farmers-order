@@ -494,6 +494,18 @@ function roundPrice_(value) {
 // Google Calendar
 // ===============================
 
+function authorizeCalendar_() {
+  const calendarName = String(getWebsiteSettings_().calendarName || '倆口田訂單').trim() || '倆口田訂單';
+  let calendars = CalendarApp.getCalendarsByName(calendarName);
+  if (!calendars || !calendars.length) {
+    CalendarApp.createCalendar(calendarName, {
+      summary: '倆口田訂單與希望收貨日'
+    });
+  }
+  return 'Calendar authorization OK';
+}
+
+
 function createCalendarEventForOrder_(orderId, payload) {
   if (payload.receiptDateMode !== '指定日期' || !payload.preferredReceiptDate) {
     return { status: 'skipped', message: '未指定收貨日，不建立行事曆事件' };
