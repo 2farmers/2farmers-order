@@ -85,7 +85,8 @@ function setup() {
   assert.equal(t.requests[0].paymentMethod,'中國信託');
   assert.equal(t.requests[0].receiptDateMode,'不指定');
   assert.equal(t.get('paymentResultBox').style.display,'block');
-  assert.equal(t.run('currentPaymentAmount'),'1230');
+  assert.equal(t.run('savedOrders[0].data.grandTotal'),1230);
+  assert.equal(t.run('currentPaymentAmount'),'400');
   console.log('PASS shipping thresholds, mixed totals, split payloads, retained cart/form, pickup, receipts/LINE IDs, submission lock');
   for (const mode of ['network', 'duplicate', 'reject', 'no-id']) {
     const f = setup(); f.mode(mode); f.qty('veg', 1); f.customer();
