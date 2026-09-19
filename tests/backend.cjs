@@ -149,6 +149,38 @@ console.log('PASS resume after details/accounting/inventory failures, including 
   assert.equal(free.shipping,0);assert.equal(free.total,2000);
   console.log('PASS tiered low-temp shipping and payment/receipt persistence');
 }
+{
+  const t=setup();
+  const created=[];
+  const calendar={
+    createAllDayEvent:(title,date,options)=>{
+      created.push({title,date,options});
+      return {getId:()=> 'EVENT-TEST-1'};
+    }
+  };
+  t.context.CalendarApp={
+    getCalendarsByName:name=>[calendar],
+    createCalendar:()=>calendar
+  };
+  const result=t.post([{id:'veg',qty:2}],{
+    receiptDateMode:'指定日期',
+    preferredReceiptDate:'2026-09-23',
+    paymentMethod:'中國信託'
+  });
+  assert.equal(result.status,'success');
+  assert.equal(result.calendarStatus,'created');
+  assert.equal(created.length,1);
+  assert.match(created[0].title,/收貨｜測試｜宅配/);
+  assert.match(created[0].options.description,/訂單編號/);
+  assert.equal(t.objects('訂單總表')[0]['行事曆事件ID'],'EVENT-TEST-1');
+  assert.equal(t.post([{id:'veg',qty:2}],{
+    receiptDateMode:'指定日期',
+    preferredReceiptDate:'2026-09-23',
+    paymentMethod:'中國信託'
+  }).status,'duplicate');
+  assert.equal(created.length,1);
+  console.log('PASS preferred receipt date creates one calendar event and stores event ID');
+}
 console.log('All backend tests passed. No live Google calls.');
 
 {
