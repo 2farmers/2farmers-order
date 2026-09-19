@@ -494,7 +494,7 @@ function roundPrice_(value) {
 // Google Calendar
 // ===============================
 
-function authorizeCalendar_() {
+function authorizeCalendar() {
   const calendarName = String(getWebsiteSettings_().calendarName || '倆口田訂單').trim() || '倆口田訂單';
   let calendars = CalendarApp.getCalendarsByName(calendarName);
   if (!calendars || !calendars.length) {
