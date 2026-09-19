@@ -28,7 +28,8 @@ const DEFAULT_WEBSITE_SETTINGS = {
   postAccount: '',
   postAccountName: '',
   postBranch: '',
-  linePayInfo: ''
+  linePayInfo: '',
+  calendarName: '倆口田訂單'
 };
 
 // Run once from the Apps Script editor after installing this version.
@@ -56,7 +57,8 @@ function setupOrderSystem() {
       ['postAccount', DEFAULT_WEBSITE_SETTINGS.postAccount, '郵局收款帳號'],
       ['postAccountName', DEFAULT_WEBSITE_SETTINGS.postAccountName, '郵局戶名'],
       ['postBranch', DEFAULT_WEBSITE_SETTINGS.postBranch, '郵局分支局'],
-      ['linePayInfo', DEFAULT_WEBSITE_SETTINGS.linePayInfo, 'LINE Pay／LINE 聯絡資訊']
+      ['linePayInfo', DEFAULT_WEBSITE_SETTINGS.linePayInfo, 'LINE Pay／LINE 聯絡資訊'],
+      ['calendarName', DEFAULT_WEBSITE_SETTINGS.calendarName, '自動建立訂單行程的 Google Calendar 名稱']
     ];
     if (settingsSheet.getLastRow() === 0 || settingsSheet.getRange(1, 1).getValue() === '') {
       settingsSheet.getRange(1, 1, settingRows.length, settingRows[0].length).setValues(settingRows);
@@ -113,8 +115,22 @@ function doPost(e) {
     writeStarted = true;
     writeOrder_(orderId, new Date(), payload);
     SpreadsheetApp.flush();
+
+    let calendarStatus = 'skipped';
+    let calendarMessage = '';
+    try {
+      const calendarResult = createCalendarEventForOrder_(orderId, payload);
+      calendarStatus = calendarResult.status;
+      calendarMessage = calendarResult.message || '';
+    } catch (calendarErr) {
+      calendarStatus = 'error';
+      calendarMessage = calendarErr.message || '行事曆建立失敗';
+      console.error('Calendar event error', calendarErr);
+    }
+
     return jsonOutput_({
       status: 'success', orderId,
+      calendarStatus, calendarMessage,
       priceType: payload.priceType, partnerName: payload.partnerName || '',
       partnerCode: payload.partnerCode || '', discountRate: payload.discountRate,
       subtotal: payload.subtotal, shipping: payload.shipping, total: payload.total,
@@ -475,6 +491,77 @@ function roundPrice_(value) {
 }
 
 // ===============================
+// Google Calendar
+// ===============================
+
+function createCalendarEventForOrder_(orderId, payload) {
+  if (payload.receiptDateMode !== '指定日期' || !payload.preferredReceiptDate) {
+    return { status: 'skipped', message: '未指定收貨日，不建立行事曆事件' };
+  }
+
+  const settings = getWebsiteSettings_();
+  const calendarName = String(settings.calendarName || '倆口田訂單').trim() || '倆口田訂單';
+  let calendars = CalendarApp.getCalendarsByName(calendarName);
+  let calendar = calendars && calendars.length ? calendars[0] : null;
+
+  if (!calendar) {
+    calendar = CalendarApp.createCalendar(calendarName, {
+      summary: '倆口田訂單與希望收貨日'
+    });
+  }
+
+  const date = parseLocalDate_(payload.preferredReceiptDate);
+  if (!date) throw new Error('希望收貨日格式錯誤');
+
+  const title = `收貨｜${payload.receiverName || '客人'}｜${payload.shippingMethod || ''}`;
+  const description = [
+    `訂單編號：${orderId}`,
+    `客人：${payload.receiverName || ''}`,
+    `電話：${payload.receiverPhone || ''}`,
+    `配送方式：${payload.shippingMethod || ''}`,
+    `地址：${payload.receiverAddress || ''}`,
+    `付款方式：${payload.paymentMethod || ''}`,
+    `總金額：${payload.total || 0} 元`,
+    '',
+    '商品：',
+    payload.itemsText || '',
+    '',
+    `備註：${payload.note || '無'}`
+  ].join('\n');
+
+  const event = calendar.createAllDayEvent(title, date, { description });
+  saveCalendarEventId_(orderId, event.getId());
+
+  return { status: 'created', message: `已新增到「${calendarName}」`, eventId: event.getId() };
+}
+
+function parseLocalDate_(value) {
+  const match = String(value || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const date = new Date(year, month, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) return null;
+  return date;
+}
+
+function saveCalendarEventId_(orderId, eventId) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ORDERS);
+  if (!sheet) return;
+  ensureHeaders_(sheet, ['行事曆事件ID']);
+  const headers = getHeaders_(sheet);
+  const idCol = headers.indexOf('訂單編號');
+  const eventCol = headers.indexOf('行事曆事件ID');
+  if (idCol < 0 || eventCol < 0) return;
+
+  const values = sheet.getDataRange().getValues();
+  const index = values.findIndex((row, i) => i > 0 && String(row[idCol]).trim() === String(orderId).trim());
+  if (index < 0) return;
+  sheet.getRange(index + 1, eventCol + 1).setValue(String(eventId || ''));
+}
+
+// ===============================
 // 商品主檔
 // ===============================
 
@@ -567,7 +654,8 @@ function writeOrder_(orderId, now, payload) {
     '確認處理',
     '付款方式',
     '收貨日模式',
-    '希望收貨日'
+    '希望收貨日',
+    '行事曆事件ID'
   ];
 
   ensureHeaders_(sheet, headers);
@@ -595,7 +683,8 @@ function writeOrder_(orderId, now, payload) {
     '確認處理': '',
     '付款方式': payload.paymentMethod || '',
     '收貨日模式': payload.receiptDateMode || '不指定',
-    '希望收貨日': payload.receiptDateMode === '指定日期' ? (payload.preferredReceiptDate || '') : ''
+    '希望收貨日': payload.receiptDateMode === '指定日期' ? (payload.preferredReceiptDate || '') : '',
+    '行事曆事件ID': ''
   });
 }
 
@@ -639,7 +728,8 @@ function getOrderFromRow_(sheet, rowNumber) {
     status: obj['狀態'],
     paymentMethod: obj['付款方式'] || '',
     receiptDateMode: obj['收貨日模式'] || '不指定',
-    preferredReceiptDate: obj['希望收貨日'] || ''
+    preferredReceiptDate: obj['希望收貨日'] || '',
+    calendarEventId: obj['行事曆事件ID'] || ''
   };
 }
 
@@ -1047,7 +1137,8 @@ function getWebsiteSettings_() {
     'postAccount',
     'postAccountName',
     'postBranch',
-    'linePayInfo'
+    'linePayInfo',
+    'calendarName'
   ]);
   values.slice(1).forEach(row => {
     const key = String(row[0] || '').trim();
