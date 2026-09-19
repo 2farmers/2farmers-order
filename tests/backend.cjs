@@ -77,7 +77,7 @@ function setup() {
 {
   const t=setup();
   const order=t.post([{id:'dumpling',qty:1,shippingType:'normal',price:1}],{partnerCode:'TEST',discountRate:0.1});
-  assert.equal(order.status,'success'); assert.equal(order.shipping,250);assert.equal(order.total,500);assert.equal(order.items[0].price,250);assert.equal(order.items[0].shippingType,'frozen');
+  assert.equal(order.status,'success'); assert.equal(order.shipping,160);assert.equal(order.total,410);assert.equal(order.items[0].price,250);assert.equal(order.items[0].shippingType,'frozen');
   assert.equal(order.priceType,'一般售價');assert.equal(order.partnerCode,'');assert.equal(order.discountRate,1);
   assert.match(order.orderId,/^260908-123456-[A-Z0-9]{4}$/);
   assert.equal(t.objects('訂單總表').length,1);
@@ -92,7 +92,8 @@ function setup() {
   assert.equal(t.events.at(-1)[0],'release');
   t.setBusy(true); const count=t.objects('訂單總表').length;
   assert.equal(t.post().retrySafe,true);assert.equal(t.objects('訂單總表').length,count);
-  console.log('PASS authoritative prices/temperature, aggregated stock, duplicate protection, validation, lock contention, no reservation on receipt');
+  assert.equal(t.objects('訂單總表')[0]['付款方式'],'');assert.equal(t.objects('訂單總表')[0]['收貨日模式'],'不指定');
+  console.log('PASS authoritative prices/temperature, aggregated stock, duplicate protection, payment/receipt defaults, validation, lock contention, no reservation on receipt');
 }
 {
   const t=setup();t.fail('訂單總表',true);
@@ -135,6 +136,18 @@ console.log('PASS resume after details/accounting/inventory failures, including 
   t.confirm(2);assert.equal(t.objects('商品主檔')[0].soldQty,2);
   assert.equal(t.objects('訂單總表')[0]['狀態'],'新訂單');
   console.log('PASS legacy records with unproven completion require manual review');
+}
+{
+  const t=setup();
+  const order=t.post([{id:'dumpling',qty:4}],{paymentMethod:'郵局',receiptDateMode:'指定日期',preferredReceiptDate:'2026-09-25'});
+  assert.equal(order.shipping,80);assert.equal(order.total,1080);
+  const saved=t.objects('訂單總表')[0];
+  assert.equal(saved['付款方式'],'郵局');
+  assert.equal(saved['收貨日模式'],'指定日期');
+  assert.equal(saved['希望收貨日'],'2026-09-25');
+  const free=t.post([{id:'dumpling',qty:8}],{receiverName:'另一位',receiverPhone:'0911111111',receiverAddress:'另一地址'});
+  assert.equal(free.shipping,0);assert.equal(free.total,2000);
+  console.log('PASS tiered low-temp shipping and payment/receipt persistence');
 }
 console.log('All backend tests passed. No live Google calls.');
 
