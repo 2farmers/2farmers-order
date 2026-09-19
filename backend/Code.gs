@@ -13,9 +13,20 @@ const DUPLICATE_MINUTES = 10;
 const DEFAULT_WEBSITE_SETTINGS = {
   normalShippingFee: 65,
   normalFreeShippingThreshold: 500,
-  lowTempShippingFee: 250,
+  lowTempShippingFee: 160,
   lowTempFreeShippingThreshold: 1000,
-  shippingDays: '週一、週二、週三、週四'
+  lowTempDiscountThreshold: 1000,
+  lowTempDiscountFee: 80,
+  lowTempTieredFreeThreshold: 2000,
+  shippingPolicyVersion: 2,
+  shippingDays: '週一、週二、週三、週四',
+  ctbcBankCode: '822',
+  ctbcAccount: '',
+  ctbcAccountName: '',
+  postBankCode: '700',
+  postAccount: '',
+  postAccountName: '',
+  linePayInfo: ''
 };
 
 // Run once from the Apps Script editor after installing this version.
@@ -30,8 +41,18 @@ function setupOrderSystem() {
       ['normalShippingFee', DEFAULT_WEBSITE_SETTINGS.normalShippingFee, '常溫宅配運費'],
       ['normalFreeShippingThreshold', DEFAULT_WEBSITE_SETTINGS.normalFreeShippingThreshold, '常溫免運門檻'],
       ['lowTempShippingFee', DEFAULT_WEBSITE_SETTINGS.lowTempShippingFee, '低溫宅配運費'],
-      ['lowTempFreeShippingThreshold', DEFAULT_WEBSITE_SETTINGS.lowTempFreeShippingThreshold, '低溫免運門檻'],
-      ['shippingDays', DEFAULT_WEBSITE_SETTINGS.shippingDays, '網站顯示的本週出貨日']
+      ['lowTempFreeShippingThreshold', DEFAULT_WEBSITE_SETTINGS.lowTempFreeShippingThreshold, '舊版低溫免運門檻'],
+      ['shippingDays', DEFAULT_WEBSITE_SETTINGS.shippingDays, '網站顯示的本週出貨日'],
+      ['lowTempDiscountThreshold', DEFAULT_WEBSITE_SETTINGS.lowTempDiscountThreshold, '低溫優惠運費門檻'],
+      ['lowTempDiscountFee', DEFAULT_WEBSITE_SETTINGS.lowTempDiscountFee, '低溫滿額優惠運費'],
+      ['lowTempTieredFreeThreshold', DEFAULT_WEBSITE_SETTINGS.lowTempTieredFreeThreshold, '新版低溫免運門檻'],
+      ['ctbcBankCode', DEFAULT_WEBSITE_SETTINGS.ctbcBankCode, '中國信託銀行代碼'],
+      ['ctbcAccount', DEFAULT_WEBSITE_SETTINGS.ctbcAccount, '中國信託收款帳號'],
+      ['ctbcAccountName', DEFAULT_WEBSITE_SETTINGS.ctbcAccountName, '中國信託戶名'],
+      ['postBankCode', DEFAULT_WEBSITE_SETTINGS.postBankCode, '郵局代碼'],
+      ['postAccount', DEFAULT_WEBSITE_SETTINGS.postAccount, '郵局收款帳號'],
+      ['postAccountName', DEFAULT_WEBSITE_SETTINGS.postAccountName, '郵局戶名'],
+      ['linePayInfo', DEFAULT_WEBSITE_SETTINGS.linePayInfo, 'LINE Pay 收款資訊或連結']
     ];
     if (settingsSheet.getLastRow() === 0 || settingsSheet.getRange(1, 1).getValue() === '') {
       settingsSheet.getRange(1, 1, settingRows.length, settingRows[0].length).setValues(settingRows);
@@ -41,7 +62,7 @@ function setupOrderSystem() {
     }
 
     const orderSheet = getOrCreateSheet_(SHEET_ORDERS);
-    ensureHeaders_(orderSheet, ['付款狀態', '匯款末五碼', '確認處理']);
+    ensureHeaders_(orderSheet, ['付款狀態', '匯款末五碼', '確認處理', '付款方式', '收貨日模式', '希望收貨日']);
     configurePaymentColumns_(orderSheet);
     const archiveSheet = getOrCreateSheet_(SHEET_ARCHIVE);
     ensureHeaders_(archiveSheet, getHeaders_(orderSheet));
@@ -405,7 +426,15 @@ function applyPricingAndTotals_(rawPayload) {
 
   if (hasLowTemp) {
     shippingMethod = '低溫宅配';
-    shipping = lowTempSubtotal >= settings.lowTempFreeShippingThreshold ? 0 : settings.lowTempShippingFee;
+    if (Number(settings.shippingPolicyVersion) === 2) {
+      shipping = lowTempSubtotal >= settings.lowTempTieredFreeThreshold
+        ? 0
+        : lowTempSubtotal >= settings.lowTempDiscountThreshold
+          ? settings.lowTempDiscountFee
+          : settings.lowTempShippingFee;
+    } else {
+      shipping = lowTempSubtotal >= settings.lowTempFreeShippingThreshold ? 0 : settings.lowTempShippingFee;
+    }
   } else if (shippingMethod === '面交') {
     shipping = 0;
   } else {
@@ -531,7 +560,10 @@ function writeOrder_(orderId, now, payload) {
     '狀態',
     '付款狀態',
     '匯款末五碼',
-    '確認處理'
+    '確認處理',
+    '付款方式',
+    '收貨日模式',
+    '希望收貨日'
   ];
 
   ensureHeaders_(sheet, headers);
@@ -556,7 +588,10 @@ function writeOrder_(orderId, now, payload) {
     '狀態': '新訂單',
     '付款狀態': '未付款',
     '匯款末五碼': '',
-    '確認處理': ''
+    '確認處理': '',
+    '付款方式': payload.paymentMethod || '',
+    '收貨日模式': payload.receiptDateMode || '不指定',
+    '希望收貨日': payload.receiptDateMode === '指定日期' ? (payload.preferredReceiptDate || '') : ''
   });
 }
 
@@ -597,7 +632,10 @@ function getOrderFromRow_(sheet, rowNumber) {
     itemsText: obj['商品明細'],
     items,
     note: obj['備註'],
-    status: obj['狀態']
+    status: obj['狀態'],
+    paymentMethod: obj['付款方式'] || '',
+    receiptDateMode: obj['收貨日模式'] || '不指定',
+    preferredReceiptDate: obj['希望收貨日'] || ''
   };
 }
 
@@ -995,17 +1033,29 @@ function getWebsiteSettings_() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SETTINGS);
   if (!sheet || sheet.getLastRow() < 2) return settings;
   const values = sheet.getDataRange().getValues();
+  const stringKeys = new Set([
+    'shippingDays',
+    'ctbcBankCode',
+    'ctbcAccount',
+    'ctbcAccountName',
+    'postBankCode',
+    'postAccount',
+    'postAccountName',
+    'linePayInfo'
+  ]);
   values.slice(1).forEach(row => {
     const key = String(row[0] || '').trim();
     if (!Object.prototype.hasOwnProperty.call(settings, key)) return;
-    if (key === 'shippingDays') {
-      const value = String(row[1] || '').trim();
-      if (value) settings[key] = value;
+    if (stringKeys.has(key)) {
+      const value = String(row[1] ?? '').trim();
+      if (value || key !== 'shippingDays') settings[key] = value;
       return;
     }
     const value = Number(row[1]);
     if (Number.isFinite(value) && value >= 0) settings[key] = value;
   });
+  // Presence of the tiered fields means this backend supports the newer low-temp policy.
+  settings.shippingPolicyVersion = 2;
   return settings;
 }
 
