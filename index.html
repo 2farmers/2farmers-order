@@ -792,9 +792,11 @@
     ctbcBankCode: '',
     ctbcAccount: '',
     ctbcAccountName: '',
+    ctbcBranch: '',
     postBankCode: '',
     postAccount: '',
     postAccountName: '',
+    postBranch: '',
     linePayInfo: ''
   };
 
@@ -1294,6 +1296,7 @@
         websiteSettings.postBankCode ? `代碼：${websiteSettings.postBankCode}` : '',
         websiteSettings.postAccount ? `帳號：${websiteSettings.postAccount}` : '',
         websiteSettings.postAccountName ? `戶名：${websiteSettings.postAccountName}` : '',
+        websiteSettings.postBranch ? `分支局：${websiteSettings.postBranch}` : '',
         `本筆應付金額：${amount} 元`
       ].filter(Boolean);
       return {
@@ -1304,8 +1307,8 @@
     }
     if (method === 'LINE Pay') {
       const lines = [
-        '付款方式：LINE Pay',
-        websiteSettings.linePayInfo || 'LINE Pay 收款資訊尚未設定',
+        '付款方式：LINE Pay／LINE 聯絡',
+        websiteSettings.linePayInfo || 'LINE Pay／LINE 聯絡資訊尚未設定',
         `本筆應付金額：${amount} 元`
       ];
       return {
@@ -1319,6 +1322,7 @@
       websiteSettings.ctbcBankCode ? `銀行代碼：${websiteSettings.ctbcBankCode}` : '',
       websiteSettings.ctbcAccount ? `帳號：${websiteSettings.ctbcAccount}` : '',
       websiteSettings.ctbcAccountName ? `戶名：${websiteSettings.ctbcAccountName}` : '',
+      websiteSettings.ctbcBranch ? `分行：${websiteSettings.ctbcBranch}` : '',
       `本筆應付金額：${amount} 元`
     ].filter(Boolean);
     return {
