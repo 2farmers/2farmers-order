@@ -827,26 +827,29 @@
   }
 
   function getLowTempShipping(subtotal) {
-    if (subtotal >= websiteSettings.lowTempFreeShippingThreshold) return 0;
-    if (hasTieredLowTempShipping() && subtotal >= websiteSettings.lowTempDiscountThreshold) {
-      return websiteSettings.lowTempDiscountFee;
+    const s = websiteSettings;
+    if (hasTieredLowTempShipping()) {
+      if (subtotal >= s.lowTempTieredFreeThreshold) return 0;
+      if (subtotal >= s.lowTempDiscountThreshold) return s.lowTempDiscountFee;
+      return s.lowTempShippingFee;
     }
-    return websiteSettings.lowTempShippingFee;
+    return subtotal >= s.lowTempFreeShippingThreshold ? 0 : s.lowTempShippingFee;
   }
 
   function getLowTempShippingDescription() {
     const s = websiteSettings;
     if (!hasTieredLowTempShipping()) return `低溫宅配滿 ${s.lowTempFreeShippingThreshold} 元免運，未滿運費 ${s.lowTempShippingFee} 元。`;
-    return `低溫宅配運費 ${s.lowTempShippingFee} 元，滿 ${s.lowTempDiscountThreshold} 元運費優惠 ${s.lowTempDiscountFee} 元，滿 ${s.lowTempFreeShippingThreshold} 元免運。`;
+    return `低溫宅配運費 ${s.lowTempShippingFee} 元，滿 ${s.lowTempDiscountThreshold} 元運費優惠 ${s.lowTempDiscountFee} 元，滿 ${s.lowTempTieredFreeThreshold} 元免運。`;
   }
 
   function getLowTempShippingHint(subtotal) {
     const s = websiteSettings;
-    if (subtotal >= s.lowTempFreeShippingThreshold) return '本筆已達免運門檻 🎉';
     if (hasTieredLowTempShipping()) {
-      if (subtotal < s.lowTempDiscountThreshold) return `本筆低溫商品再買 ${s.lowTempDiscountThreshold - subtotal} 元，運費降為 ${s.lowTempDiscountFee} 元；滿 ${s.lowTempFreeShippingThreshold} 元免運。`;
-      return `本筆已享運費優惠 ${s.lowTempDiscountFee} 元，倆口田補貼 ${s.lowTempShippingFee - s.lowTempDiscountFee} 元；再買 ${s.lowTempFreeShippingThreshold - subtotal} 元免運。`;
+      if (subtotal >= s.lowTempTieredFreeThreshold) return '本筆已達免運門檻 🎉';
+      if (subtotal < s.lowTempDiscountThreshold) return `本筆低溫商品再買 ${s.lowTempDiscountThreshold - subtotal} 元，運費降為 ${s.lowTempDiscountFee} 元；滿 ${s.lowTempTieredFreeThreshold} 元免運。`;
+      return `本筆已享運費優惠 ${s.lowTempDiscountFee} 元，倆口田補貼 ${s.lowTempShippingFee - s.lowTempDiscountFee} 元；再買 ${s.lowTempTieredFreeThreshold - subtotal} 元免運。`;
     }
+    if (subtotal >= s.lowTempFreeShippingThreshold) return '本筆已達免運門檻 🎉';
     return `本筆低溫商品再買 ${s.lowTempFreeShippingThreshold - subtotal} 元即可免運`;
   }
 
