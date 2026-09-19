@@ -1,0 +1,21 @@
+name: Order System Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches:
+      - upgrade-payment-delivery-20260919
+
+jobs:
+  node-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Backend tests
+        run: node tests/backend.cjs
+      - name: Checkout tests
+        run: node tests/checkout-unit.cjs
