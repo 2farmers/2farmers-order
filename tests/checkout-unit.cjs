@@ -47,12 +47,12 @@ function setup() {
   assert.equal(t.get('submitBtn').disabled, true);
   t.qty('veg', 4); assert.equal(t.get('grandTotal').textContent, '465 元');
   t.qty('veg', 5); assert.equal(t.get('shippingFee').textContent, '0 元');
-  t.qty('dumpling', 3); assert.equal(t.get('stickyGrandTotal').textContent, '1500 元');
+  t.qty('dumpling', 3); assert.equal(t.get('stickyGrandTotal').textContent, '1410 元');
   assert.equal(t.get('cartNotice').hidden, false);
   t.run("checkoutGroup = 'lowTemp'; updateTotals();");
-  assert.equal(t.get('grandTotal').textContent, '1000 元');
+  assert.equal(t.get('grandTotal').textContent, '910 元');
   assert.equal(t.radios[1].disabled, true);
-  t.qty('dumpling', 4); assert.equal(t.get('shippingFee').textContent, '0 元');
+  t.qty('dumpling', 4); assert.equal(t.get('shippingFee').textContent, '80 元');
   t.qty('pickle', 1); t.customer();
   t.mode('pending'); const saving = t.run('prepareSavedOrder()');
   await t.run('prepareSavedOrder()');
@@ -61,7 +61,7 @@ function setup() {
   t.qty('veg', 9); assert.equal(t.run('state.quantities.veg'), 5);
   t.mode('success'); t.release(); await saving;
   assert.equal(t.requests[0].shippingMethod, '低溫宅配');
-  assert.equal(t.requests[0].total, 1150);
+  assert.equal(t.requests[0].total, 1230);
   assert.deepEqual(t.requests[0].items.map(i => i.id), ['dumpling', 'pickle']);
   assert.equal(t.run('state.quantities.veg'), 5);
   assert.equal(t.run('state.quantities.dumpling'), 0);
@@ -82,6 +82,10 @@ function setup() {
   assert.equal(t.requests[1].receiverAddress, '面交自取');
   assert.equal(t.run('savedOrders.length'), 2);
   assert.equal(t.get('submitBtn').disabled, true);
+  assert.equal(t.requests[0].paymentMethod,'中國信託');
+  assert.equal(t.requests[0].receiptDateMode,'不指定');
+  assert.equal(t.get('paymentResultBox').style.display,'block');
+  assert.equal(t.run('currentPaymentAmount'),'1230');
   console.log('PASS shipping thresholds, mixed totals, split payloads, retained cart/form, pickup, receipts/LINE IDs, submission lock');
   for (const mode of ['network', 'duplicate', 'reject', 'no-id']) {
     const f = setup(); f.mode(mode); f.qty('veg', 1); f.customer();
