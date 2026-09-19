@@ -19,3 +19,29 @@ jobs:
         run: node tests/backend.cjs
       - name: Checkout tests
         run: node tests/checkout-unit.cjs
+      - name: Verify deployed Apps Script backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://script.google.com/macros/s/AKfycbxu52TzvV_Ek848NPOYrC3j8xL3B_YQQdFs6-NgKYOQpjcdccifrhWo9C4zT2PQ5SQs/exec'
+          BODY="$(curl -LfsS "$URL")"
+          node -e '
+            const data = JSON.parse(process.argv[1]);
+            const s = data.settings || {};
+            const checks = [
+              [s.shippingPolicyVersion === 2, "shippingPolicyVersion"],
+              [Number(s.lowTempShippingFee) === 160, "lowTempShippingFee"],
+              [Number(s.lowTempDiscountThreshold) === 1000, "lowTempDiscountThreshold"],
+              [Number(s.lowTempDiscountFee) === 80, "lowTempDiscountFee"],
+              [Number(s.lowTempTieredFreeThreshold) === 2000, "lowTempTieredFreeThreshold"],
+              [String(s.ctbcAccount || "").length > 0, "ctbcAccount"],
+              [String(s.postAccount || "").length > 0, "postAccount"],
+              [String(s.linePayInfo || "").length > 0, "linePayInfo"]
+            ];
+            const failed = checks.filter(([ok]) => !ok).map(([,name]) => name);
+            if (failed.length) {
+              console.error("Deployed backend missing/incorrect:", failed.join(", "));
+              process.exit(1);
+            }
+            console.log("PASS deployed Apps Script backend is on the new payment/delivery version");
+          ' "$BODY"
