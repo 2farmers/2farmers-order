@@ -612,7 +612,7 @@
       </div>
       <div class="info-card">
         <div class="info-title">付款說明</div>
-        <div class="info-value">人工確認訂單</div>
+        <div class="info-value">轉帳 / LINE Pay</div>
       </div>
     </div>
 
@@ -654,6 +654,30 @@
     </div>
 
     <div class="section">
+      <h2 class="section-title">希望收貨日</h2>
+      <p class="section-subtitle">不指定最方便；若有需要，也可以告訴我們希望哪一天收到。</p>
+      <div class="shipping-options">
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="receiptDateMode" value="不指定" checked />
+            <span>不指定，由倆口田安排</span>
+          </div>
+        </label>
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="receiptDateMode" value="指定日期" />
+            <span>我有希望收貨日</span>
+          </div>
+        </label>
+      </div>
+      <div id="preferredReceiptDateWrap" class="field" style="display:none;margin-top:12px;">
+        <label for="preferredReceiptDate">希望收貨日</label>
+        <input id="preferredReceiptDate" type="date" />
+        <div class="hint" style="margin-top:6px;">此為希望日期；宅配實際到貨仍可能受物流狀況影響。</div>
+      </div>
+    </div>
+
+    <div class="section">
       <h2 class="section-title">本筆金額總計</h2>
       <div class="summary-box">
         <div id="freeShippingHint" style="font-size:0.9rem;color:#466d45;background:#edf4eb;padding:8px 10px;border-radius:10px;"></div>
@@ -669,6 +693,31 @@
           <span>本筆應付金額</span>
           <span id="grandTotal">0 元</span>
         </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">付款方式</h2>
+      <p class="section-subtitle">可以下單後轉帳，也可以收到貨前後再付款；依你方便即可。</p>
+      <div class="shipping-options">
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="paymentMethod" value="中國信託" checked />
+            <span>中國信託</span>
+          </div>
+        </label>
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="paymentMethod" value="郵局" />
+            <span>郵局</span>
+          </div>
+        </label>
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="paymentMethod" value="LINE Pay" />
+            <span>LINE Pay</span>
+          </div>
+        </label>
       </div>
     </div>
 
@@ -694,14 +743,14 @@
       </div>
 
       <div class="notice-box payment">
-        付款說明：送出訂單後，我們會先確認品項、出貨時間與配送方式。匯款帳號會在收到訂單後，透過 LINE 傳給您；收到貨品前後都可以轉帳。
+        付款說明：倆口田保留彈性付款方式，收到貨品前後都可以付款。新版完成後，送出訂單即可直接看到你選擇的付款資訊，不必再等待我們另外傳帳號。
       </div>
 
       <div class="actions">
         <button id="submitBtn" class="btn btn-primary" type="button">確認訂單並送出</button>
       </div>
       <div id="errorMsg" class="error"></div>
-      <div class="hint">送出後訂單會先寫入倆口田後台。請接著傳 LINE 訊息，讓我們能在 LINE 找到您並提供匯款資訊；若尚未傳送，訂單資料仍已收到，請勿重複下單。</div>
+      <div class="hint">送出後訂單會先寫入倆口田後台。訂單成立後不需要重複下單；若有臨時更改，再透過 LINE 聯絡我們即可。</div>
     </div>
 
     <div class="section">
@@ -728,7 +777,14 @@
     normalFreeShippingThreshold: 500,
     lowTempShippingFee: 250,
     lowTempFreeShippingThreshold: 1000,
-    shippingDays: '週一、週二、週三、週四'
+    shippingDays: '週一、週二、週三、週四',
+    ctbcBankCode: '',
+    ctbcAccount: '',
+    ctbcAccountName: '',
+    postBankCode: '',
+    postAccount: '',
+    postAccountName: '',
+    linePayInfo: ''
   };
 
   let products = [];
@@ -1094,6 +1150,20 @@
     });
   });
 
+  document.querySelectorAll('input[name="receiptDateMode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      clearPreparedOrder();
+      const specific = document.querySelector('input[name="receiptDateMode"]:checked')?.value === '指定日期';
+      document.getElementById('preferredReceiptDateWrap').style.display = specific ? 'block' : 'none';
+      if (!specific) document.getElementById('preferredReceiptDate').value = '';
+    });
+  });
+
+  document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+    radio.addEventListener('change', clearPreparedOrder);
+  });
+  document.getElementById('preferredReceiptDate').addEventListener('change', clearPreparedOrder);
+
 
   function getOrderData() {
     const selectedItems = products
@@ -1150,7 +1220,10 @@
       customerName: document.getElementById('customerName').value.trim(),
       customerPhone: document.getElementById('customerPhone').value.trim(),
       customerAddress: document.getElementById('customerAddress').value.trim(),
-      customerNote: document.getElementById('customerNote').value.trim()
+      customerNote: document.getElementById('customerNote').value.trim(),
+      paymentMethod: document.querySelector('input[name="paymentMethod"]:checked')?.value || '中國信託',
+      receiptDateMode: document.querySelector('input[name="receiptDateMode"]:checked')?.value || '不指定',
+      preferredReceiptDate: document.getElementById('preferredReceiptDate').value || ''
     };
   }
 
@@ -1163,6 +1236,7 @@
     if (!data.customerPhone) return '請填寫電話。';
     if (data.hasLowTemp && data.shippingMethod !== '低溫宅配') return '冷藏／冷凍商品只能使用低溫宅配。';
     if (!data.customerAddress && data.shippingMethod !== '面交') return '請填寫地址。';
+    if (data.receiptDateMode === '指定日期' && !data.preferredReceiptDate) return '請選擇希望收貨日。';
     return '';
   }
 
@@ -1180,9 +1254,11 @@
       `配送方式：${data.shippingMethod}`,
       `運費：${data.shipping}元`,
       `最終總金額：${data.grandTotal}元`,
+      `付款方式：${data.paymentMethod || '中國信託'}`,
+      `希望收貨日：${data.receiptDateMode === '指定日期' ? data.preferredReceiptDate : '不指定，由倆口田安排'}`,
       '',
       '【付款說明】',
-      '匯款帳號會在倆口田收到訂單、確認品項與出貨時間後，透過 LINE 提供。收到貨品前後都可以轉帳。',
+      '收到貨品前後都可以付款，依你方便即可。',
       '',
       '【收件資訊】',
       `收件人姓名：${data.customerName}`,
@@ -1315,6 +1391,9 @@
         receiverPhone: orderData.customerPhone,
         receiverAddress: orderData.shippingMethod === '面交' ? '面交自取' : orderData.customerAddress,
         note: orderData.customerNote || '',
+        paymentMethod: orderData.paymentMethod || '中國信託',
+        receiptDateMode: orderData.receiptDateMode || '不指定',
+        preferredReceiptDate: orderData.preferredReceiptDate || '',
         shippingMethod: orderData.shippingMethod,
         deliveryMethod: orderData.shippingMethod,
         shipping: orderData.shipping,
