@@ -68,14 +68,15 @@ function setupOrderSystem() {
     }
 
     const orderSheet = getOrCreateSheet_(SHEET_ORDERS);
-    ensureHeaders_(orderSheet, ['付款狀態', '匯款末五碼', '確認處理', '付款方式', '收貨日模式', '希望收貨日']);
+    ensureHeaders_(orderSheet, ['付款狀態', '匯款末五碼', '確認處理', '付款方式', '收貨日模式', '希望收貨日', '行事曆事件ID']);
     configurePaymentColumns_(orderSheet);
     const archiveSheet = getOrCreateSheet_(SHEET_ARCHIVE);
     ensureHeaders_(archiveSheet, getHeaders_(orderSheet));
     configurePaymentColumns_(archiveSheet);
     archiveCompletedOrders_(orderSheet);
     SpreadsheetApp.flush();
-    ss.toast('訂單系統設定完成');
+    authorizeCalendar();
+    ss.toast('訂單系統設定完成，Calendar 已授權');
   } finally {
     if (lock.hasLock()) lock.releaseLock();
   }
