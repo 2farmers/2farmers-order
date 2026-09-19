@@ -612,7 +612,7 @@
       </div>
       <div class="info-card">
         <div class="info-title">付款說明</div>
-        <div class="info-value">人工確認訂單</div>
+        <div class="info-value">轉帳 / LINE Pay</div>
       </div>
     </div>
 
@@ -654,6 +654,30 @@
     </div>
 
     <div class="section">
+      <h2 class="section-title">希望收貨日</h2>
+      <p class="section-subtitle">不指定最方便；若有需要，也可以告訴我們希望哪一天收到。</p>
+      <div class="shipping-options">
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="receiptDateMode" value="不指定" checked />
+            <span>不指定，由倆口田安排</span>
+          </div>
+        </label>
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="receiptDateMode" value="指定日期" />
+            <span>我有希望收貨日</span>
+          </div>
+        </label>
+      </div>
+      <div id="preferredReceiptDateWrap" class="field" style="display:none;margin-top:12px;">
+        <label for="preferredReceiptDate">希望收貨日</label>
+        <input id="preferredReceiptDate" type="date" />
+        <div class="hint" style="margin-top:6px;">此為希望日期；宅配實際到貨仍可能受物流狀況影響。</div>
+      </div>
+    </div>
+
+    <div class="section">
       <h2 class="section-title">本筆金額總計</h2>
       <div class="summary-box">
         <div id="freeShippingHint" style="font-size:0.9rem;color:#466d45;background:#edf4eb;padding:8px 10px;border-radius:10px;"></div>
@@ -669,6 +693,31 @@
           <span>本筆應付金額</span>
           <span id="grandTotal">0 元</span>
         </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">付款方式</h2>
+      <p class="section-subtitle">可以下單後轉帳，也可以收到貨前後再付款；依你方便即可。</p>
+      <div class="shipping-options">
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="paymentMethod" value="中國信託" checked />
+            <span>中國信託</span>
+          </div>
+        </label>
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="paymentMethod" value="郵局" />
+            <span>郵局</span>
+          </div>
+        </label>
+        <label class="option">
+          <div class="option-label">
+            <input type="radio" name="paymentMethod" value="LINE Pay" />
+            <span>LINE Pay</span>
+          </div>
+        </label>
       </div>
     </div>
 
@@ -694,20 +743,31 @@
       </div>
 
       <div class="notice-box payment">
-        付款說明：送出訂單後，我們會先確認品項、出貨時間與配送方式。匯款帳號會在收到訂單後，透過 LINE 傳給您；收到貨品前後都可以轉帳。
+        付款說明：倆口田保留彈性付款方式，收到貨品前後都可以付款。新版完成後，送出訂單即可直接看到你選擇的付款資訊，不必再等待我們另外傳帳號。
       </div>
 
       <div class="actions">
         <button id="submitBtn" class="btn btn-primary" type="button">確認訂單並送出</button>
       </div>
       <div id="errorMsg" class="error"></div>
-      <div class="hint">送出後訂單會先寫入倆口田後台。請接著傳 LINE 訊息，讓我們能在 LINE 找到您並提供匯款資訊；若尚未傳送，訂單資料仍已收到，請勿重複下單。</div>
+      <div class="hint">送出後訂單會先寫入倆口田後台。訂單成立後不需要重複下單；若有臨時更改，再透過 LINE 聯絡我們即可。</div>
     </div>
 
     <div class="section">
       <h2 class="section-title">已送出的訂單</h2>
       <div id="savedOrders" aria-live="polite"></div>
       <div id="orderOutput" class="order-output" role="status">送出後會顯示整理好的訂單內容。訂單寫入後台後，才能傳 LINE 或複製內容。</div>
+
+      <div id="paymentResultBox" class="notice-box payment" style="display:none;margin-top:12px;">
+        <div style="font-weight:800;margin-bottom:8px;">付款資訊</div>
+        <div id="paymentResultText" style="white-space:pre-line;"></div>
+        <div class="actions" style="margin-top:10px;">
+          <button id="copyPaymentAccountBtn" class="btn btn-secondary" type="button" style="display:none;">複製帳號 / 收款資訊</button>
+          <button id="copyPaymentAmountBtn" class="btn btn-secondary" type="button" style="display:none;">複製付款金額</button>
+        </div>
+        <div class="hint" style="margin-top:8px;">不用急著立即付款；收到貨品前後再付款也可以，依你方便即可。</div>
+      </div>
+
       <div class="actions" style="margin-top:12px;">
         <button id="lineBtn" class="btn btn-primary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">LINE 傳送訂單給倆口田</button>
         <button id="copyBtn" class="btn btn-secondary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">複製訂單內容</button>
@@ -726,9 +786,22 @@
   let websiteSettings = {
     normalShippingFee: 65,
     normalFreeShippingThreshold: 500,
-    lowTempShippingFee: 250,
+    lowTempShippingFee: 160,
     lowTempFreeShippingThreshold: 1000,
-    shippingDays: '週一、週二、週三、週四'
+    lowTempDiscountThreshold: 1000,
+    lowTempDiscountFee: 80,
+    lowTempTieredFreeThreshold: 2000,
+    shippingPolicyVersion: 2,
+    shippingDays: '週一、週二、週三、週四',
+    ctbcBankCode: '',
+    ctbcAccount: '',
+    ctbcAccountName: '',
+    ctbcBranch: '',
+    postBankCode: '',
+    postAccount: '',
+    postAccountName: '',
+    postBranch: '',
+    linePayInfo: ''
   };
 
   let products = [];
@@ -754,26 +827,29 @@
   }
 
   function getLowTempShipping(subtotal) {
-    if (subtotal >= websiteSettings.lowTempFreeShippingThreshold) return 0;
-    if (hasTieredLowTempShipping() && subtotal >= websiteSettings.lowTempDiscountThreshold) {
-      return websiteSettings.lowTempDiscountFee;
+    const s = websiteSettings;
+    if (hasTieredLowTempShipping()) {
+      if (subtotal >= s.lowTempTieredFreeThreshold) return 0;
+      if (subtotal >= s.lowTempDiscountThreshold) return s.lowTempDiscountFee;
+      return s.lowTempShippingFee;
     }
-    return websiteSettings.lowTempShippingFee;
+    return subtotal >= s.lowTempFreeShippingThreshold ? 0 : s.lowTempShippingFee;
   }
 
   function getLowTempShippingDescription() {
     const s = websiteSettings;
     if (!hasTieredLowTempShipping()) return `低溫宅配滿 ${s.lowTempFreeShippingThreshold} 元免運，未滿運費 ${s.lowTempShippingFee} 元。`;
-    return `低溫宅配運費 ${s.lowTempShippingFee} 元，滿 ${s.lowTempDiscountThreshold} 元運費優惠 ${s.lowTempDiscountFee} 元，滿 ${s.lowTempFreeShippingThreshold} 元免運。`;
+    return `低溫宅配運費 ${s.lowTempShippingFee} 元，滿 ${s.lowTempDiscountThreshold} 元運費優惠 ${s.lowTempDiscountFee} 元，滿 ${s.lowTempTieredFreeThreshold} 元免運。`;
   }
 
   function getLowTempShippingHint(subtotal) {
     const s = websiteSettings;
-    if (subtotal >= s.lowTempFreeShippingThreshold) return '本筆已達免運門檻 🎉';
     if (hasTieredLowTempShipping()) {
-      if (subtotal < s.lowTempDiscountThreshold) return `本筆低溫商品再買 ${s.lowTempDiscountThreshold - subtotal} 元，運費降為 ${s.lowTempDiscountFee} 元；滿 ${s.lowTempFreeShippingThreshold} 元免運。`;
-      return `本筆已享運費優惠 ${s.lowTempDiscountFee} 元，倆口田補貼 ${s.lowTempShippingFee - s.lowTempDiscountFee} 元；再買 ${s.lowTempFreeShippingThreshold - subtotal} 元免運。`;
+      if (subtotal >= s.lowTempTieredFreeThreshold) return '本筆已達免運門檻 🎉';
+      if (subtotal < s.lowTempDiscountThreshold) return `本筆低溫商品再買 ${s.lowTempDiscountThreshold - subtotal} 元，運費降為 ${s.lowTempDiscountFee} 元；滿 ${s.lowTempTieredFreeThreshold} 元免運。`;
+      return `本筆已享運費優惠 ${s.lowTempDiscountFee} 元，倆口田補貼 ${s.lowTempShippingFee - s.lowTempDiscountFee} 元；再買 ${s.lowTempTieredFreeThreshold - subtotal} 元免運。`;
     }
+    if (subtotal >= s.lowTempFreeShippingThreshold) return '本筆已達免運門檻 🎉';
     return `本筆低溫商品再買 ${s.lowTempFreeShippingThreshold - subtotal} 元即可免運`;
   }
 
@@ -849,6 +925,12 @@
   const lineBtn = document.getElementById('lineBtn');
   const copyBtn = document.getElementById('copyBtn');
   const continueShoppingBtn = document.getElementById('continueShoppingBtn');
+  const paymentResultBox = document.getElementById('paymentResultBox');
+  const paymentResultText = document.getElementById('paymentResultText');
+  const copyPaymentAccountBtn = document.getElementById('copyPaymentAccountBtn');
+  const copyPaymentAmountBtn = document.getElementById('copyPaymentAmountBtn');
+  let currentPaymentCopyText = '';
+  let currentPaymentAmount = '';
 
   function formatMoney(num) {
     return `${num} 元`;
@@ -1094,6 +1176,20 @@
     });
   });
 
+  document.querySelectorAll('input[name="receiptDateMode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      clearPreparedOrder();
+      const specific = document.querySelector('input[name="receiptDateMode"]:checked')?.value === '指定日期';
+      document.getElementById('preferredReceiptDateWrap').style.display = specific ? 'block' : 'none';
+      if (!specific) document.getElementById('preferredReceiptDate').value = '';
+    });
+  });
+
+  document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+    radio.addEventListener('change', clearPreparedOrder);
+  });
+  document.getElementById('preferredReceiptDate').addEventListener('change', clearPreparedOrder);
+
 
   function getOrderData() {
     const selectedItems = products
@@ -1150,7 +1246,10 @@
       customerName: document.getElementById('customerName').value.trim(),
       customerPhone: document.getElementById('customerPhone').value.trim(),
       customerAddress: document.getElementById('customerAddress').value.trim(),
-      customerNote: document.getElementById('customerNote').value.trim()
+      customerNote: document.getElementById('customerNote').value.trim(),
+      paymentMethod: document.querySelector('input[name="paymentMethod"]:checked')?.value || '中國信託',
+      receiptDateMode: document.querySelector('input[name="receiptDateMode"]:checked')?.value || '不指定',
+      preferredReceiptDate: document.getElementById('preferredReceiptDate').value || ''
     };
   }
 
@@ -1163,6 +1262,7 @@
     if (!data.customerPhone) return '請填寫電話。';
     if (data.hasLowTemp && data.shippingMethod !== '低溫宅配') return '冷藏／冷凍商品只能使用低溫宅配。';
     if (!data.customerAddress && data.shippingMethod !== '面交') return '請填寫地址。';
+    if (data.receiptDateMode === '指定日期' && !data.preferredReceiptDate) return '請選擇希望收貨日。';
     return '';
   }
 
@@ -1180,9 +1280,11 @@
       `配送方式：${data.shippingMethod}`,
       `運費：${data.shipping}元`,
       `最終總金額：${data.grandTotal}元`,
+      `付款方式：${data.paymentMethod || '中國信託'}`,
+      `希望收貨日：${data.receiptDateMode === '指定日期' ? data.preferredReceiptDate : '不指定，由倆口田安排'}`,
       '',
       '【付款說明】',
-      '匯款帳號會在倆口田收到訂單、確認品項與出貨時間後，透過 LINE 提供。收到貨品前後都可以轉帳。',
+      '收到貨品前後都可以付款，依你方便即可。',
       '',
       '【收件資訊】',
       `收件人姓名：${data.customerName}`,
@@ -1191,6 +1293,76 @@
       `備註：${data.customerNote || '無'}`
     ].join('\n');
   }
+
+  function getPaymentDisplay(data) {
+    const method = data.paymentMethod || '中國信託';
+    const amount = data.grandTotal;
+    if (method === '郵局') {
+      const lines = [
+        '付款方式：郵局',
+        websiteSettings.postBankCode ? `代碼：${websiteSettings.postBankCode}` : '',
+        websiteSettings.postAccount ? `帳號：${websiteSettings.postAccount}` : '',
+        websiteSettings.postAccountName ? `戶名：${websiteSettings.postAccountName}` : '',
+        websiteSettings.postBranch ? `分支局：${websiteSettings.postBranch}` : '',
+        `本筆應付金額：${amount} 元`
+      ].filter(Boolean);
+      return {
+        text: lines.join('\n'),
+        copyText: websiteSettings.postAccount || '',
+        ready: !!websiteSettings.postAccount
+      };
+    }
+    if (method === 'LINE Pay') {
+      const lines = [
+        '付款方式：LINE Pay／LINE 聯絡',
+        websiteSettings.linePayInfo || 'LINE Pay／LINE 聯絡資訊尚未設定',
+        `本筆應付金額：${amount} 元`
+      ];
+      return {
+        text: lines.join('\n'),
+        copyText: websiteSettings.linePayInfo || '',
+        ready: !!websiteSettings.linePayInfo
+      };
+    }
+    const lines = [
+      '付款方式：中國信託',
+      websiteSettings.ctbcBankCode ? `銀行代碼：${websiteSettings.ctbcBankCode}` : '',
+      websiteSettings.ctbcAccount ? `帳號：${websiteSettings.ctbcAccount}` : '',
+      websiteSettings.ctbcAccountName ? `戶名：${websiteSettings.ctbcAccountName}` : '',
+      websiteSettings.ctbcBranch ? `分行：${websiteSettings.ctbcBranch}` : '',
+      `本筆應付金額：${amount} 元`
+    ].filter(Boolean);
+    return {
+      text: lines.join('\n'),
+      copyText: websiteSettings.ctbcAccount || '',
+      ready: !!websiteSettings.ctbcAccount
+    };
+  }
+
+  function renderPaymentResult(data) {
+    const info = getPaymentDisplay(data);
+    paymentResultBox.style.display = 'block';
+    paymentResultText.textContent = info.ready
+      ? info.text
+      : info.text + '\n\n收款資料尚未填入網站設定，請先透過 LINE 聯絡倆口田。';
+    currentPaymentCopyText = info.copyText;
+    currentPaymentAmount = String(data.grandTotal);
+    copyPaymentAccountBtn.style.display = info.copyText ? 'inline-flex' : 'none';
+    copyPaymentAmountBtn.style.display = 'inline-flex';
+  }
+
+  async function copyTextValue(value, successMessage) {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      showError(successMessage, '#2d6d34');
+    } catch (err) {
+      showError('無法自動複製，請手動選取文字複製。', '#c84a4a');
+    }
+  }
+
+  copyPaymentAccountBtn.addEventListener('click', () => copyTextValue(currentPaymentCopyText, '已複製付款帳號 / 收款資訊。'));
+  copyPaymentAmountBtn.addEventListener('click', () => copyTextValue(currentPaymentAmount, '已複製付款金額。'));
 
   function getLineUrl(orderText) {
     const encodedText = encodeURIComponent(orderText);
@@ -1315,6 +1487,9 @@
         receiverPhone: orderData.customerPhone,
         receiverAddress: orderData.shippingMethod === '面交' ? '面交自取' : orderData.customerAddress,
         note: orderData.customerNote || '',
+        paymentMethod: orderData.paymentMethod || '中國信託',
+        receiptDateMode: orderData.receiptDateMode || '不指定',
+        preferredReceiptDate: orderData.preferredReceiptDate || '',
         shippingMethod: orderData.shippingMethod,
         deliveryMethod: orderData.shippingMethod,
         shipping: orderData.shipping,
@@ -1434,19 +1609,20 @@
 
       currentOrderText = savedText;
       currentSavedOrderData = savedData;
+      renderPaymentResult(savedData);
       orderOutput.textContent = [
         '✅ 本筆訂單已收到，請透過上方按鈕傳 LINE 聯絡農夫。',
         '',
         orderId ? `訂單編號：${orderId}` : '',
         savedData.priceChanged ? `金額已依後台更新：${formatMoney(savedData.grandTotal)}。請查看本筆明細並與倆口田確認。` : '',
         '',
-        '提醒：匯款帳號會在我們確認品項、出貨時間與配送方式後，透過 LINE 傳給您。',
-        '尚未傳 LINE 時，我們無法直接對應您的 LINE 帳號。請複製訂單聯絡官方 LINE，勿重複下單。'
+        '付款資訊已顯示在本頁下方；收到貨品前後都可以付款。',
+        '若有臨時更改，再透過 LINE 聯絡倆口田即可。'
       ].join('\n');
       enableAfterSavedOrder();
       resetCartAfterSuccessfulOrder(orderData);
       const pending = Object.values(getCartGroups()).some(group => group.items.length);
-      showError(pending ? '本筆訂單已收到。另一溫層商品仍在購物車，收件資料已保留，請確認後再送出另一筆。' : '本筆訂單已收到。請接著傳 LINE 聯絡農夫，確認出貨與匯款資訊。', '#2d6d34');
+      showError(pending ? '本筆訂單已收到。另一溫層商品仍在購物車，收件資料已保留，請確認後再送出另一筆。' : '本筆訂單已收到。付款資訊已顯示，可依你方便在收到貨品前後付款。', '#2d6d34');
       document.getElementById('savedOrders').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       return savedText;
