@@ -23,9 +23,11 @@ const DEFAULT_WEBSITE_SETTINGS = {
   ctbcBankCode: '822',
   ctbcAccount: '',
   ctbcAccountName: '',
+  ctbcBranch: '',
   postBankCode: '700',
   postAccount: '',
   postAccountName: '',
+  postBranch: '',
   linePayInfo: ''
 };
 
@@ -49,10 +51,12 @@ function setupOrderSystem() {
       ['ctbcBankCode', DEFAULT_WEBSITE_SETTINGS.ctbcBankCode, '中國信託銀行代碼'],
       ['ctbcAccount', DEFAULT_WEBSITE_SETTINGS.ctbcAccount, '中國信託收款帳號'],
       ['ctbcAccountName', DEFAULT_WEBSITE_SETTINGS.ctbcAccountName, '中國信託戶名'],
+      ['ctbcBranch', DEFAULT_WEBSITE_SETTINGS.ctbcBranch, '中國信託分行'],
       ['postBankCode', DEFAULT_WEBSITE_SETTINGS.postBankCode, '郵局代碼'],
       ['postAccount', DEFAULT_WEBSITE_SETTINGS.postAccount, '郵局收款帳號'],
       ['postAccountName', DEFAULT_WEBSITE_SETTINGS.postAccountName, '郵局戶名'],
-      ['linePayInfo', DEFAULT_WEBSITE_SETTINGS.linePayInfo, 'LINE Pay 收款資訊或連結']
+      ['postBranch', DEFAULT_WEBSITE_SETTINGS.postBranch, '郵局分支局'],
+      ['linePayInfo', DEFAULT_WEBSITE_SETTINGS.linePayInfo, 'LINE Pay／LINE 聯絡資訊']
     ];
     if (settingsSheet.getLastRow() === 0 || settingsSheet.getRange(1, 1).getValue() === '') {
       settingsSheet.getRange(1, 1, settingRows.length, settingRows[0].length).setValues(settingRows);
@@ -1038,9 +1042,11 @@ function getWebsiteSettings_() {
     'ctbcBankCode',
     'ctbcAccount',
     'ctbcAccountName',
+    'ctbcBranch',
     'postBankCode',
     'postAccount',
     'postAccountName',
+    'postBranch',
     'linePayInfo'
   ]);
   values.slice(1).forEach(row => {
