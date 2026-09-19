@@ -757,6 +757,17 @@
       <h2 class="section-title">已送出的訂單</h2>
       <div id="savedOrders" aria-live="polite"></div>
       <div id="orderOutput" class="order-output" role="status">送出後會顯示整理好的訂單內容。訂單寫入後台後，才能傳 LINE 或複製內容。</div>
+
+      <div id="paymentResultBox" class="notice-box payment" style="display:none;margin-top:12px;">
+        <div style="font-weight:800;margin-bottom:8px;">付款資訊</div>
+        <div id="paymentResultText" style="white-space:pre-line;"></div>
+        <div class="actions" style="margin-top:10px;">
+          <button id="copyPaymentAccountBtn" class="btn btn-secondary" type="button" style="display:none;">複製帳號 / 收款資訊</button>
+          <button id="copyPaymentAmountBtn" class="btn btn-secondary" type="button" style="display:none;">複製付款金額</button>
+        </div>
+        <div class="hint" style="margin-top:8px;">不用急著立即付款；收到貨品前後再付款也可以，依你方便即可。</div>
+      </div>
+
       <div class="actions" style="margin-top:12px;">
         <button id="lineBtn" class="btn btn-primary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">LINE 傳送訂單給倆口田</button>
         <button id="copyBtn" class="btn btn-secondary" type="button" disabled style="opacity:0.5;cursor:not-allowed;">複製訂單內容</button>
@@ -905,6 +916,12 @@
   const lineBtn = document.getElementById('lineBtn');
   const copyBtn = document.getElementById('copyBtn');
   const continueShoppingBtn = document.getElementById('continueShoppingBtn');
+  const paymentResultBox = document.getElementById('paymentResultBox');
+  const paymentResultText = document.getElementById('paymentResultText');
+  const copyPaymentAccountBtn = document.getElementById('copyPaymentAccountBtn');
+  const copyPaymentAmountBtn = document.getElementById('copyPaymentAmountBtn');
+  let currentPaymentCopyText = '';
+  let currentPaymentAmount = '';
 
   function formatMoney(num) {
     return `${num} 元`;
@@ -1268,6 +1285,74 @@
     ].join('\n');
   }
 
+  function getPaymentDisplay(data) {
+    const method = data.paymentMethod || '中國信託';
+    const amount = data.grandTotal;
+    if (method === '郵局') {
+      const lines = [
+        '付款方式：郵局',
+        websiteSettings.postBankCode ? `代碼：${websiteSettings.postBankCode}` : '',
+        websiteSettings.postAccount ? `帳號：${websiteSettings.postAccount}` : '',
+        websiteSettings.postAccountName ? `戶名：${websiteSettings.postAccountName}` : '',
+        `本筆應付金額：${amount} 元`
+      ].filter(Boolean);
+      return {
+        text: lines.join('\n'),
+        copyText: websiteSettings.postAccount || '',
+        ready: !!websiteSettings.postAccount
+      };
+    }
+    if (method === 'LINE Pay') {
+      const lines = [
+        '付款方式：LINE Pay',
+        websiteSettings.linePayInfo || 'LINE Pay 收款資訊尚未設定',
+        `本筆應付金額：${amount} 元`
+      ];
+      return {
+        text: lines.join('\n'),
+        copyText: websiteSettings.linePayInfo || '',
+        ready: !!websiteSettings.linePayInfo
+      };
+    }
+    const lines = [
+      '付款方式：中國信託',
+      websiteSettings.ctbcBankCode ? `銀行代碼：${websiteSettings.ctbcBankCode}` : '',
+      websiteSettings.ctbcAccount ? `帳號：${websiteSettings.ctbcAccount}` : '',
+      websiteSettings.ctbcAccountName ? `戶名：${websiteSettings.ctbcAccountName}` : '',
+      `本筆應付金額：${amount} 元`
+    ].filter(Boolean);
+    return {
+      text: lines.join('\n'),
+      copyText: websiteSettings.ctbcAccount || '',
+      ready: !!websiteSettings.ctbcAccount
+    };
+  }
+
+  function renderPaymentResult(data) {
+    const info = getPaymentDisplay(data);
+    paymentResultBox.style.display = 'block';
+    paymentResultText.textContent = info.ready
+      ? info.text
+      : info.text + '\n\n收款資料尚未填入網站設定，請先透過 LINE 聯絡倆口田。';
+    currentPaymentCopyText = info.copyText;
+    currentPaymentAmount = String(data.grandTotal);
+    copyPaymentAccountBtn.style.display = info.copyText ? 'inline-flex' : 'none';
+    copyPaymentAmountBtn.style.display = 'inline-flex';
+  }
+
+  async function copyTextValue(value, successMessage) {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      showError(successMessage, '#2d6d34');
+    } catch (err) {
+      showError('無法自動複製，請手動選取文字複製。', '#c84a4a');
+    }
+  }
+
+  copyPaymentAccountBtn.addEventListener('click', () => copyTextValue(currentPaymentCopyText, '已複製付款帳號 / 收款資訊。'));
+  copyPaymentAmountBtn.addEventListener('click', () => copyTextValue(currentPaymentAmount, '已複製付款金額。'));
+
   function getLineUrl(orderText) {
     const encodedText = encodeURIComponent(orderText);
     if (lineTarget.trim()) {
@@ -1513,19 +1598,20 @@
 
       currentOrderText = savedText;
       currentSavedOrderData = savedData;
+      renderPaymentResult(savedData);
       orderOutput.textContent = [
         '✅ 本筆訂單已收到，請透過上方按鈕傳 LINE 聯絡農夫。',
         '',
         orderId ? `訂單編號：${orderId}` : '',
         savedData.priceChanged ? `金額已依後台更新：${formatMoney(savedData.grandTotal)}。請查看本筆明細並與倆口田確認。` : '',
         '',
-        '提醒：匯款帳號會在我們確認品項、出貨時間與配送方式後，透過 LINE 傳給您。',
-        '尚未傳 LINE 時，我們無法直接對應您的 LINE 帳號。請複製訂單聯絡官方 LINE，勿重複下單。'
+        '付款資訊已顯示在本頁下方；收到貨品前後都可以付款。',
+        '若有臨時更改，再透過 LINE 聯絡倆口田即可。'
       ].join('\n');
       enableAfterSavedOrder();
       resetCartAfterSuccessfulOrder(orderData);
       const pending = Object.values(getCartGroups()).some(group => group.items.length);
-      showError(pending ? '本筆訂單已收到。另一溫層商品仍在購物車，收件資料已保留，請確認後再送出另一筆。' : '本筆訂單已收到。請接著傳 LINE 聯絡農夫，確認出貨與匯款資訊。', '#2d6d34');
+      showError(pending ? '本筆訂單已收到。另一溫層商品仍在購物車，收件資料已保留，請確認後再送出另一筆。' : '本筆訂單已收到。付款資訊已顯示，可依你方便在收到貨品前後付款。', '#2d6d34');
       document.getElementById('savedOrders').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       return savedText;
