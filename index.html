@@ -655,12 +655,12 @@
 
     <div class="section">
       <h2 class="section-title">希望收貨日</h2>
-      <p class="section-subtitle">不指定最方便；若有需要，也可以告訴我們希望哪一天收到。</p>
+      <p class="section-subtitle">不指定時通常隔日出貨；週五～週日不出貨，會順延至下一個週一。若有需要，也可以告訴我們希望哪一天收到。</p>
       <div class="shipping-options">
         <label class="option">
           <div class="option-label">
             <input type="radio" name="receiptDateMode" value="不指定" checked />
-            <span>不指定，由倆口田安排</span>
+            <span>不指定，由倆口田安排（通常隔日出貨）</span>
           </div>
         </label>
         <label class="option">
@@ -1282,6 +1282,7 @@
       `最終總金額：${data.grandTotal}元`,
       `付款方式：${data.paymentMethod || '中國信託'}`,
       `希望收貨日：${data.receiptDateMode === '指定日期' ? data.preferredReceiptDate : '不指定，由倆口田安排'}`,
+      data.receiptDateMode !== '指定日期' && data.estimatedShipDate ? `預計出貨日：${data.estimatedShipDate}` : '',
       '',
       '【付款說明】',
       '收到貨品前後都可以付款，依你方便即可。',
@@ -1553,7 +1554,8 @@
       subtotal: number(response.subtotal, sent.subtotal),
       shipping: number(response.shipping, sent.shipping),
       grandTotal: number(response.total, sent.grandTotal),
-      shippingMethod: response.shippingMethod || sent.shippingMethod
+      shippingMethod: response.shippingMethod || sent.shippingMethod,
+      estimatedShipDate: response.estimatedShipDate || sent.estimatedShipDate || ''
     };
     if (Math.abs(saved.subtotal + saved.shipping - saved.grandTotal) > 0.001) throw new Error('後台金額加總不符');
     if (Array.isArray(response.items)) {
