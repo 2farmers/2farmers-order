@@ -54,9 +54,13 @@ function setup() {
     ['veg','蔬菜',100,'份','normal',10,0,true,'蔬果收入'],
     ['dumpling','水餃',250,'包','frozen',10,0,true,'料理收入']
   ]));
+  const defaultCalendar={
+    createAllDayEvent:()=>({getId:()=> 'DEFAULT-EVENT-' + (++nextId)})
+  };
   const context=vm.createContext({console,Date,SpreadsheetApp:{getActiveSpreadsheet:()=>book,flush:()=>{assert.equal(held,true);events.push(['flush']);}},
     LockService:{getScriptLock:()=>({tryLock:()=>{if(busy||held)return false;held=true;events.push(['lock']);return true;},hasLock:()=>held,releaseLock:()=>{held=false;events.push(['release']);}})},
     Utilities:{formatDate:(_date,_tz,pattern)=> pattern === 'yyMMdd-HHmmss' ? '260908-123456' : '20260908',getUuid:()=>String(++nextId)},
+    CalendarApp:{getCalendarsByName:()=>[defaultCalendar],createCalendar:()=>defaultCalendar},
     ContentService:{MimeType:{JSON:'json'},createTextOutput:text=>({setMimeType:()=>JSON.parse(text)})}
   });
   vm.runInContext(source,context);
@@ -148,6 +152,44 @@ console.log('PASS resume after details/accounting/inventory failures, including 
   const free=t.post([{id:'dumpling',qty:8}],{receiverName:'另一位',receiverPhone:'0911111111',receiverAddress:'另一地址'});
   assert.equal(free.shipping,0);assert.equal(free.total,2000);
   console.log('PASS tiered low-temp shipping and payment/receipt persistence');
+}
+{
+  const t=setup();
+  const calc=t.context.calculateNextShippingDate_;
+  const cases=[
+    ['2026-09-21T10:00:00','2026-09-22'],
+    ['2026-09-22T10:00:00','2026-09-23'],
+    ['2026-09-23T10:00:00','2026-09-24'],
+    ['2026-09-24T10:00:00','2026-09-28'],
+    ['2026-09-25T10:00:00','2026-09-28'],
+    ['2026-09-26T10:00:00','2026-09-28'],
+    ['2026-09-27T10:00:00','2026-09-28']
+  ];
+  for (const [input,expected] of cases) {
+    assert.equal(calc(new Date(input)),expected,input);
+  }
+  console.log('PASS next-day shipping skips Friday, Saturday, and Sunday');
+}
+{
+  const t=setup();
+  const created=[];
+  const calendar={
+    createAllDayEvent:(title,date,options)=>{
+      created.push({title,date,options});
+      return {getId:()=> 'SHIP-EVENT-1'};
+    }
+  };
+  t.context.CalendarApp={getCalendarsByName:()=>[calendar],createCalendar:()=>calendar};
+  const result=t.post([{id:'veg',qty:2}],{receiptDateMode:'不指定'});
+  assert.equal(result.status,'success');
+  assert.ok(result.estimatedShipDate);
+  assert.equal(result.calendarStatus,'created');
+  assert.equal(created.length,1);
+  assert.match(created[0].title,/出貨｜測試｜宅配/);
+  assert.equal(t.objects('訂單總表')[0]['預計出貨日'],result.estimatedShipDate);
+  assert.equal(t.objects('訂單總表')[0]['希望收貨日'],'');
+  assert.equal(t.objects('訂單總表')[0]['行事曆事件ID'],'SHIP-EVENT-1');
+  console.log('PASS unspecified receipt date creates shipping event and persists estimated ship date');
 }
 {
   const t=setup();
