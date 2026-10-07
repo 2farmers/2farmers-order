@@ -192,7 +192,7 @@ button{background:#315f44;color:white;border:0;border-radius:9px;padding:11px 20
 
 <header><div class="eyebrow">倆口田 · 共耕</div><h1>倆口田共耕</h1><div class="muted">一起種、一起等、一起收成。</div></header>
 
-<p id="apiStatus" class="notice muted" role="status" aria-live="polite">正在連接共耕資料…</p>
+<p id="apiStatus" class="notice muted" role="status" aria-live="polite"></p>
 <section id="home">
 
   <div class="home-actions">
@@ -921,7 +921,7 @@ document.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',s
 
 $('#vegInfo').addEventListener('click',()=>{$('#vegDetail').classList.toggle('hidden');$('#treeDetail').classList.add('hidden')});
 
-$('#treeInfo').addEventListener('click',()=>{$('#treeDetail').classList.toggle('hidden');$('#vegDetail').classList.add('hidden')});
+$('#treeInfo').addEventListener('click',()=>{$('#treeDetail').classList.toggle('hidden');$('#vegDetail').classList.add('hidden');if(!$('#treeDetail').classList.contains('hidden'))loadFruitOptions()});
 
 let vegVerified=false;
 
@@ -1140,8 +1140,9 @@ let fruitVerified=false;
 let currentFruitApplicationId='';
 
 let fruitOptionsLoading=false;
+let fruitOptionsLoadedAt=0;
 function loadFruitOptions(){
-  if(fruitOptionsLoading)return;
+  if(fruitOptionsLoading || (fruitOptionsLoadedAt && Date.now()-fruitOptionsLoadedAt<30000))return;
   fruitOptionsLoading=true;
   const box=$('#treeChoiceOptions');
   const submit=$('#submitFruitApplication');
@@ -1159,6 +1160,7 @@ function loadFruitOptions(){
       const status=o.open?`｜剩餘 ${o.remaining} 株｜${Number(o.amount).toLocaleString()} 元`:'｜目前額滿／暫停';
       add(label,'span','',o.label+status);
     });
+    fruitOptionsLoadedAt=Date.now();
     const available=options.some(o=>o.open);
     submit.disabled=!available;
     if(!available)add(box,'p','muted','目前果樹共耕名額已滿，暫停接受申請。');
@@ -1435,5 +1437,4 @@ $('#form').addEventListener('submit',e=>{e.preventDefault();$('#message').textCo
 
 $('#clear').addEventListener('click',()=>{$('#result').classList.add('hidden');$('#sections').replaceChildren();$('#form').reset();$('#message').textContent='';window.scrollTo(0,0)});
 
-cofarmRun.withSuccessHandler(()=>{document.getElementById('apiStatus').textContent='';}).ping();
 </script></body></html>
