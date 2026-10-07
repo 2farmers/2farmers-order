@@ -22,7 +22,8 @@
     const token = tokenKind ? paymentTokens.get(tokenKind + ':' + args[0]) : '';
     if (tokenKind && !token) throw new Error('付款回報驗證已失效，請聯絡倆口田並提供申請編號，請勿重複申請。');
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45000);
+    const timeoutMs = writes.has(method) ? 45000 : 90000;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     let body;
     try {
       const response = await fetch(endpoint, {
