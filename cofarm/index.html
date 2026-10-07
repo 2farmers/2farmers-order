@@ -373,7 +373,7 @@ button{background:#315f44;color:white;border:0;border-radius:9px;padding:11px 20
 
         <label>手機<input id="vegPhone" type="tel" autocomplete="tel"></label>
 
-        <label>Email<input id="vegEmail" type="email" autocomplete="email"></label>
+        <label>E-mail（選填）<input id="vegEmail" type="email" autocomplete="email"></label>
 
       </div>
 
@@ -617,7 +617,7 @@ button{background:#315f44;color:white;border:0;border-radius:9px;padding:11px 20
 
         <label>手機<input id="fruitPhone" type="tel" autocomplete="tel"></label>
 
-        <label>Email<input id="fruitEmail" type="email" autocomplete="email"></label>
+        <label>E-mail（選填）<input id="fruitEmail" type="email" autocomplete="email"></label>
 
       </div>
 
@@ -1139,38 +1139,42 @@ let fruitVerified=false;
 
 let currentFruitApplicationId='';
 
-$('#treeApply').addEventListener('click',()=>{
-
-  const area=$('#treeApplication');
-
-  area.classList.remove('hidden');
-
-  area.scrollIntoView({behavior:'smooth',block:'start'});
-
+let fruitOptionsLoading=false;
+function loadFruitOptions(){
+  if(fruitOptionsLoading)return;
+  fruitOptionsLoading=true;
+  const box=$('#treeChoiceOptions');
+  const submit=$('#submitFruitApplication');
+  submit.disabled=true;
+  box.replaceChildren();
+  add(box,'p','muted','正在載入可參與的果樹…');
   cofarmRun.withSuccessHandler(config=>{
-
-    const box=$('#treeChoiceOptions');
-
-    if(box.children.length)return;
-
-    (config.options||[]).forEach(o=>{
-
+    fruitOptionsLoading=false;
+    box.replaceChildren();
+    const options=config&&Array.isArray(config.options)?config.options:[];
+    options.forEach(o=>{
       const label=add(box,'label');
-
       const radio=add(label,'input');
-
       radio.type='radio';radio.name='treeChoice';radio.value=o.value;radio.disabled=!o.open;
-
       const status=o.open?`｜剩餘 ${o.remaining} 株｜${Number(o.amount).toLocaleString()} 元`:'｜目前額滿／暫停';
-
       add(label,'span','',o.label+status);
-
     });
-
-    if(!(config.options||[]).some(o=>o.open))add(box,'p','muted','目前果樹共耕名額已滿，暫停接受申請。');
-
+    const available=options.some(o=>o.open);
+    submit.disabled=!available;
+    if(!available)add(box,'p','muted','目前果樹共耕名額已滿，暫停接受申請。');
+  }).withFailureHandler(error=>{
+    fruitOptionsLoading=false;
+    box.replaceChildren();
+    add(box,'p','error',error.message||'果樹選項載入失敗，請重試。');
+    const retry=add(box,'button','','重新載入果樹選項');
+    retry.type='button';retry.addEventListener('click',loadFruitOptions);
   }).fruitApplicationOptions();
-
+}
+$('#treeApply').addEventListener('click',()=>{
+  const area=$('#treeApplication');
+  area.classList.remove('hidden');
+  area.scrollIntoView({behavior:'smooth',block:'start'});
+  loadFruitOptions();
 });
 
 document.querySelectorAll('input[name="fruitMemberType"]').forEach(r=>r.addEventListener('change',()=>{
