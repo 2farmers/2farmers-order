@@ -1,0 +1,1435 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>倆口田｜我的共耕紀錄</title><style>
+
+*{box-sizing:border-box}body{margin:0;background:#f4f6ef;color:#273b30;font:16px/1.65 system-ui,-apple-system,sans-serif}
+
+main{max-width:820px;margin:auto;padding:34px 18px 72px}header{margin-bottom:26px}h1{font-size:1.8rem;margin:.2em 0}h2{font-size:1.24rem;margin:0 0 15px}h3{font-size:1rem;margin:20px 0 6px}
+
+.eyebrow{color:#6f846d;font-size:.85rem;letter-spacing:.15em}.card{background:#fff;border-radius:16px;padding:22px;margin:16px 0;box-shadow:0 3px 18px #203a2112}
+
+.muted{color:#657467}.row{display:flex;gap:12px;flex-wrap:wrap}label{flex:1;min-width:220px;font-weight:600}input,select,textarea{display:block;width:100%;padding:11px;border:1px solid #b7c6b9;border-radius:9px;font:inherit;margin:6px 0 0}textarea{min-height:105px;resize:vertical}
+
+button{background:#315f44;color:white;border:0;border-radius:9px;padding:11px 20px;font:inherit;font-weight:700;cursor:pointer;margin-top:16px}button:disabled{opacity:.5}
+
+.metric{font-weight:700;font-size:1.25rem;color:#315f44}.list{list-style:none;padding:0;margin:8px 0}.list li{border-top:1px solid #e8eee6;padding:10px 0}.list li:first-child{border:0}.photo{max-width:100%;max-height:320px;border-radius:10px;display:block;margin:10px 0}
+
+.chip{display:inline-block;background:#e6efe3;color:#315f44;padding:2px 9px;border-radius:100px;font-size:.85rem}.error{color:#9a2929}.hidden{display:none}small{color:#657467}
+
+.history-choice{display:flex;align-items:center;gap:9px;min-width:0;font-weight:500;margin:14px 0}.history-choice input{width:auto;margin:0;accent-color:#315f44}
+
+.story{border-top:1px solid #e8eee6;padding:15px 0}.story:first-of-type{border:0}.story h3{margin:4px 0}.story p{margin:6px 0;white-space:pre-line}.options{display:grid;gap:8px;margin:12px 0}.options label{min-width:0;display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #dae4d8;border-radius:9px;font-weight:400}.options input{width:auto;margin:0}.notice{min-height:1.5em;margin:8px 0}.muted-button{background:#edf2e9;color:#315f44}
+
+.home-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:22px 0}
+
+.entry-card{background:#fff;border:1px solid #dfe8dc;border-radius:18px;padding:24px;box-shadow:0 3px 18px #203a2112;cursor:pointer;text-align:left;color:inherit;font:inherit;margin:0}
+
+.entry-card:hover{border-color:#9db49e;transform:translateY(-1px)}
+
+.entry-icon{font-size:2rem;display:block;margin-bottom:10px}.entry-title{font-size:1.2rem;font-weight:800;display:block;margin-bottom:5px}
+
+.entry-copy{color:#657467;font-size:.94rem}.back-button{background:transparent;color:#315f44;border:1px solid #b7c6b9;margin:0 0 14px}
+
+.participate-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+
+.participate-card{border:1px solid #dfe8dc;border-radius:14px;padding:18px;background:#fbfcf8}
+
+.participate-card h3{margin:0 0 8px;font-size:1.08rem}.participate-card p{margin:6px 0}
+
+@media(max-width:900px){
+
+  main{max-width:680px;padding:32px 22px 72px}
+
+  header{margin-bottom:28px}
+
+  h1{font-size:2rem;line-height:1.25}
+
+  h2{font-size:1.4rem;line-height:1.4}
+
+  h3{font-size:1.08rem}
+
+  body{font-size:18px;line-height:1.75}
+
+  .eyebrow{font-size:.9rem}
+
+  .home-actions,.participate-grid{grid-template-columns:1fr;gap:16px}
+
+  .entry-card{padding:24px 22px;min-height:150px}
+
+  .entry-icon{font-size:2.25rem}
+
+  .entry-title{font-size:1.28rem}
+
+  .entry-copy{font-size:1rem;line-height:1.6}
+
+  .card{padding:22px;margin:18px 0;border-radius:18px}
+
+  .participate-card{padding:20px}
+
+  button{min-height:48px;padding:12px 20px;font-size:1rem}
+
+  input,select,textarea{font-size:16px;padding:13px}
+
+  label{min-width:100%}
+
+}
+
+@media(max-width:480px){
+
+  main{padding:26px 18px 64px}
+
+  body{font-size:17px}
+
+  h1{font-size:1.85rem}
+
+  h2{font-size:1.32rem}
+
+  .entry-card{min-height:0;padding:22px 20px}
+
+  .card{padding:20px 18px}
+
+}
+
+/* 手機閱讀強化：以實際手機閱讀舒適度為優先 */
+
+@media screen and (max-width:900px){
+
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+  body{font-size:19px!important;line-height:1.8!important}
+
+  main{width:100%!important;max-width:none!important;padding:30px 20px 72px!important}
+
+  header{margin-bottom:30px!important}
+
+  h1{font-size:2rem!important;line-height:1.3!important}
+
+  h2{font-size:1.55rem!important;line-height:1.45!important;margin-bottom:16px!important}
+
+  h3{font-size:1.22rem!important;line-height:1.5!important}
+
+  p,li{font-size:19px!important;line-height:1.8!important}
+
+  small,.muted{font-size:17px!important;line-height:1.7!important}
+
+  .eyebrow{font-size:16px!important;letter-spacing:.1em!important}
+
+  .home-actions{display:flex!important;flex-direction:column!important;gap:18px!important}
+
+  .participate-grid{display:flex!important;flex-direction:column!important;gap:16px!important}
+
+  .entry-card{display:block!important;width:100%!important;min-height:0!important;padding:26px 24px!important}
+
+  .entry-icon{font-size:2.5rem!important;margin-bottom:12px!important}
+
+  .entry-title{font-size:1.45rem!important;line-height:1.4!important;margin-bottom:8px!important}
+
+  .entry-copy{font-size:18px!important;line-height:1.7!important}
+
+  .card{padding:24px 22px!important;margin:20px 0!important}
+
+  .participate-card{width:100%!important;padding:22px!important}
+
+  .participate-card h3{font-size:1.22rem!important;margin-bottom:8px!important}
+
+  .participate-card strong{font-size:18px!important;line-height:1.6!important}
+
+  .participate-card p{font-size:17px!important;line-height:1.7!important}
+
+  .list li{padding:13px 0!important}
+
+  button{font-size:17px!important;min-height:50px!important;padding:12px 20px!important}
+
+  .chip{font-size:16px!important}
+
+  .metric{font-size:1.35rem!important}
+
+}
+
+@media screen and (max-width:480px){
+
+  body{font-size:19px!important}
+
+  main{padding:26px 18px 64px!important}
+
+  h1{font-size:1.9rem!important}
+
+  h2{font-size:1.48rem!important}
+
+  .card{padding:22px 19px!important}
+
+  .entry-card{padding:24px 21px!important}
+
+}
+
+/* 蔬果專案時間軸 */
+.crop-intro{margin:0 0 18px;color:#607368}
+.crop-scroll{overflow-x:auto;padding-bottom:8px}
+.crop-axis,.crop-row{display:grid;grid-template-columns:130px minmax(0,1fr);gap:14px}
+.crop-axis{margin-bottom:10px}.crop-months{display:grid;text-align:center;color:#607368}
+.crop-row{align-items:center;margin-bottom:20px}
+.crop-select{background:transparent;color:#244636;box-shadow:none;text-align:left;padding:10px 4px;min-height:48px;border:0;width:100%;white-space:normal}
+.crop-select strong,.crop-select small{display:block}.crop-select small{color:#607368}
+.crop-select[aria-pressed="true"] strong{text-decoration:underline;text-underline-offset:5px}
+.crop-select:focus-visible{outline:2px solid #345c42;outline-offset:2px}
+.crop-lane{height:96px;position:relative;background:repeating-linear-gradient(to right,#e2e9e1 0,#e2e9e1 1px,transparent 1px,transparent var(--crop-month-width))}
+.crop-growth{position:absolute;top:12px;height:18px;border-radius:5px;background:#bdd5bd}
+.crop-growth.planned{background:repeating-linear-gradient(135deg,#dce8db 0,#dce8db 5px,#f2f6f1 5px,#f2f6f1 10px)}
+.crop-estimate{position:absolute;top:7px;height:28px;border-radius:5px;background:#e9b75a;min-width:3px}
+.crop-today{position:absolute;top:0;bottom:20px;border-left:2px dashed #64786a;pointer-events:none}
+.crop-date-label{position:absolute;bottom:0;right:0;font-size:.85em;white-space:nowrap;color:#425e4c}
+.crop-pending{position:absolute;top:8px;left:6px;color:#607368}
+.crop-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.88em;margin-top:8px;color:#425e4c}
+.crop-swatch{display:inline-block;width:16px;height:12px;background:#bdd5bd;border-radius:3px;margin-right:5px}.crop-swatch.harvest{background:#e9b75a}.crop-swatch.planned{background:repeating-linear-gradient(135deg,#dce8db 0,#dce8db 3px,#f2f6f1 3px,#f2f6f1 6px)}
+.crop-detail{margin-top:22px;padding-top:18px;border-top:1px solid #e2e9e1}.crop-detail h3{margin-top:0}.crop-detail img{max-width:100%;height:auto}
+@media(max-width:600px){.crop-axis,.crop-row{grid-template-columns:96px minmax(0,1fr);gap:8px}.crop-select{font-size:1em!important}.crop-date-label{font-size:.85em!important}.crop-months{font-size:.9em}}
+
+.crop-harvest{position:absolute;top:43px;height:17px;border-radius:5px;background:#87afc7;min-width:3px}
+.crop-harvest.uncertain{background:repeating-linear-gradient(135deg,#87afc7 0,#87afc7 4px,#d5e5ef 4px,#d5e5ef 8px)}
+.crop-swatch.period{background:#87afc7}
+
+</style></head><body><main>
+
+<header><div class="eyebrow">倆口田 · 共耕</div><h1>倆口田共耕</h1><div class="muted">一起種、一起等、一起收成。</div></header>
+
+<p id="apiStatus" class="notice muted" role="status" aria-live="polite">正在連接共耕資料…</p>
+<section id="home">
+
+  <div class="home-actions">
+
+    <button class="entry-card" id="openParticipate" type="button"><span class="entry-icon">🌱</span><span class="entry-title">參與共耕</span><span class="entry-copy">認識倆口田共耕，選擇適合你的參與方式。</span></button>
+
+    <button class="entry-card" id="openMine" type="button"><span class="entry-icon">👤</span><span class="entry-title">我的共耕</span><span class="entry-copy">已經是共耕夥伴？登入查看自己的共耕紀錄。</span></button>
+
+  </div>
+
+  <p class="muted">倆口田共耕，不是一種會員商品，而是參與倆口田農業的入口。</p>
+
+</section>
+
+<section id="participate" class="hidden">
+
+  <button class="back-button" type="button" data-home>← 回到共耕首頁</button>
+
+  <section class="card">
+
+    <div class="eyebrow">參與共耕</div>
+
+    <h2>一起種一段時間，也一起分享土地長出來的東西。</h2>
+
+    <p class="muted">我們提供土地、種植與日常管理，你可以用不同的方式參與一段農業的過程。</p>
+
+    <div class="participate-grid">
+
+      <div class="participate-card"><h3>🥬 蔬果共耕</h3><strong>陪一塊田，走過一年的四季</strong><p class="muted">跟著實際田間收成走，不預先固定每一箱的品項，分享每個季節真正長出來的蔬果。</p><button type="button" id="vegInfo">了解蔬果共耕</button></div>
+
+      <div class="participate-card"><h3>🌳 果樹共耕</h3><strong>陪一棵樹，慢慢長大</strong><p class="muted">不用擁有果園，也能在倆口田有一棵你陪著長大的樹，從定植、照顧一路走到收成。</p><button type="button" id="treeInfo">了解果樹共耕</button></div>
+
+    </div>
+
+  </section>
+
+  <section class="card hidden" id="vegDetail">
+
+  <div class="eyebrow">蔬果共耕</div>
+
+  <h2>陪一塊田，走過四季</h2>
+
+  <p><strong>不是單純訂一箱菜，而是陪一塊田，用比較舒服的節奏長出收成。</strong></p>
+
+  <p>倆口田走在友善耕作這條路上，我們慢慢發現：如果土地一直被短期收入追著跑，就很容易變成每一塊地都要塞滿作物、每一個季節都不能停。</p>
+
+  <p>共耕讓我們可以把腳步放慢一點。讓作物照季節來、讓一部分土地有休息的時間，也讓我們可以比較安心地嘗試不同的作物。</p>
+
+  <p>你不一定要拿著鋤頭下田，也不一定住在附近。即使人在家裡，也可以透過蔬果箱與田間紀錄，參與一塊田正在發生的事情。</p>
+
+  <h3>你會一起收到什麼？</h3>
+
+  <ul class="list">
+
+    <li><strong>當季綜合蔬果箱</strong><br><span class="muted">依倆口田當時實際收成安排，不預先固定每一箱的品項。</span></li>
+
+    <li><strong>小批量作物優先分享</strong><br><span class="muted">有些作物數量不多、不一定適合正式上架，會優先和共耕夥伴分享。</span></li>
+
+    <li><strong>田間近況與種植紀錄</strong><br><span class="muted">不只知道收到什麼，也能知道這一季種了什麼、遇到什麼，以及為什麼做出這些種植選擇。</span></li>
+
+    <li><strong>農產品、加工品或試作品優先分享</strong><br><span class="muted">依當期實際狀況安排。</span></li>
+
+  </ul>
+
+  <h3>蔬果箱可能會有什麼？</h3>
+
+  <p>內容會依當季收成改變，可能包含倆口田當期的蔬菜、瓜果、香料植物，以及加工品或試作品。</p>
+
+  <p class="muted">每次內容都可能不同，實際品項、份量與安排會依田間狀況、採收量與品質調整。</p>
+
+  <h3>共耕不是固定蔬果箱訂閱</h3>
+
+  <p>我們會盡力種植、誠實記錄，並在有適合的收成時優先分享給共耕夥伴。但農業會受到季節、天氣、病蟲害與作物生長狀況影響，因此不保證每次蔬果箱的品項、重量與價值完全一致。</p>
+
+  <div class="card" style="background:#f7f9f4;box-shadow:none">
+
+    <h3>關於夏季與極端天氣</h3>
+
+    <p>台灣夏季是高溫、多雨與颱風風險較高的季節，作物可能受到豪雨、颱風、病蟲害或田區轉換影響。</p>
+
+    <p>因此，共耕分享會跟著實際田間收成走，可能延後、合併安排；遇到較嚴重的農損時，也可能有一段時間沒有適合寄出的蔬果。</p>
+
+    <p class="muted">我們不會為了湊出一箱而勉強採收。田裡發生什麼，我們就一起看見什麼。</p>
+
+  </div>
+
+  <h3>A｜年度共耕夥伴｜12,000 元／年</h3>
+
+  <p><strong>適合：已經認同倆口田，想陪農場走完整一年的人。</strong></p>
+
+  <ul class="list">
+
+    <li>加入即開始，不綁曆年 1–12 月。</li>
+
+    <li>目標安排 12 次蔬果分享，實際時間依田間收成。</li>
+
+    <li>年度田間總結與下一季作物規劃分享。</li>
+
+    <li>小批量作物、加工品或試作品優先分享。</li>
+
+    <li>農產品優先購買。</li>
+
+    <li>年度支持者優先續約資格。</li>
+
+  </ul>
+
+  <h3>B｜季節共耕夥伴｜3,600 元／季</h3>
+
+  <p><strong>適合：第一次加入，或想先陪倆口田走過一段時間的人。</strong></p>
+
+  <ul class="list">
+
+    <li>加入即開始，不需要等待固定季別。</li>
+
+    <li>完成 3 次蔬果分享為一期，實際時間依田間收成。</li>
+
+    <li>當季綜合蔬果箱與小批量作物優先分享。</li>
+
+    <li>農產品優先購買。</li>
+
+  </ul>
+
+  <h3>C｜純粹支持｜金額自訂</h3>
+
+  <p><strong>適合：想支持倆口田，但暫時不需要蔬果箱的人。</strong></p>
+
+  <p>這個方案不安排固定農產品回饋。你的名字可以列入共耕感謝名單；如果希望匿名，也可以告訴我們。</p>
+
+  <p style="margin-top:24px"><strong>風險一起承擔，等待一起經歷，收成一起歡喜。</strong></p>
+
+  <p class="muted">我們想做的，不只是把蔬果送到支持者家裡，也想把一塊田正在發生的事情，一起送進你的生活裡。</p>
+
+  <button type="button" id="vegApply">我要參與蔬果共耕</button>
+
+  <section id="vegApplication" class="hidden" style="margin-top:24px">
+
+    <hr style="border:0;border-top:1px solid #e1e8de;margin:24px 0">
+
+    <div class="eyebrow">蔬果共耕申請</div>
+
+    <h2>先告訴我們，你是不是已經是共耕會員？</h2>
+
+    <div class="options" id="vegMemberTypeOptions">
+
+      <label><input type="radio" name="vegMemberType" value="new"> <span>我是第一次參與倆口田共耕</span></label>
+
+      <label><input type="radio" name="vegMemberType" value="existing"> <span>我已經是倆口田共耕會員</span></label>
+
+    </div>
+
+    <div id="vegExistingFields" class="hidden">
+
+      <div class="row">
+
+        <label>會員編號<input id="vegMemberId" placeholder="例如 LK-0001" autocomplete="username"></label>
+
+        <label>專屬查詢碼<input id="vegMemberCode" type="password" autocomplete="off" placeholder="請輸入原本的查詢碼"></label>
+
+      </div>
+
+      <button type="button" id="verifyVegMember">確認會員身分</button>
+
+      <p id="verifyVegNotice" class="notice muted"></p>
+
+    </div>
+
+    <div id="vegNewFields" class="hidden">
+
+      <div class="row">
+
+        <label>姓名<input id="vegName" autocomplete="name"></label>
+
+        <label>顯示名稱<input id="vegDisplayName" placeholder="會員頁面顯示的名稱"></label>
+
+      </div>
+
+      <div class="row">
+
+        <label>手機<input id="vegPhone" type="tel" autocomplete="tel"></label>
+
+        <label>Email<input id="vegEmail" type="email" autocomplete="email"></label>
+
+      </div>
+
+    </div>
+
+    <div id="vegApplicationStep2" class="hidden">
+
+      <h3>選擇參與方案</h3>
+
+      <div class="options" id="vegPlanOptions"></div>
+
+      <div id="vegCustomAmountWrap" class="hidden">
+
+        <label>純粹支持金額
+
+          <input id="vegCustomAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="請輸入支持金額">
+
+        </label>
+
+      </div>
+
+      <div id="vegShippingFields">
+
+        <h3>蔬果箱配送資料</h3>
+
+        <div class="row">
+
+          <label>收件人<input id="vegRecipient"></label>
+
+          <label>收件手機<input id="vegRecipientPhone" type="tel"></label>
+
+        </div>
+
+        <label>收件地址<input id="vegAddress" autocomplete="street-address"></label>
+
+        <label>飲食忌口或不方便收取的項目
+
+          <textarea id="vegAvoid" maxlength="300" placeholder="例如：不吃辣、不方便收茄子、對特定食材過敏等。沒有可留白。"></textarea>
+
+        </label>
+
+      </div>
+
+      <label>其他備註
+
+        <textarea id="vegNote" maxlength="500" placeholder="想對倆口田說的話、特殊收件需求等。"></textarea>
+
+      </label>
+
+      <div class="card" style="background:#f7f9f4;box-shadow:none;margin-top:24px">
+
+        <h3>加入前，請再確認一次</h3>
+
+        <ul class="list">
+
+          <li>蔬果共耕不是固定蔬果箱訂閱，內容與時間會依實際田間收成安排。</li>
+
+          <li>年度方案目標分享 12 次；季節方案完成 3 次分享為一期。</li>
+
+          <li>台灣夏季高溫、多雨與颱風風險較高，分享可能延後、合併，嚴重農損時也可能暫時沒有適合寄出的蔬果。</li>
+
+          <li>加入即開始，不需要等待固定月份或季別。</li>
+
+          <li><strong>風險一起承擔，等待一起經歷，收成一起歡喜。</strong></li>
+
+        </ul>
+
+        <label class="history-choice"><input type="checkbox" id="vegAgree"><span>我已理解並同意上述蔬果共耕方式。</span></label>
+
+      </div>
+
+      <button type="button" id="submitVegApplication">送出蔬果共耕申請</button>
+
+      <p id="vegApplicationNotice" class="notice muted"></p>
+
+    </div>
+
+    <div id="vegApplicationSuccess" class="hidden">
+
+      <div class="card" style="background:#f7f9f4;box-shadow:none">
+
+        <h2>🌱 已收到你的蔬果共耕申請</h2>
+
+        <p id="vegSuccessText"></p>
+
+        <p><strong id="vegPaymentStatus">目前狀態：待付款</strong></p>
+
+        <p class="muted">完成付款並回報後，倆口田確認入帳，就會正式建立你的蔬果共耕會籍。</p>
+
+        <div class="card" style="background:#fff;box-shadow:none;margin-top:20px">
+
+          <h3>付款資訊</h3>
+
+          <label>請選擇付款方式
+
+            <select id="vegPaymentMethod">
+
+              <option value="中國信託">中國信託</option>
+
+              <option value="郵局">郵局</option>
+
+              <option value="LINE Pay">LINE Pay</option>
+
+            </select>
+
+          </label>
+
+          <div id="vegPaymentInfo"></div>
+
+          <label id="vegPaymentReferenceLabel">匯款帳號末五碼
+
+            <input id="vegPaymentReference" inputmode="numeric" maxlength="40" placeholder="例如：12345">
+
+          </label>
+
+          <button type="button" id="reportVegPayment">我已完成付款</button>
+
+          <p id="vegPaymentNotice" class="notice muted"></p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</section>
+
+  <section class="card hidden" id="treeDetail">
+
+  <div class="eyebrow">果樹共耕</div>
+
+  <h2>陪一棵樹，慢慢長大</h2>
+
+  <p><strong>我沒有自己的果園，但在倆口田，有一棵我陪著長大的樹。</strong></p>
+
+  <p>你不需要有土地，也不需要每天到田裡照顧。倆口田負責土地、種植與日常管理；你可以透過共耕紀錄，看著自己的果樹從定植、長葉、開花，一路走到收成。時間適合時，也歡迎實際來田裡參與。</p>
+
+  <h3>🌱 幼樹共耕｜5,000 元／株</h3>
+
+  <p>這筆費用涵蓋的是<strong>整個幼樹階段</strong>，不是每年收一次。果樹可能需要三年、四年，甚至更久才進入第一次正常收成。</p>
+
+  <ul class="list">
+
+    <li>倆口田負責幼樹期間的日常照顧與田間管理。</li>
+
+    <li>幼樹期間，每年提供一箱倆口田共耕蔬果箱，內容依當時田間實際收成安排。</li>
+
+    <li>少量試花、試果或零星結果，不代表已經進入正常收成。</li>
+
+    <li>第一次正常收成時，實際採收由共耕人與倆口田各分享 50%。</li>
+
+  </ul>
+
+  <h3>🌳 成樹共耕｜5,000 元／年</h3>
+
+  <p>第一次正常收成完成後，從下一年度開始進入成樹共耕。每年由共耕人自己決定是否繼續。</p>
+
+  <ul class="list">
+
+    <li>一年一期，不自動續約，也不要求一次參與多年。</li>
+
+    <li>當年度實際採收，共耕人 50%、倆口田 50%。</li>
+
+    <li>農業沒有固定產量，因此不保證最低收成斤數。</li>
+
+  </ul>
+
+  <h3>5,000 元是在買一棵樹嗎？</h3>
+
+  <p>不是。果樹與土地仍由倆口田管理。共耕費支持的是一段農業過程裡需要的土地、時間與照顧，也讓共耕人可以參與果樹的成長紀錄與收成分享。</p>
+
+  <h3>如果果樹死掉呢？</h3>
+
+  <p>果樹死亡與重新補植的風險由倆口田承擔。倆口田會重新補植，不向共耕人收取補植費。</p>
+
+  <p class="muted">如果已經進入成樹階段的果樹死亡，補植後會重新回到幼樹階段；在新的果樹再次進入第一次正常收成以前，不另外收取年度共耕費。</p>
+
+  <h3>收成之後，可以怎麼拿？</h3>
+
+  <div class="participate-grid">
+
+    <div class="participate-card"><h3>🧺 自己來採</h3><p class="muted">時間與田間狀況適合時，可以安排親自來取得自己的收成。</p></div>
+
+    <div class="participate-card"><h3>📦 幫我寄回家</h3><p class="muted">由倆口田協助包裝寄送，實際包材與物流費用由共耕人負擔。</p></div>
+
+    <div class="participate-card"><h3>🏷️ 幫我賣掉</h3><p class="muted">可委託倆口田代售。扣除實際直接銷售成本後，再收取代售收益的 10% 作為代售服務費。</p></div>
+
+  </div>
+
+  <p style="margin-top:22px"><strong>豐收一起分享，歉收一起承擔。</strong></p>
+
+  <p class="muted">果樹共耕不是投資，也不是預購未來固定斤數的水果。我們希望留下的是一段真正參與土地與果樹成長的關係。</p>
+
+  <button type="button" id="treeApply">我要參與果樹共耕</button>
+
+  <section id="treeApplication" class="hidden" style="margin-top:24px">
+
+    <hr style="border:0;border-top:1px solid #e1e8de;margin:24px 0">
+
+    <div class="eyebrow">果樹共耕申請</div>
+
+    <h2>先告訴我們，你是不是已經是共耕會員？</h2>
+
+    <div class="options" id="memberTypeOptions">
+
+      <label><input type="radio" name="fruitMemberType" value="new"> <span>我是第一次參與倆口田共耕</span></label>
+
+      <label><input type="radio" name="fruitMemberType" value="existing"> <span>我已經是倆口田共耕會員</span></label>
+
+    </div>
+
+    <div id="existingMemberFields" class="hidden">
+
+      <div class="row">
+
+        <label>會員編號<input id="fruitMemberId" placeholder="例如 LK-0001" autocomplete="username"></label>
+
+        <label>專屬查詢碼<input id="fruitMemberCode" type="password" autocomplete="off" placeholder="請輸入原本的查詢碼"></label>
+
+      </div>
+
+      <button type="button" id="verifyFruitMember">確認會員身分</button>
+
+      <p id="verifyFruitNotice" class="notice muted"></p>
+
+    </div>
+
+    <div id="newMemberFields" class="hidden">
+
+      <div class="row">
+
+        <label>姓名<input id="fruitName" autocomplete="name"></label>
+
+        <label>顯示名稱<input id="fruitDisplayName" placeholder="會員頁面顯示的名稱"></label>
+
+      </div>
+
+      <div class="row">
+
+        <label>手機<input id="fruitPhone" type="tel" autocomplete="tel"></label>
+
+        <label>Email<input id="fruitEmail" type="email" autocomplete="email"></label>
+
+      </div>
+
+      <label>收件地址<input id="fruitAddress" autocomplete="street-address"></label>
+
+    </div>
+
+    <div id="fruitApplicationStep2" class="hidden">
+
+      <h3>選擇想參與的果樹</h3>
+
+      <div class="options" id="treeChoiceOptions"></div>
+
+      <label>替這棵樹取個名字（可以先不填）
+
+        <input id="fruitTreeName" maxlength="30" placeholder="例如：小綠、平安、慢慢長大">
+
+      </label>
+
+      <div class="card" style="background:#f7f9f4;box-shadow:none;margin-top:24px">
+
+        <h3>送出前，再確認一次</h3>
+
+        <ul class="list">
+
+          <li>幼樹共耕費：5,000 元／株，涵蓋整個幼樹階段，不是每年收一次。</li>
+
+          <li>第一次正常收成，由共耕人與倆口田各分享 50%。</li>
+
+          <li>果樹死亡由倆口田負責補植，不另外收取補植費。</li>
+
+          <li>農業沒有固定產量，不保證最低收成斤數。</li>
+
+          <li><strong>豐收一起分享，歉收一起承擔。</strong></li>
+
+        </ul>
+
+        <label class="history-choice"><input type="checkbox" id="fruitAgree"><span>我已閱讀並同意上述果樹共耕重點。</span></label>
+
+      </div>
+
+      <button type="button" id="submitFruitApplication">送出共耕申請</button>
+
+      <p id="fruitApplicationNotice" class="notice muted"></p>
+
+    </div>
+
+    <div id="fruitApplicationSuccess" class="hidden">
+
+      <div class="card" style="background:#f7f9f4;box-shadow:none">
+
+        <h2>🌱 已收到你的果樹共耕申請</h2>
+
+        <p id="fruitSuccessText"></p>
+
+        <p><strong id="fruitPaymentStatus">目前狀態：待付款</strong></p>
+
+        <p class="muted">申請送出後已先保留一個方案名額，但尚未占用實際樹號。完成付款並由倆口田確認入帳後，才會正式建立果樹共耕紀錄。</p>
+
+        <div id="fruitPaymentBox" class="card" style="background:#fff;box-shadow:none;margin-top:20px">
+
+          <h3>付款資訊</h3>
+
+          <label>請選擇付款方式
+
+            <select id="fruitPaymentMethod">
+
+              <option value="中國信託">中國信託</option>
+
+              <option value="郵局">郵局</option>
+
+              <option value="LINE Pay">LINE Pay</option>
+
+            </select>
+
+          </label>
+
+          <div id="fruitPaymentInfo"></div>
+
+          <label id="fruitPaymentReferenceLabel">匯款帳號末五碼
+
+            <input id="fruitPaymentReference" inputmode="numeric" maxlength="5" placeholder="例如：12345">
+
+          </label>
+
+          <button type="button" id="reportFruitPayment">我已完成付款</button>
+
+          <p id="fruitPaymentNotice" class="notice muted"></p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</section>
+
+</section>
+
+<section id="memberArea" class="hidden">
+
+<button class="back-button" type="button" data-home>← 回到共耕首頁</button>
+
+<section class="card" id="login"><h2>查詢會員紀錄</h2><form id="form"><div class="row"><label>會員編號<input name="id" autocomplete="username" required placeholder="例如 LK-0001"></label><label>專屬查詢碼<input name="code" type="password" autocomplete="off" required placeholder="請輸入收到的查詢碼"></label></div><button id="submit">查詢我的紀錄</button></form><p id="message" role="alert" aria-live="polite"></p><small>查詢碼請勿轉傳。查詢後可按下「清除畫面」。</small></section>
+
+<section id="result" class="hidden" aria-live="polite"><div class="card"><h2 id="welcome"></h2><button id="clear" type="button">清除畫面</button></div><div id="sections"></div></section>
+
+</main><script src="config.js"></script><script src="api.js"></script><script>
+
+const $=s=>document.querySelector(s); const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=String(txt);return n};
+
+function add(parent,tag,cls,txt){const n=el(tag,cls,txt);parent.append(n);return n}
+
+// Google Drive 的「複製連結」是檢視頁，先轉成圖片預覽網址。
+
+function photoSource(value){
+
+  if(!value)return null;
+
+  try{
+
+    const u=new URL(String(value).trim());
+
+    if(u.protocol!=='https:'||u.username||u.password)return null;
+
+    if(u.hostname!=='drive.google.com')return {image:u.href,original:u.href};
+
+    const path=/^\/file\/(?:u\/\d+\/)?d\/([A-Za-z0-9_-]+)(?:\/|$)/.exec(u.pathname);
+
+    const queryPaths=['/open','/uc','/thumbnail'];
+
+    const id=path?path[1]:queryPaths.includes(u.pathname)?u.searchParams.get('id'):null;
+
+    if(!id||!/^[A-Za-z0-9_-]{10,200}$/.test(id))return null;
+
+    const image=new URL('https\://drive.google.com/thumbnail');
+
+    image.searchParams.set('id',id);image.searchParams.set('sz','w1600');
+
+    const original=new URL('https\://drive.google.com/file/d/'+id+'/view');
+
+    const key=u.searchParams.get('resourcekey');
+
+    if(key){image.searchParams.set('resourcekey',key);original.searchParams.set('resourcekey',key)}
+
+    return {image:image.href,original:original.href};
+
+  }catch(_){return null}
+
+}
+
+function photo(parent,url){
+
+  const source=photoSource(url);if(!source)return;
+
+  const block=add(parent,'div','photo-block');
+
+  const view=add(block,'a');view.href=source.original;view.target='_blank';view.rel='noopener noreferrer';view.referrerPolicy='no-referrer';
+
+  const img=el('img','photo');img.alt='共耕紀錄照片';img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';
+
+  const notice=add(block,'small','hidden','照片暫時無法顯示。 ');notice.setAttribute('role','status');
+
+  const link=add(block,'a','','開啟原始照片');link.href=source.original;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
+
+  img.addEventListener('error',()=>{view.remove();notice.classList.remove('hidden')},{once:true});
+
+  view.append(img);img.src=source.image;
+
+}
+
+function credentials(){const f=new FormData($('#form'));return [f.get('id'),f.get('code')]}
+
+function messageBoard(section,messages){add(section,'p','muted','分享料理、酪梨心得，或想聊聊田裡的事。留言會先由倆口田審核。');const form=add(section,'form');const topicLabel=add(form,'label','','留言主題');const topic=add(topicLabel,'select');['蔬果料理','酪梨心得','田間交流'].forEach(x=>{const opt=add(topic,'option','',x);opt.value=x});const bodyLabel=add(form,'label','','留言內容');const body=add(bodyLabel,'textarea');body.maxLength=500;body.minLength=3;body.required=true;body.placeholder='例如：這次的酪梨你怎麼吃？';add(form,'small','','送出時會記錄你的會員顯示名稱；請不要留下電話、住址等私密資料。');const button=add(form,'button','','送出留言');const notice=add(section,'p','notice muted','');const list=add(section,'div');const showMessage=(m,first)=>{const article=el('article','story');add(article,'small','',`${m.date||''} · ${m.topic} · ${m.mine?'你':m.author}${m.pending?' · 待審核（僅你看得到）':''}`);add(article,'p','',m.text);if(first)list.prepend(article);else list.append(article)};if(!messages.length)add(list,'p','muted','還沒有留言，歡迎分享第一則。');else messages.forEach(m=>showMessage(m,false));form.addEventListener('submit',e=>{e.preventDefault();button.disabled=true;notice.className='notice muted';notice.textContent='送出中…';cofarmRun.withSuccessHandler(result=>{button.disabled=false;body.value='';notice.textContent='已收到留言；審核公開後其他會員才會看到。';if(!messages.length)list.replaceChildren();messages.unshift(result);showMessage({...result,mine:true,pending:true},true)}).withFailureHandler(err=>{button.disabled=false;notice.className='notice error';notice.textContent=err.message||'送出失敗，請稍後再試。'}).submitMemberMessage(...credentials(),topic.value,body.value)})}
+
+// 單一時間軸；所有文字透過 textContent 呈現，照片沿用既有安全處理。
+function cropTimeline(data,area){
+  const section=add(area,'section','card');add(section,'h2','','🥬 蔬果專案');
+  add(section,'p','crop-intro','看看田裡正在長什麼，以及接下來可以期待的收成。');
+  const projects=data.cropProjects||[];
+  if(!projects.length){add(section,'p','muted','蔬果專案整理中，近期會陸續更新。');return}
+  const toDay=s=>s?Date.parse(s+'T00:00:00Z'):NaN;
+  const now=new Date();const parts=new Intl.DateTimeFormat('en',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);const part=t=>parts.find(p=>p.type===t).value;const todayString=part('year')+'-'+part('month')+'-'+part('day');
+  const today=toDay(todayString),dates=[today];
+  projects.forEach(p=>[p.planted,p.harvestStart,p.harvestEnd,p.harvestPeriodEnd].forEach(s=>{const d=toDay(s);if(Number.isFinite(d))dates.push(d)}));
+  const first=new Date(Math.min(...dates)),last=new Date(Math.max(...dates));
+  const start=Date.UTC(first.getUTCFullYear(),first.getUTCMonth(),1);
+  const end=Date.UTC(last.getUTCFullYear(),last.getUTCMonth()+1,1);
+  const monthCount=(last.getUTCFullYear()-first.getUTCFullYear())*12+last.getUTCMonth()-first.getUTCMonth()+1;
+  const viewport=add(section,'div','crop-scroll');viewport.tabIndex=0;viewport.setAttribute('aria-label','蔬果種植與預估採收時間軸，可左右捲動');
+  const chart=add(viewport,'div');chart.style.minWidth=(130+monthCount*70)+'px';
+  const axis=add(chart,'div','crop-axis');add(axis,'span','','蔬果 / 進度');const months=add(axis,'div','crop-months');
+  months.style.gridTemplateColumns='repeat('+monthCount+',minmax(0,1fr))';
+  for(let i=0;i<monthCount;i++){const d=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+i,1));add(months,'span','',d.getUTCFullYear()+'/'+(d.getUTCMonth()+1))}
+  // 每月格線與月份等寬；時間位置依月份內日期計算，避免不同月天數造成錯位。
+  const at=d=>{const x=new Date(d),index=(x.getUTCFullYear()-first.getUTCFullYear())*12+x.getUTCMonth()-first.getUTCMonth();const days=new Date(Date.UTC(x.getUTCFullYear(),x.getUTCMonth()+1,0)).getUTCDate();return Math.max(0,Math.min(100,100*(index+(x.getUTCDate()-1)/days)/monthCount))};
+  const label=p=>p.harvestStart?(p.harvestStart===p.harvestEnd?p.harvestStart:p.harvestStart+' ～ '+p.harvestEnd):'採收時間待更新';
+  const detail=el('div','crop-detail');detail.setAttribute('aria-live','polite');
+  const buttons=[];
+  const select=(p,button)=>{buttons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));detail.replaceChildren();add(detail,'h3','',p.name+(p.area?'｜'+p.area:''));add(detail,'p','',p.status+'｜'+(p.planted?'種植：'+p.planted:'種植日期待填'));
+    add(detail,'p','',p.harvestStart?'預估開始採收：'+label(p):p.dateIssue?'採收時間待確認，確認後會更新。':'預估開始採收：待更新');
+    if(p.harvestDays)add(detail,'p','','預估採收約 '+p.harvestDays+' 天（開始採收當天算第 1 天）。');
+    if(p.harvestPeriodStart&&p.harvestPeriodEnd)add(detail,'p','','可能採收時段：'+p.harvestPeriodStart+' ～ '+p.harvestPeriodEnd+(p.harvestStart!==p.harvestEnd?'。日期範圍包含開始採收時間的浮動，並非每天都會有收成。':''));
+    else if(p.harvestDays)add(detail,'p','muted','開始採收時間確認後，就能推算採收期間。');
+    if(p.durationIssue)add(detail,'p','muted','採收天數待確認。');
+    if(p.observation)add(detail,'p','',p.observation);photo(detail,p.photo);if(p.updated)add(detail,'small','muted','更新日期：'+p.updated);
+  };
+  projects.forEach(p=>{const row=add(chart,'div','crop-row');const button=add(row,'button','crop-select');button.type='button';button.setAttribute('aria-pressed','false');add(button,'strong','',p.name);add(button,'small','',p.status+(p.harvestDays?' · 約'+p.harvestDays+'天':''));buttons.push(button);
+    const lane=add(row,'div','crop-lane');lane.style.setProperty('--crop-month-width',(100/monthCount)+'%');lane.setAttribute('role','img');lane.setAttribute('aria-label',p.name+'，'+p.status+'，預估開始採收：'+label(p));
+    const planting=toDay(p.planted),a=toDay(p.harvestStart),b=toDay(p.harvestEnd);
+    const bar=(cls,left,right)=>{const n=add(lane,'span',cls);n.style.left=left+'%';n.style.width=Math.max(0,right-left)+'%';return n};
+    if(Number.isFinite(planting)){const stop=Number.isFinite(a)?a:Math.max(planting,today);bar('crop-growth'+(p.status==='預計種植'?' planned':''),at(planting),at(stop));}
+    if(Number.isFinite(a)){bar('crop-estimate',at(a),at(b+86400000));add(lane,'span','crop-date-label',label(p));}
+    else add(lane,'span','crop-date-label',p.dateIssue?'採收時間待確認':'採收時間待更新');
+    if(p.harvestPeriodStart&&p.harvestPeriodEnd){const harvest=bar('crop-harvest'+(p.harvestStart!==p.harvestEnd?' uncertain':''),at(toDay(p.harvestPeriodStart)),at(toDay(p.harvestPeriodEnd)+86400000));harvest.setAttribute('title','預估採收約 '+p.harvestDays+' 天，可能採收時段 '+p.harvestPeriodStart+' ～ '+p.harvestPeriodEnd);lane.setAttribute('aria-label',p.name+'，'+p.status+'，預估採收約 '+p.harvestDays+' 天，可能採收時段 '+p.harvestPeriodStart+' ～ '+p.harvestPeriodEnd);}
+    if(!Number.isFinite(planting))add(lane,'span','crop-pending','種植日期待填');
+    const line=add(lane,'span','crop-today');line.style.left=at(today)+'%';line.setAttribute('aria-hidden','true');
+    button.addEventListener('click',()=>select(p,button));
+  });
+  const legend=add(section,'div','crop-legend');[['','生長期'],['planned','預計種植'],['harvest','預估開始採收時段'],['period','預估採收期間']].forEach(([cls,text])=>{const item=add(legend,'span');add(item,'i','crop-swatch '+cls);item.append(document.createTextNode(text.replace('开始','開始')))});add(legend,'span','','虛線：今天');
+  add(section,'p','muted','採收時間為預估，會依天氣與生長狀況調整；不代表寄箱日期。黃色表示可能開始採收的時段，藍色表示預估採收期間；藍色條紋包含開始日期的浮動。');
+  section.append(detail);select(projects[0],buttons[0]);
+}
+
+function participation(data,area){
+
+  const news=add(area,'section','card');add(news,'h2','','倆口田近況');
+
+  if(!data.updates?.length)add(news,'p','muted','最近還沒有發布田間消息。');
+
+  (data.updates||[]).forEach(u=>{const article=add(news,'article','story');add(article,'small','',`${u.date} · ${u.area||'倆口田'}`);add(article,'h3','',u.title);add(article,'p','',u.text);photo(article,u.photo)});
+
+  const section=add(area,'section','card');add(section,'h2','','一起參與');
+
+  if(!data.polls?.length&&!data.events?.length)messageBoard(section,data.messages||[]);
+
+  (data.polls||[]).forEach(p=>{const block=add(section,'article','story');add(block,'h3','',p.title);if(p.description)add(block,'p','muted',p.description);if(p.deadline)add(block,'small','',`回覆至 ${p.deadline}`);const form=add(block,'form');const options=add(form,'div','options');p.options.forEach((choice,i)=>{const label=add(options,'label');const radio=add(label,'input');radio.type='radio';radio.name='choice';radio.value=choice;radio.required=true;if(choice===p.selected)radio.checked=true;add(label,'span','',choice)});const button=add(form,'button','',p.selected?'更新我的選擇':'送出選擇');const notice=add(block,'p','notice muted',p.selected?`你目前選擇：${p.selected}`:'每位會員可選一項，送出後仍可更改。');form.addEventListener('submit',e=>{e.preventDefault();const chosen=new FormData(form).get('choice');if(!chosen)return;button.disabled=true;notice.textContent='儲存中…';cofarmRun.withSuccessHandler(result=>{button.disabled=false;p.selected=result.choice;button.textContent='更新我的選擇';notice.className='notice muted';notice.textContent=`已記下你的選擇：${result.choice}`}).withFailureHandler(err=>{button.disabled=false;notice.className='notice error';notice.textContent=err.message||'儲存失敗，請稍後再試。'}).submitPollAnswer(...credentials(),p.id,chosen)})});
+
+  (data.events||[]).forEach(e=>{const block=add(section,'article','story');add(block,'h3','',e.title);add(block,'p','muted',`${e.when}${e.place?' · '+e.place:''}`);if(e.description)add(block,'p','',e.description);const notice=add(block,'p','notice muted',e.registered?'你已報名這場活動。':e.available?`目前還有 ${e.spots} 個名額。`:'目前未開放報名或已額滿。');const button=add(block,'button',e.registered?'muted-button':'',e.registered?'取消報名':'報名參訪');button.type='button';button.hidden=!e.registered&&!e.available;button.addEventListener('click',()=>{const action=e.registered?'取消':'報名';button.disabled=true;notice.textContent='處理中…';cofarmRun.withSuccessHandler(result=>{e.registered=result.registered;e.spots+=result.registered?-1:1;button.disabled=false;button.className=e.registered?'muted-button':'';button.textContent=e.registered?'取消報名':'報名參訪';button.hidden=!e.registered&&e.spots<=0;notice.className='notice muted';notice.textContent=e.registered?'已報名；一個會員 ID 保留一個名額。':`已取消報名；目前還有 ${e.spots} 個名額。`}).withFailureHandler(err=>{button.disabled=false;notice.className='notice error';notice.textContent=err.message||'處理失敗，請稍後再試。'}).setFarmVisitRegistration(...credentials(),e.id,action)})});
+
+}
+
+function boxList(parent,boxes,fruit){if(!boxes.length){add(parent,'p','muted','目前尚無已送達紀錄');return}const ul=add(parent,'ul','list');boxes.forEach((b,i)=>{const li=add(ul,'li');add(li,'strong','',`${b.date||(b.month?b.month+' 寄出（送達日未記錄）':'日期未記錄')} · ${b.id||`第 ${boxes.length-i} 箱`}`);if(fruit&&b.weight)add(li,'span','muted',` · ${b.weight} 斤`);if(fruit&&b.kind)add(li,'span','chip',b.kind);if(b.items)add(li,'div','',b.items);photo(li,b.photo)})}
+
+function display(data){const area=$('#sections');area.replaceChildren();$('#welcome').textContent=`${data.name||'會員'}，您好`;$('#result').classList.remove('hidden');
+
+  data.csa.forEach(m=>{const card=add(area,'section','card');add(card,'h2','',`共耕會籍 ${m.id}`);add(card,'span','chip',m.status);if(m.start)add(card,'p','muted',`開始紀錄：${m.start}`);add(card,'div','metric',`已收到 ${m.received} / ${m.entitled} 箱`);add(card,'p','muted',`尚餘 ${m.remaining} 箱`);add(card,'h3','','蔬果箱紀錄');boxList(card,m.boxes,false);if(m.shipped?.length){add(card,'h3','','已寄出・待確認送達');add(card,'p','muted','以下箱次尚未計入已收到箱數。');const ul=add(card,'ul','list');m.shipped.forEach(b=>{const li=add(ul,'li');add(li,'strong','',`${b.month?b.month+' 寄出':'寄出月份未記錄'} · ${b.id}`);if(b.items)add(li,'div','',b.items)})}});
+
+  if(data.combined?.length){const card=add(area,'section','card');add(card,'h2','','合併寄送的果樹回饋');add(card,'p','muted','這些是多筆果樹認購合併寄送的水果，不重複算到每棵樹。');const ul=add(card,'ul','list');data.combined.forEach(b=>{const li=add(ul,'li');add(li,'strong','',`${b.date||((b.month||'月份未記錄')+' 寄出')} · ${b.id}`);add(li,'span','muted',` · ${fmt(b.weight)} 斤 · ${b.status}`);if(b.kind)add(li,'span','chip',b.kind);if(b.items)add(li,'div','',b.items)})}
+
+  data.trees.forEach(t=>{const card=add(area,'section','card');add(card,'h2','','🌳 我的果樹');add(card,'h3','',`${t.name&&t.name!==t.treeId?t.name+'｜':''}${t.treeId||'樹號待確認'}${t.variety?'｜'+t.variety:''}`);if(t.start)add(card,'p','',`我們從 ${t.start} 開始一起照顧這棵樹。`);add(card,'p','muted',`定植：${t.plantedYear ? t.plantedYear+' 年' : '尚未確認'}${t.status?'　目前狀態：'+t.status:''}`);photo(card,t.photo);
+
+    add(card,'h3','','果樹共耕進度');const p=t.progress;if(p.firstYear){add(card,'p','',`首產年 ${p.firstYear}：整棵樹採收 ${fmt(p.harvested)} 斤，約定分享一半 ${fmt(p.target)} 斤。`);add(card,'p','',`已送達 ${fmt(p.delivered)} 斤，尚待分享 ${fmt(p.remaining)} 斤。`);add(card,'p','muted',p.settled ? (p.complete?'首產年採收已結算，共耕條件已達成。':'首產年採收已結算，等待完成分享。'):'首產年採收尚待結算，完成狀態仍為進行中。')}else{if(t.start){add(card,'p','',`🌱 共耕剛開始`);add(card,'p','muted',`${t.treeId||'這棵樹'} 已在 ${t.start} 加入你的共耕紀錄。接下來的照顧、開花、結果與採收，都會陸續記錄在這裡。`)}else add(card,'p','muted','共耕開始日期尚未填寫，暫無法判定首產年與完成進度。');}
+
+    add(card,'h3','','定植與照顧紀錄');const list=add(card,'div');const renderHistory=showBefore=>{list.replaceChildren();const visible=t.logs.filter(x=>showBefore||!x.beforeAdoption);if(!visible.length){add(list,'p','muted','目前尚無紀錄');return}const ul=add(list,'ul','list');visible.forEach(x=>{const li=add(ul,'li');add(li,'strong','',x.date||'日期未填');if(x.beforeAdoption)add(li,'span','chip','認購前');add(li,'div','',x.text);photo(li,x.photo)})};
+
+    if(t.start){const choice=add(card,'label','history-choice');const toggle=add(choice,'input');toggle.type='checkbox';add(choice,'span','','顯示認購前的定植與照顧過程');card.insertBefore(choice,list);toggle.addEventListener('change',()=>renderHistory(toggle.checked));renderHistory(false)}else{add(card,'p','muted','共耕開始日期未填，暫時顯示全部歷程；填入日期後即可切換認購前紀錄。');renderHistory(true)}
+
+    add(card,'h3','','年度採收（整棵樹）');const years=Object.entries(t.yields).sort((a,b)=>b[0].localeCompare(a[0]));add(card,'p','',years.length?years.map(([y,v])=>`${y}：${fmt(v)} 斤`).join('　'):'目前尚無採收紀錄');add(card,'h3','','我的水果箱');boxList(card,t.boxes,true);if(t.shipped?.length){add(card,'h3','','已寄出・待確認送達');add(card,'p','muted','以下箱次尚未計入已分享斤數。');const ul=add(card,'ul','list');t.shipped.forEach(b=>{const li=add(ul,'li');add(li,'strong','',`${b.month?b.month+' 寄出':'寄出月份未記錄'} · ${b.id}`);if(b.weight)add(li,'span','muted',` · ${b.weight} 斤`);if(b.kind)add(li,'span','chip',b.kind);if(b.items)add(li,'div','',b.items)})}});
+
+  if(!data.csa.length&&!data.trees.length)add(area,'p','muted','目前沒有共耕紀錄。');
+
+cropTimeline(data,area);
+  participation(data,area);
+
+}
+
+function fmt(n){return Math.round(Number(n)*100)/100}
+
+function showHome(){
+
+  $('#home').classList.remove('hidden');$('#participate').classList.add('hidden');$('#memberArea').classList.add('hidden');
+
+  $('#result').classList.add('hidden');window.scrollTo(0,0);
+
+}
+
+document.getElementById('openParticipate').onclick=function(){
+
+  document.getElementById('home').classList.add('hidden');
+
+  document.getElementById('participate').classList.remove('hidden');
+
+  window.scrollTo(0,0);
+
+};
+
+document.getElementById('openMine').onclick=function(){
+
+  document.getElementById('home').classList.add('hidden');
+
+  document.getElementById('memberArea').classList.remove('hidden');
+
+  window.scrollTo(0,0);
+
+};
+
+document.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',showHome));
+
+$('#vegInfo').addEventListener('click',()=>{$('#vegDetail').classList.toggle('hidden');$('#treeDetail').classList.add('hidden')});
+
+$('#treeInfo').addEventListener('click',()=>{$('#treeDetail').classList.toggle('hidden');$('#vegDetail').classList.add('hidden')});
+
+let vegVerified=false;
+
+let currentVegApplicationId='';
+
+let currentVegPaymentInfo={};
+
+function loadVegPlans(){
+
+  cofarmRun.withSuccessHandler(plans=>{
+
+    const box=$('#vegPlanOptions'); box.replaceChildren();
+
+    (plans||[]).forEach(p=>{
+
+      const label=add(box,'label');
+
+      const radio=add(label,'input');
+
+      radio.type='radio'; radio.name='vegPlan'; radio.value=p.id;
+
+      radio.dataset.mode=p.amountMode||'固定';
+
+      radio.dataset.target=String(p.target||0);
+
+      const amount=p.amountMode==='自訂'?'金額自訂':Number(p.amount).toLocaleString()+' 元';
+
+      add(label,'span','',`${p.label}｜${amount}${p.target?`｜目標 ${p.target} 次分享`:''}`);
+
+    });
+
+    if(!(plans||[]).length)add(box,'p','muted','目前蔬果共耕暫停接受申請。');
+
+  }).vegetablePlanOptions();
+
+}
+
+$('#vegApply').addEventListener('click',()=>{
+
+  const area=$('#vegApplication');
+
+  area.classList.remove('hidden');
+
+  area.scrollIntoView({behavior:'smooth',block:'start'});
+
+  if(!$('#vegPlanOptions').children.length)loadVegPlans();
+
+});
+
+document.querySelectorAll('input[name="vegMemberType"]').forEach(r=>r.addEventListener('change',()=>{
+
+  const existing=r.value==='existing'&&r.checked, fresh=r.value==='new'&&r.checked;
+
+  $('#vegExistingFields').classList.toggle('hidden',!existing);
+
+  $('#vegNewFields').classList.toggle('hidden',!fresh);
+
+  $('#vegApplicationStep2').classList.toggle('hidden',!fresh);
+
+  vegVerified=false; $('#verifyVegNotice').textContent='';
+
+}));
+
+$('#verifyVegMember').addEventListener('click',()=>{
+
+  const id=$('#vegMemberId').value.trim(),code=$('#vegMemberCode').value.trim(),notice=$('#verifyVegNotice');
+
+  notice.className='notice muted';notice.textContent='確認中…';$('#verifyVegMember').disabled=true;
+
+  cofarmRun.withSuccessHandler(member=>{
+
+    vegVerified=true;$('#verifyVegMember').disabled=false;
+
+    notice.textContent=`歡迎回來，${member.name}。這次的蔬果共耕會加入你原本的「我的共耕」。`;
+
+    $('#vegApplicationStep2').classList.remove('hidden');
+
+  }).withFailureHandler(err=>{
+
+    vegVerified=false;$('#verifyVegMember').disabled=false;
+
+    notice.className='notice error';notice.textContent=err.message||'會員身分確認失敗。';
+
+    $('#vegApplicationStep2').classList.add('hidden');
+
+  }).verifyExistingMember(id,code);
+
+});
+
+$('#vegPlanOptions').addEventListener('change',e=>{
+
+  if(e.target.name!=='vegPlan')return;
+
+  const support=e.target.dataset.mode==='自訂', needsBox=Number(e.target.dataset.target||0)>0;
+
+  $('#vegCustomAmountWrap').classList.toggle('hidden',!support);
+
+  $('#vegShippingFields').classList.toggle('hidden',!needsBox);
+
+});
+
+$('#submitVegApplication').addEventListener('click',()=>{
+
+  const memberType=document.querySelector('input[name="vegMemberType"]:checked')?.value;
+
+  const plan=document.querySelector('input[name="vegPlan"]:checked');
+
+  const notice=$('#vegApplicationNotice');
+
+  if(!memberType){notice.className='notice error';notice.textContent='請先選擇會員身分。';return}
+
+  if(memberType==='existing'&&!vegVerified){notice.className='notice error';notice.textContent='請先確認會員身分。';return}
+
+  if(!plan){notice.className='notice error';notice.textContent='請選擇蔬果共耕方案。';return}
+
+  if(!$('#vegAgree').checked){notice.className='notice error';notice.textContent='請先閱讀並勾選同意蔬果共耕方式。';return}
+
+  const payload={
+
+    memberType,memberId:$('#vegMemberId').value.trim(),memberCode:$('#vegMemberCode').value.trim(),
+
+    name:$('#vegName').value.trim(),displayName:$('#vegDisplayName').value.trim(),
+
+    phone:$('#vegPhone').value.trim(),email:$('#vegEmail').value.trim(),
+
+    planId:plan.value,customAmount:$('#vegCustomAmount').value,
+
+    recipient:$('#vegRecipient').value.trim(),recipientPhone:$('#vegRecipientPhone').value.trim(),
+
+    address:$('#vegAddress').value.trim(),avoid:$('#vegAvoid').value.trim(),note:$('#vegNote').value.trim(),
+
+    agreed:true
+
+  };
+
+  const button=$('#submitVegApplication');button.disabled=true;notice.className='notice muted';notice.textContent='送出中…';
+
+  cofarmRun.withSuccessHandler(result=>{
+
+    button.disabled=false;notice.textContent='';currentVegApplicationId=result.id;currentVegPaymentInfo=result.paymentInfo||{};
+
+    $('#vegApplicationStep2').classList.add('hidden');$('#vegExistingFields').classList.add('hidden');
+
+    $('#vegNewFields').classList.add('hidden');$('#vegMemberTypeOptions').classList.add('hidden');
+
+    $('#vegApplicationSuccess').classList.remove('hidden');
+
+    $('#vegSuccessText').textContent=`申請編號 ${result.id}｜${result.planName}｜${Number(result.amount).toLocaleString()} 元`;
+
+    renderVegPaymentMethod();
+
+    $('#vegApplicationSuccess').scrollIntoView({behavior:'smooth',block:'start'});
+
+  }).withFailureHandler(err=>{
+
+    button.disabled=false;notice.className='notice error';notice.textContent=err.message||'申請送出失敗，請稍後再試。';
+
+  }).submitVegetableApplication(payload);
+
+});
+
+function renderVegPaymentMethod(){
+
+  const info=currentVegPaymentInfo||{}, method=$('#vegPaymentMethod').value, box=$('#vegPaymentInfo');
+
+  box.replaceChildren(); let rows=[];
+
+  if(method==='中國信託')rows=[['銀行代碼',info['中國信託銀行代碼']],['帳號',info['中國信託收款帳號']],['戶名',info['中國信託戶名']],['分行',info['中國信託分行']]];
+
+  else if(method==='郵局')rows=[['郵局代碼',info['郵局代碼']],['帳號',info['郵局收款帳號']],['戶名',info['郵局戶名']],['分行',info['郵局分行']]];
+
+  else rows=[['戶名',info['LINE Pay 戶名']],['LINE ID',info['LINE Pay ID']]];
+
+  rows.filter(x=>x[1]).forEach(([k,v])=>{const p=add(box,'p');const s=document.createElement('strong');s.textContent=k+'：';p.append(s,document.createTextNode(String(v)))});
+
+  if(method==='LINE Pay'&&info['LINE Pay 連結']){const p=add(box,'p'),a=document.createElement('a');a.href=info['LINE Pay 連結'];a.target='_blank';a.rel='noopener';a.textContent='開啟 LINE Pay／LINE 聯絡連結';p.append(a)}
+
+  if(info['付款說明'])add(box,'p','muted',info['付款說明']);
+
+  const label=$('#vegPaymentReferenceLabel'),input=$('#vegPaymentReference');
+
+  label.firstChild.textContent=method==='LINE Pay'?'LINE Pay 付款人姓名或辨識名稱':'匯款帳號末五碼';
+
+  input.placeholder=method==='LINE Pay'?'例如：楊杰勝':'例如：12345';
+
+  input.value='';
+
+}
+
+$('#vegPaymentMethod').addEventListener('change',renderVegPaymentMethod);
+
+$('#reportVegPayment').addEventListener('click',()=>{
+
+  const method=$('#vegPaymentMethod').value,ref=$('#vegPaymentReference').value.trim(),notice=$('#vegPaymentNotice');
+
+  if(!ref){notice.className='notice error';notice.textContent=method==='LINE Pay'?'請填寫付款人姓名或辨識名稱。':'請填寫匯款帳號末五碼。';return}
+
+  const button=$('#reportVegPayment');button.disabled=true;notice.className='notice muted';notice.textContent='回報中…';
+
+  cofarmRun.withSuccessHandler(result=>{
+
+    button.disabled=false;button.disabled=true;$('#vegPaymentStatus').textContent='目前狀態：已回報付款';
+
+    notice.className='notice muted';notice.textContent=result.message||'付款回報已收到。';
+
+  }).withFailureHandler(err=>{
+
+    button.disabled=false;notice.className='notice error';notice.textContent=err.message||'付款回報失敗，請稍後再試。';
+
+  }).reportVegetablePayment(currentVegApplicationId,method,ref);
+
+});
+
+let fruitVerified=false;
+
+let currentFruitApplicationId='';
+
+$('#treeApply').addEventListener('click',()=>{
+
+  const area=$('#treeApplication');
+
+  area.classList.remove('hidden');
+
+  area.scrollIntoView({behavior:'smooth',block:'start'});
+
+  cofarmRun.withSuccessHandler(config=>{
+
+    const box=$('#treeChoiceOptions');
+
+    if(box.children.length)return;
+
+    (config.options||[]).forEach(o=>{
+
+      const label=add(box,'label');
+
+      const radio=add(label,'input');
+
+      radio.type='radio';radio.name='treeChoice';radio.value=o.value;radio.disabled=!o.open;
+
+      const status=o.open?`｜剩餘 ${o.remaining} 株｜${Number(o.amount).toLocaleString()} 元`:'｜目前額滿／暫停';
+
+      add(label,'span','',o.label+status);
+
+    });
+
+    if(!(config.options||[]).some(o=>o.open))add(box,'p','muted','目前果樹共耕名額已滿，暫停接受申請。');
+
+  }).fruitApplicationOptions();
+
+});
+
+document.querySelectorAll('input[name="fruitMemberType"]').forEach(r=>r.addEventListener('change',()=>{
+
+  const existing=r.value==='existing'&&r.checked;
+
+  const fresh=r.value==='new'&&r.checked;
+
+  $('#existingMemberFields').classList.toggle('hidden',!existing);
+
+  $('#newMemberFields').classList.toggle('hidden',!fresh);
+
+  $('#fruitApplicationStep2').classList.toggle('hidden',!fresh);
+
+  fruitVerified=false;
+
+  $('#verifyFruitNotice').textContent='';
+
+}));
+
+$('#verifyFruitMember').addEventListener('click',()=>{
+
+  const id=$('#fruitMemberId').value.trim(),code=$('#fruitMemberCode').value.trim();
+
+  const notice=$('#verifyFruitNotice');
+
+  notice.className='notice muted';notice.textContent='確認中…';
+
+  $('#verifyFruitMember').disabled=true;
+
+  cofarmRun.withSuccessHandler(member=>{
+
+    fruitVerified=true;$('#verifyFruitMember').disabled=false;
+
+    notice.textContent=`歡迎回來，${member.name}。這次的果樹共耕會加入你原本的「我的共耕」。`;
+
+    $('#fruitApplicationStep2').classList.remove('hidden');
+
+  }).withFailureHandler(err=>{
+
+    fruitVerified=false;$('#verifyFruitMember').disabled=false;
+
+    notice.className='notice error';notice.textContent=err.message||'會員身分確認失敗。';
+
+    $('#fruitApplicationStep2').classList.add('hidden');
+
+  }).verifyExistingMember(id,code);
+
+});
+
+$('#submitFruitApplication').addEventListener('click',()=>{
+
+  const memberType=document.querySelector('input[name="fruitMemberType"]:checked')?.value;
+
+  const treeChoice=document.querySelector('input[name="treeChoice"]:checked')?.value;
+
+  const notice=$('#fruitApplicationNotice');
+
+  if(!memberType){notice.className='notice error';notice.textContent='請先選擇參與身分。';return}
+
+  if(memberType==='existing'&&!fruitVerified){notice.className='notice error';notice.textContent='請先確認會員身分。';return}
+
+  if(!treeChoice){notice.className='notice error';notice.textContent='請選擇想參與的果樹。';return}
+
+  if(!$('#fruitAgree').checked){notice.className='notice error';notice.textContent='請先閱讀並勾選同意果樹共耕重點。';return}
+
+  const payload={
+
+    memberType,
+
+    memberId:$('#fruitMemberId').value.trim(),
+
+    memberCode:$('#fruitMemberCode').value.trim(),
+
+    name:$('#fruitName').value.trim(),
+
+    displayName:$('#fruitDisplayName').value.trim(),
+
+    phone:$('#fruitPhone').value.trim(),
+
+    email:$('#fruitEmail').value.trim(),
+
+    address:$('#fruitAddress').value.trim(),
+
+    treeChoice,
+
+    treeName:$('#fruitTreeName').value.trim(),
+
+    agreed:true
+
+  };
+
+  const button=$('#submitFruitApplication');
+
+  button.disabled=true;notice.className='notice muted';notice.textContent='送出中…';
+
+  cofarmRun.withSuccessHandler(result=>{
+
+    button.disabled=false;notice.textContent='';
+
+    $('#fruitApplicationStep2').classList.add('hidden');
+
+    $('#existingMemberFields').classList.add('hidden');
+
+    $('#newMemberFields').classList.add('hidden');
+
+    $('#memberTypeOptions').classList.add('hidden');
+
+    $('#fruitApplicationSuccess').classList.remove('hidden');
+
+    currentFruitApplicationId=result.id;
+
+    $('#fruitSuccessText').textContent=`申請編號 ${result.id}｜${result.treeChoice}${result.treeName?'｜'+result.treeName:''}｜共耕費 ${Number(result.amount).toLocaleString()} 元`;
+
+    const info=result.paymentInfo||{}, paymentBox=$('#fruitPaymentInfo');
+
+    const renderSelectedPayment=()=>{
+
+      paymentBox.replaceChildren();
+
+      const method=$('#fruitPaymentMethod').value;
+
+      let rows=[];
+
+      if(method==='中國信託') rows=[
+
+        ['銀行代碼',info['中國信託銀行代碼']],['帳號',info['中國信託收款帳號']],
+
+        ['戶名',info['中國信託戶名']],['分行',info['中國信託分行']]
+
+      ];
+
+      else if(method==='郵局') rows=[
+
+        ['郵局代碼',info['郵局代碼']],['帳號',info['郵局收款帳號']],
+
+        ['戶名',info['郵局戶名']],['分行',info['郵局分行']]
+
+      ];
+
+      else rows=[
+
+        ['戶名',info['LINE Pay 戶名']],['LINE ID',info['LINE Pay ID']]
+
+      ];
+
+      const valid=rows.filter(x=>x[1]);
+
+      if(valid.length){
+
+        const h=add(paymentBox,'h4','',method);
+
+        valid.forEach(([k,v])=>{
+
+          const p=add(paymentBox,'p');
+
+          const strong=document.createElement('strong');
+
+          strong.textContent=k+'：';
+
+          p.append(strong,document.createTextNode(String(v)));
+
+        });
+
+        if(method==='LINE Pay' && info['LINE Pay 連結']){
+
+          const p=add(paymentBox,'p'),a=document.createElement('a');
+
+          a.href=info['LINE Pay 連結'];a.target='_blank';a.rel='noopener';
+
+          a.textContent='開啟 LINE Pay／LINE 聯絡連結';p.appendChild(a);
+
+        }
+
+      }else{
+
+        add(paymentBox,'p','muted','這個付款方式的資訊尚未設定，請聯絡倆口田。');
+
+      }
+
+      if(info['付款說明'])add(paymentBox,'p','muted',info['付款說明']);
+
+    };
+
+    window.renderFruitPaymentMethod=renderSelectedPayment;
+
+    renderSelectedPayment();
+
+    $('#fruitPaymentStatus').textContent='目前狀態：待付款';
+
+    $('#fruitPaymentBox').classList.remove('hidden');
+
+    $('#fruitApplicationSuccess').scrollIntoView({behavior:'smooth',block:'start'});
+
+  }).withFailureHandler(err=>{
+
+    button.disabled=false;notice.className='notice error';
+
+    notice.textContent=err.message||'申請送出失敗，請稍後再試。';
+
+  }).submitFruitApplication(payload);
+
+});
+
+$('#fruitPaymentMethod').addEventListener('change',()=>{
+
+  if(window.renderFruitPaymentMethod)window.renderFruitPaymentMethod();
+
+  const isLine=$('#fruitPaymentMethod').value==='LINE Pay';
+
+  const label=$('#fruitPaymentReferenceLabel'),input=$('#fruitPaymentReference');
+
+  label.firstChild.textContent=isLine?'LINE Pay 付款人姓名或辨識名稱 ':'匯款帳號末五碼 ';
+
+  input.value='';
+
+  input.inputMode=isLine?'text':'numeric';
+
+  input.maxLength=isLine?40:5;
+
+  input.placeholder=isLine?'例如：楊杰勝':'例如：12345';
+
+});
+
+$('#reportFruitPayment').addEventListener('click',()=>{
+
+  const method=$('#fruitPaymentMethod').value,reference=$('#fruitPaymentReference').value.trim();
+
+  const notice=$('#fruitPaymentNotice'),button=$('#reportFruitPayment');
+
+  if(!currentFruitApplicationId){notice.className='notice error';notice.textContent='找不到申請編號，請重新整理後再試。';return}
+
+  if(method!=='LINE Pay' && !/^\d{5}$/.test(reference)){notice.className='notice error';notice.textContent='請輸入 5 位數的匯款末五碼。';return}
+
+  if(method==='LINE Pay' && !reference){notice.className='notice error';notice.textContent='請填寫 LINE Pay 付款人姓名或方便辨識的名稱。';return}
+
+  button.disabled=true;notice.className='notice muted';notice.textContent='回報中…';
+
+  cofarmRun.withSuccessHandler(result=>{
+
+    button.disabled=false;
+
+    $('#fruitPaymentStatus').textContent='目前狀態：已回報付款';
+
+    notice.className='notice';notice.textContent=result.message||'付款回報已收到。';
+
+    $('#fruitPaymentReference').disabled=true;$('#fruitPaymentMethod').disabled=true;button.disabled=true;
+
+  }).withFailureHandler(err=>{
+
+    button.disabled=false;notice.className='notice error';notice.textContent=err.message||'付款回報失敗，請稍後再試。';
+
+  }).reportFruitPayment(currentFruitApplicationId,method,reference);
+
+});
+
+$('#form').addEventListener('submit',e=>{e.preventDefault();$('#message').textContent='查詢中…';$('#message').className='';$('#submit').disabled=true;$('#result').classList.add('hidden');const f=new FormData(e.target);cofarmRun.withSuccessHandler(data=>{$('#submit').disabled=false;$('#message').textContent='';display(data)}).withFailureHandler(err=>{$('#submit').disabled=false;$('#message').className='error';$('#message').textContent=err.message||'查詢失敗，請稍後再試。'}).lookupMember(f.get('id'),f.get('code'))});
+
+$('#clear').addEventListener('click',()=>{$('#result').classList.add('hidden');$('#sections').replaceChildren();$('#form').reset();$('#message').textContent='';window.scrollTo(0,0)});
+
+cofarmRun.withSuccessHandler(()=>{document.getElementById('apiStatus').textContent='';}).ping();
+</script></body></html>
