@@ -827,7 +827,9 @@ function cropTimeline(data,area){
     if(p.durationIssue)add(detail,'p','muted','採收天數待確認。');
     if(p.observation)add(detail,'p','',p.observation);photo(detail,p.photo);if(p.updated)add(detail,'small','muted','更新日期：'+p.updated);
   };
-  projects.forEach(p=>{const row=add(chart,'div','crop-row');const button=add(row,'button','crop-select');button.type='button';button.setAttribute('aria-pressed','false');add(button,'strong','',p.name);add(button,'small','',p.status+(p.harvestDays?' · 約'+p.harvestDays+'天':''));buttons.push(button);
+  projects.forEach(p=>{const row=add(chart,'div','crop-row');const button=add(row,'button','crop-select');button.type='button';button.setAttribute('aria-pressed','false');add(button,'strong','',p.name);const plantedAt=toDay(p.planted);const elapsedDays=Number.isFinite(plantedAt)?Math.floor((today-plantedAt)/86400000):null;
+    const growthText=elapsedDays===null?'':elapsedDays<0?' · 尚未種植':p.status==='已完成'?'':' · 已生長 '+elapsedDays+' 天';
+    add(button,'small','',p.status+growthText);buttons.push(button);
     const lane=add(row,'div','crop-lane');lane.style.setProperty('--crop-month-width',(100/monthCount)+'%');lane.setAttribute('role','img');lane.setAttribute('aria-label',p.name+'，'+p.status+'，預估開始採收：'+label(p));
     const planting=toDay(p.planted),a=toDay(p.harvestStart),b=toDay(p.harvestEnd);
     const bar=(cls,left,right)=>{const n=add(lane,'span',cls);n.style.left=left+'%';n.style.width=Math.max(0,right-left)+'%';return n};
