@@ -822,7 +822,7 @@
       </div>
 
       <div class="notice-box payment">
-        付款說明：倆口田保留彈性付款方式，收到貨品前後都可以付款。新版完成後，送出訂單即可直接看到你選擇的付款資訊，不必再等待我們另外傳帳號。
+        付款說明：倆口田保留彈性付款方式，收到貨品前後都可以付款。送出訂單後即可直接看到你選擇的付款資訊，不必等待我們另外傳帳號。
       </div>
 
       <div class="actions">
@@ -1505,6 +1505,7 @@
     savedOrders.forEach(receipt => {
       const card = document.createElement('div');
       card.className = 'receipt';
+      card.tabIndex = -1;
       const title = document.createElement('p');
       title.textContent = `✅ ${receipt.data.hasLowTemp ? '低溫' : '常溫'}訂單已收到・${formatMoney(receipt.data.grandTotal)}`;
       const reference = document.createElement('p');
@@ -1516,12 +1517,43 @@
       const pre = document.createElement('pre');
       pre.textContent = receipt.text;
       details.append(summary, pre);
+      const payment = document.createElement('div');
+      payment.className = 'notice-box payment';
+      const amount = document.createElement('p');
+      amount.style.cssText = 'font-size:1.4rem;font-weight:800;margin:0 0 12px;';
+      amount.textContent = '本筆應付：' + formatMoney(receipt.data.grandTotal);
+      const info = getPaymentDisplay(receipt.data);
+      const paymentText = document.createElement('div');
+      paymentText.style.whiteSpace = 'pre-line';
+      paymentText.textContent = info.text + (info.ready ? '' : '\n請透過官方 LINE 聯絡倆口田確認收款資訊。');
+      const paymentActions = document.createElement('div');
+      paymentActions.className = 'actions';
+      const feedback = document.createElement('p');
+      feedback.className = 'hint';
+      feedback.setAttribute('role', 'status');
+      const addCopy = (label, value) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-secondary';
+        button.textContent = label;
+        button.addEventListener('click', async () => {
+          try { await navigator.clipboard.writeText(value); feedback.textContent = label + '成功'; }
+          catch { feedback.textContent = '無法自動複製，請選取上方文字手動複製。'; }
+        });
+        paymentActions.append(button);
+      };
+      if (info.copyText) addCopy('複製帳號／收款資訊', info.copyText);
+      addCopy('複製金額', String(receipt.data.grandTotal));
+      const paymentHint = document.createElement('p');
+      paymentHint.className = 'hint';
+      paymentHint.textContent = '收到貨品前後都可以付款，依您方便即可。';
+      payment.append(amount, paymentText, paymentActions, feedback, paymentHint);
       const actions = document.createElement('div');
       actions.className = 'actions';
       const line = document.createElement('a');
       line.className = 'btn btn-primary';
       line.style.textDecoration = 'none';
-      line.textContent = '傳 LINE 聯絡農夫';
+      line.textContent = '將訂單與付款資訊傳到 LINE';
       line.href = getLineUrl(receipt.text);
       line.target = '_blank';
       line.rel = 'noopener noreferrer';
@@ -1536,8 +1568,8 @@
       actions.append(line, copy);
       const hint = document.createElement('p');
       hint.className = 'hint';
-      hint.textContent = '下一步：請在 LINE 按下送出，我們才能在 LINE 找到您並提供匯款資訊。無法開啟時，請複製本筆訂單，加入官方 LINE @733fsbwp 後貼上。資料已收到，請勿重複下單。';
-      card.append(title, reference, details, actions, hint);
+      hint.textContent = '下一步：請在 LINE 按下送出，方便我們聯繫確認訂單。付款資訊已顯示在上方，也會附在 LINE 訊息中。無法開啟時，請複製本筆訂單，加入官方 LINE @733fsbwp 後貼上。資料已收到，請勿重複下單。';
+      card.append(title, reference, payment, actions, hint, details);
       container.append(card);
     });
   }
@@ -1684,27 +1716,31 @@
       const savedData = reconcileSavedOrder(orderData, response);
       const rawId = response.orderId ?? response.orderNumber ?? response.orderNo;
       const orderId = typeof rawId === 'string' || typeof rawId === 'number' ? String(rawId) : '';
-      const savedText = [orderId ? `訂單編號：${orderId}` : '', savedData.priceChanged ? '金額已依後台最新價格更新，請與倆口田確認。' : '', savedData.estimatedItems ? '以下品項單價為送出時估算；實際商品合計與應付金額以本筆後台回傳為準，請聯絡確認明細。' : '', buildOrderText(savedData)].filter(Boolean).join('\n');
+      const savedText = [orderId ? `訂單編號：${orderId}` : '', savedData.priceChanged ? '金額已依後台最新價格更新，請與倆口田確認。' : '', savedData.estimatedItems ? '以下品項單價為送出時估算；實際商品合計與應付金額以本筆後台回傳為準，請聯絡確認明細。' : '', buildOrderText(savedData), '【本筆付款資訊】', getPaymentDisplay(savedData).text].filter(Boolean).join('\n');
       savedOrders.push({ data: savedData, orderId, text: savedText });
       renderSavedOrders();
 
       currentOrderText = savedText;
       currentSavedOrderData = savedData;
-      renderPaymentResult(savedData);
+      // Payment information is displayed in each saved receipt.
       orderOutput.textContent = [
         '✅ 本筆訂單已收到，請透過上方按鈕傳 LINE 聯絡農夫。',
         '',
         orderId ? `訂單編號：${orderId}` : '',
         savedData.priceChanged ? `金額已依後台更新：${formatMoney(savedData.grandTotal)}。請查看本筆明細並與倆口田確認。` : '',
         '',
-        '付款資訊已顯示在本頁下方；收到貨品前後都可以付款。',
+        '付款資訊已顯示在上方訂單卡；收到貨品前後都可以付款。',
         '若有臨時更改，再透過 LINE 聯絡倆口田即可。'
       ].join('\n');
       enableAfterSavedOrder();
       resetCartAfterSuccessfulOrder(orderData);
       const pending = Object.values(getCartGroups()).some(group => group.items.length);
       showError(pending ? '本筆訂單已收到。另一溫層商品仍在購物車，收件資料已保留，請確認後再送出另一筆。' : '本筆訂單已收到。付款資訊已顯示，可依你方便在收到貨品前後付款。', '#2d6d34');
-      document.getElementById('savedOrders').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const latestReceipt = document.getElementById('savedOrders').lastElementChild;
+      if (latestReceipt) {
+        latestReceipt.focus({ preventScroll: true });
+        latestReceipt.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
 
       return savedText;
     } catch (err) {
