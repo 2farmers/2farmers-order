@@ -665,36 +665,15 @@
 <body>
   <div class="wrap">
     <div class="hero">
-      <div class="hero-badge">倆口田｜簡易線上下單頁</div>
-      <h1>新鮮蔬菜，直接選、直接下單</h1>
-      <p style="margin-top:6px;font-size:0.9rem;opacity:0.9;">無農藥，無化肥，草生栽培、不耕犁耕作｜季節蔬菜｜直接從田裡到你家</p>
-      <p>這裡是倆口田，把我們田裡正在採收的蔬菜，整理成一個可以直接選購的頁面。慢慢挑、放心選，填好資料後就能把訂單傳給我們，我們會親自幫你準備好。</p>
-      <p id="shippingDaysText" style="margin-top:8px;font-weight:600;">📦 本週出貨日：週一、週二、週三、週四</p>
+      <div class="hero-badge">倆口田｜線上訂購</div>
+      <h1>當季蔬果・手工水餃</h1>
+      <p>友善耕作，從田裡到餐桌。挑好喜歡的，我們親自為你準備。</p>
+      <p id="shippingDaysText" style="margin-top:8px;font-weight:600;">📦 出貨日載入中…</p>
       <div class="hero-actions">
         <a class="hero-link primary" href="#products">開始選購</a>
-        <a class="hero-link secondary" href="#order-form">填寫收件資訊</a>
+        <a class="hero-link secondary" href="#cart">查看購物車</a>
       </div>
     </div>
-
-    <div style="background:#fff7e6;border:1px solid #f0e0b2;border-radius:16px;padding:12px 14px;margin-bottom:12px;font-size:0.92rem;">
-      🔥 冰箱常備推薦：熟成德國酸菜水餃 + 韓國芝麻葉水餃 
-    </div>
-
-    <div class="quick-info">
-      <div class="info-card">
-        <div class="info-title">下單方式</div>
-        <div class="info-value">購物車式選購</div>
-      </div>
-      <div class="info-card">
-        <div class="info-title">配送方式</div>
-        <div class="info-value">常溫 / 冷藏 / 冷凍</div>
-      </div>
-      <div class="info-card">
-        <div class="info-title">付款說明</div>
-        <div class="info-value">轉帳 / LINE Pay</div>
-      </div>
-    </div>
-
 
     <div class="section" id="products">
       <h2 class="section-title">商品列表</h2>
@@ -705,6 +684,7 @@
     <div class="section" id="cart">
       <h2 class="section-title">確認購物車</h2>
       <p class="section-subtitle">確認品項與數量後，再填寫收件資訊。</p>
+      <div id="checkoutProgress" class="notice-box" role="status" hidden></div>
       <div id="cartNotice" class="notice-box" hidden></div>
       <div id="cartItems"></div>
       <a class="hero-link" href="#products">繼續挑選商品</a>
@@ -833,7 +813,7 @@
     </div>
 
     <div class="section">
-      <h2 class="section-title">已送出的訂單</h2>
+      <h2 class="section-title">訂單確認與付款</h2>
       <div id="savedOrders" aria-live="polite"></div>
       <div id="orderOutput" class="order-output" role="status">送出後會顯示整理好的訂單內容。訂單寫入後台後，才能傳 LINE 或複製內容。</div>
 
@@ -951,7 +931,13 @@
     const keys = Object.keys(groups).filter(key => groups[key].items.length);
     const notice = document.getElementById('cartNotice');
     notice.hidden = keys.length < 2;
-    notice.textContent = '購物車含常溫與低溫商品，將分成兩筆訂單、各自計算運費。收件資料只要填一次；送出本筆後，另一筆商品會保留，請再確認送出。';
+    notice.textContent = '本次分為常溫、低溫兩筆配送，各自計算運費，也需要分別確認送出。收件資料只要填一次，另一筆商品會保留在購物車。';
+    const progress = document.getElementById('checkoutProgress');
+    progress.hidden = savedOrders.length === 0;
+    const completed = savedOrders.map(receipt => receipt.data.hasLowTemp ? '低溫' : '常溫').join('、');
+    progress.textContent = keys.length
+      ? '已收到：' + completed + '訂單。尚有待送出：' + keys.map(key => groups[key].label).join('、') + '商品，請繼續確認送出。'
+      : '本頁已送出 ' + savedOrders.length + ' 筆訂單，購物車已無待送出商品。付款資訊與 LINE 聯絡按鈕請見下方訂單卡。';
     document.getElementById('cartItems').innerHTML = keys.length ? keys.map(key => {
       const group = groups[key];
       return `<div class="cart-group ${key === checkoutGroup ? 'active' : ''}">
@@ -972,7 +958,11 @@
     const count = keys.reduce((sum, key) => sum + groups[key].items.length, 0);
     const total = keys.reduce((sum, key) => sum + groups[key].subtotal + groups[key].shipping, 0);
     document.getElementById('stickyGrandTotal').textContent = formatMoney(total);
-    document.getElementById('stickyCartBtn').textContent = `查看購物車・${count}項`;
+    document.getElementById('stickyCartBtn').textContent = count ? `查看待送出・${count}項` : '開始選購';
+    document.getElementById('stickyCartBtn').href = count ? '#cart' : '#products';
+    document.getElementById('stickyCheckoutHint').textContent = keys.length > 1
+      ? '本筆' + groups[checkoutGroup].label + '：' + formatMoney(groups[checkoutGroup].subtotal + groups[checkoutGroup].shipping) + '（含運）；另一筆另送出'
+      : keys.length ? '本筆' + groups[keys[0]].label + '訂單（含運費）' : savedOrders.length ? '訂單已收到，付款資訊見訂單卡' : '選好商品後，前往購物車確認';
     setSubmitButtonState(isSubmittingOrder);
   }
 
@@ -1505,6 +1495,7 @@
     savedOrders.forEach(receipt => {
       const card = document.createElement('div');
       card.className = 'receipt';
+      card.style.scrollMarginTop = '16px';
       card.tabIndex = -1;
       const title = document.createElement('p');
       title.textContent = `✅ ${receipt.data.hasLowTemp ? '低溫' : '常溫'}訂單已收到・${formatMoney(receipt.data.grandTotal)}`;
@@ -1569,7 +1560,17 @@
       const hint = document.createElement('p');
       hint.className = 'hint';
       hint.textContent = '下一步：請在 LINE 按下送出，方便我們聯繫確認訂單。付款資訊已顯示在上方，也會附在 LINE 訊息中。無法開啟時，請複製本筆訂單，加入官方 LINE @733fsbwp 後貼上。資料已收到，請勿重複下單。';
-      card.append(title, reference, payment, actions, hint, details);
+      const pendingHint = document.createElement('p');
+      pendingHint.className = 'notice-box';
+      pendingHint.textContent = '另有商品尚未送出，請回購物車完成下一筆訂單。';
+      const nextOrder = document.createElement('a');
+      nextOrder.className = 'btn btn-secondary';
+      nextOrder.href = '#cart';
+      nextOrder.textContent = '確認下一筆訂單';
+      const hasPending = Object.values(getCartGroups()).some(group => group.items.length);
+      pendingHint.hidden = !hasPending;
+      nextOrder.hidden = !hasPending;
+      card.append(title, reference, payment, actions, hint, details, pendingHint, nextOrder);
       container.append(card);
     });
   }
@@ -1718,11 +1719,11 @@
       const orderId = typeof rawId === 'string' || typeof rawId === 'number' ? String(rawId) : '';
       const savedText = [orderId ? `訂單編號：${orderId}` : '', savedData.priceChanged ? '金額已依後台最新價格更新，請與倆口田確認。' : '', savedData.estimatedItems ? '以下品項單價為送出時估算；實際商品合計與應付金額以本筆後台回傳為準，請聯絡確認明細。' : '', buildOrderText(savedData), '【本筆付款資訊】', getPaymentDisplay(savedData).text].filter(Boolean).join('\n');
       savedOrders.push({ data: savedData, orderId, text: savedText });
-      renderSavedOrders();
-
       currentOrderText = savedText;
       currentSavedOrderData = savedData;
       // Payment information is displayed in each saved receipt.
+      orderOutput.hidden = true;
+      document.getElementById('lineBtn').parentElement.hidden = true;
       orderOutput.textContent = [
         '✅ 本筆訂單已收到，請透過上方按鈕傳 LINE 聯絡農夫。',
         '',
@@ -1734,6 +1735,7 @@
       ].join('\n');
       enableAfterSavedOrder();
       resetCartAfterSuccessfulOrder(orderData);
+      renderSavedOrders();
       const pending = Object.values(getCartGroups()).some(group => group.items.length);
       showError(pending ? '本筆訂單已收到。另一溫層商品仍在購物車，收件資料已保留，請確認後再送出另一筆。' : '本筆訂單已收到。付款資訊已顯示，可依你方便在收到貨品前後付款。', '#2d6d34');
       const latestReceipt = document.getElementById('savedOrders').lastElementChild;
@@ -1748,6 +1750,8 @@
         showError('本筆訂單未完成：' + err.message + '。商品及收件資料已保留。');
       } else {
         unresolvedSubmission = true;
+        orderOutput.hidden = false;
+        document.getElementById('lineBtn').parentElement.hidden = false;
         showError('尚無法確認本筆是否已收到，請勿重新送出。請複製下方待確認內容，透過官方 LINE @733fsbwp 聯絡倆口田查詢。');
         currentOrderText = '【請協助查詢：送出結果待確認，請勿另建新單】\n' + orderText;
         orderOutput.textContent = currentOrderText;
@@ -1867,8 +1871,9 @@
   <div class="sticky-bar">
     <div class="sticky-inner">
       <div>
-        <div class="sticky-total-label">待送出訂單合計（含運費）</div>
+        <div class="sticky-total-label">購物車全部待送出合計（含運費）</div>
         <div class="sticky-total-price" id="stickyGrandTotal">0 元</div>
+        <div id="stickyCheckoutHint" class="sticky-total-label" role="status">選好商品後，前往購物車確認</div>
       </div>
       <a class="sticky-btn" id="stickyCartBtn" href="#cart">查看購物車・0項</a>
     </div>
