@@ -621,17 +621,18 @@ button{background:#315f44;color:white;border:0;border-radius:9px;padding:11px 20
 
       </div>
 
-      <label>收件地址<input id="fruitAddress" autocomplete="street-address"></label>
+      <label><span id="fruitAddressLabel">收件地址</span><input id="fruitAddress" autocomplete="street-address"></label>
 
     </div>
 
     <div id="fruitApplicationStep2" class="hidden">
 
-      <h3>選擇想參與的果樹</h3>
+      <h3>選擇參與方式</h3>
 
       <div class="options" id="treeChoiceOptions"></div>
+      <label id="fruitSupportAmountWrap" class="hidden">支持金額（元）<input id="fruitSupportAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="請填寫你想支持的金額"></label>
 
-      <label>替這棵樹取個名字（可以先不填）
+      <label id="fruitTreeNameWrap">替這棵樹取個名字（可以先不填）
 
         <input id="fruitTreeName" maxlength="30" placeholder="例如：小綠、平安、慢慢長大">
 
@@ -641,7 +642,7 @@ button{background:#315f44;color:white;border:0;border-radius:9px;padding:11px 20
 
         <h3>送出前，再確認一次</h3>
 
-        <ul class="list">
+        <ul class="list" id="fruitTreeTerms">
 
           <li>幼樹共耕費：5,000 元／株，涵蓋整個幼樹階段，不是每年收一次。</li>
 
@@ -654,6 +655,8 @@ button{background:#315f44;color:white;border:0;border-radius:9px;padding:11px 20
           <li><strong>豐收一起分享，歉收一起承擔。</strong></li>
 
         </ul>
+
+        <p id="fruitSupportTerms" class="hidden">純粹支持，金額由你決定。不認購果樹，不含蔬果箱與水果箱回饋。確認收款後，自贊助日期起提供兩年資訊參與資格，可查看田間近況、蔬果專案及果園共同照顧紀錄。到期後保留支持紀錄。</p>
 
         <label class="history-choice"><input type="checkbox" id="fruitAgree"><span>我已閱讀並同意上述果樹共耕重點。</span></label>
 
@@ -1173,8 +1176,8 @@ function loadFruitOptions(){
     options.forEach(o=>{
       const label=add(box,'label');
       const radio=add(label,'input');
-      radio.type='radio';radio.name='treeChoice';radio.value=o.value;radio.disabled=!o.open;
-      const status=o.open?`｜剩餘 ${o.remaining} 株｜${Number(o.amount).toLocaleString()} 元`:'｜目前額滿／暫停';
+      radio.type='radio';radio.name='treeChoice';radio.value=o.value;radio.disabled=!o.open;radio.dataset.support=String(o.type==='支持');
+      const status=o.type==='支持'?'｜金額自訂｜兩年資訊參與':(o.open?`｜剩餘 ${o.remaining} 株｜${Number(o.amount).toLocaleString()} 元`:'｜目前額滿／暫停');
       add(label,'span','',o.label+status);
     });
     fruitOptionsLoadedAt=Date.now();
@@ -1189,6 +1192,17 @@ function loadFruitOptions(){
     retry.type='button';retry.addEventListener('click',loadFruitOptions);
   }).fruitApplicationOptions();
 }
+$('#treeChoiceOptions').addEventListener('change',e=>{
+  if(e.target.name!=='treeChoice')return;
+  const support=e.target.dataset.support==='true';
+  $('#fruitTreeNameWrap').classList.toggle('hidden',support);
+  $('#fruitSupportAmountWrap').classList.toggle('hidden',!support);
+  $('#fruitTreeTerms').classList.toggle('hidden',support);
+  $('#fruitSupportTerms').classList.toggle('hidden',!support);
+  $('#fruitAddressLabel').textContent=support?'收件地址（純粹支持可不填）':'收件地址';
+  $('#fruitAgree').checked=false;
+  $('#fruitAgree').nextElementSibling.textContent=support?'我已閱讀並同意上述純粹支持方式。':'我已閱讀並同意上述果樹共耕重點。';
+});
 $('#treeApply').addEventListener('click',()=>{
   const area=$('#treeApplication');
   area.classList.remove('hidden');
@@ -1256,9 +1270,12 @@ $('#submitFruitApplication').addEventListener('click',()=>{
 
   if(memberType==='existing'&&!fruitVerified){notice.className='notice error';notice.textContent='請先確認會員身分。';return}
 
-  if(!treeChoice){notice.className='notice error';notice.textContent='請選擇想參與的果樹。';return}
+  if(!treeChoice){notice.className='notice error';notice.textContent='請選擇參與方式。';return}
 
-  if(!$('#fruitAgree').checked){notice.className='notice error';notice.textContent='請先閱讀並勾選同意果樹共耕重點。';return}
+  const support=document.querySelector('input[name="treeChoice"]:checked')?.dataset.support==='true';
+  const supportAmount=Number($('#fruitSupportAmount').value);
+  if(support&&(!Number.isSafeInteger(supportAmount)||supportAmount<=0)){notice.className='notice error';notice.textContent='請填寫有效的支持金額（正整數元）。';return}
+  if(!$('#fruitAgree').checked){notice.className='notice error';notice.textContent='請先閱讀並勾選同意所選方案的參與方式。';return}
 
   const payload={
 
@@ -1278,7 +1295,7 @@ $('#submitFruitApplication').addEventListener('click',()=>{
 
     address:$('#fruitAddress').value.trim(),
 
-    treeChoice,
+    treeChoice,customAmount:support?supportAmount:undefined,
 
     treeName:$('#fruitTreeName').value.trim(),
 
@@ -1306,7 +1323,7 @@ $('#submitFruitApplication').addEventListener('click',()=>{
 
     currentFruitApplicationId=result.id;
 
-    $('#fruitSuccessText').textContent=`申請編號 ${result.id}｜${result.treeChoice}${result.treeName?'｜'+result.treeName:''}｜共耕費 ${Number(result.amount).toLocaleString()} 元`;
+    $('#fruitSuccessText').textContent=`申請編號 ${result.id}｜${result.treeChoice}${result.treeName?'｜'+result.treeName:''}｜${Number(result.amount).toLocaleString()} 元`;
 
     const info=result.paymentInfo||{}, paymentBox=$('#fruitPaymentInfo');
 
