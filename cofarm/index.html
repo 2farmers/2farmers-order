@@ -854,6 +854,7 @@ function participation(data,area){
 
   (data.updates||[]).forEach(u=>{const article=add(news,'article','story');add(article,'small','',`${u.date} · ${u.area||'倆口田'}`);add(article,'h3','',u.title);add(article,'p','',u.text);photo(article,u.photo)});
 
+  if(data.informationAccess?.expired)return;
   const section=add(area,'section','card');add(section,'h2','','一起參與');
 
   if(!data.polls?.length&&!data.events?.length)messageBoard(section,data.messages||[]);
@@ -867,6 +868,15 @@ function participation(data,area){
 function boxList(parent,boxes,fruit){if(!boxes.length){add(parent,'p','muted','目前尚無已送達紀錄');return}const ul=add(parent,'ul','list');boxes.forEach((b,i)=>{const li=add(ul,'li');add(li,'strong','',`${b.date||(b.month?b.month+' 寄出（送達日未記錄）':'日期未記錄')} · ${b.id||`第 ${boxes.length-i} 箱`}`);if(fruit&&b.weight)add(li,'span','muted',` · ${b.weight} 斤`);if(fruit&&b.kind)add(li,'span','chip',b.kind);if(b.items)add(li,'div','',b.items);photo(li,b.photo)})}
 
 function display(data){const area=$('#sections');area.replaceChildren();$('#welcome').textContent=`${data.name||'會員'}，您好`;$('#result').classList.remove('hidden');
+
+  (data.supports||[]).forEach(s=>{
+    const card=add(area,'section','card');add(card,'h2','','🌱 我的支持紀錄');
+    add(card,'span','chip',s.status);add(card,'div','metric',`${Number(s.amount).toLocaleString()} 元`);
+    add(card,'p','',`贊助日期：${s.date||'待確認'}`);
+    add(card,'p','',`資訊參與期間：${s.start||'待確認'}～${s.end||'待確認'}`);
+    add(card,'p','muted','謝謝你支持倆口田持續耕作。這份支持不含蔬果箱與果樹收成分配。');
+  });
+  if(data.informationAccess?.expired){const card=add(area,'section','card');add(card,'p','muted',data.informationAccess.cutoff==='0000-00-00'?'目前支持資格尚未開始或待核對，支持紀錄仍保留。':'本次資訊參與期間已結束，支持紀錄仍保留。以下可查看效期內的田間與果園近況。');}
 
   data.csa.forEach(m=>{const card=add(area,'section','card');add(card,'h2','',`共耕會籍 ${m.id}`);add(card,'span','chip',m.status);if(m.start)add(card,'p','muted',`開始紀錄：${m.start}`);add(card,'div','metric',`已收到 ${m.received} / ${m.entitled} 箱`);add(card,'p','muted',`尚餘 ${m.remaining} 箱`);add(card,'h3','','蔬果箱紀錄');boxList(card,m.boxes,false);if(m.shipped?.length){add(card,'h3','','已寄出・待確認送達');add(card,'p','muted','以下箱次尚未計入已收到箱數。');const ul=add(card,'ul','list');m.shipped.forEach(b=>{const li=add(ul,'li');add(li,'strong','',`${b.month?b.month+' 寄出':'寄出月份未記錄'} · ${b.id}`);if(b.items)add(li,'div','',b.items)})}});
 
@@ -882,9 +892,14 @@ function display(data){const area=$('#sections');area.replaceChildren();$('#welc
 
     add(card,'h3','','年度採收（整棵樹）');const years=Object.entries(t.yields).sort((a,b)=>b[0].localeCompare(a[0]));add(card,'p','',years.length?years.map(([y,v])=>`${y}：${fmt(v)} 斤`).join('　'):'目前尚無採收紀錄');add(card,'h3','','我的水果箱');boxList(card,t.boxes,true);if(t.shipped?.length){add(card,'h3','','已寄出・待確認送達');add(card,'p','muted','以下箱次尚未計入已分享斤數。');const ul=add(card,'ul','list');t.shipped.forEach(b=>{const li=add(ul,'li');add(li,'strong','',`${b.month?b.month+' 寄出':'寄出月份未記錄'} · ${b.id}`);if(b.weight)add(li,'span','muted',` · ${b.weight} 斤`);if(b.kind)add(li,'span','chip',b.kind);if(b.items)add(li,'div','',b.items)})}});
 
-  if(!data.csa.length&&!data.trees.length)add(area,'p','muted','目前沒有共耕紀錄。');
+  if(!data.csa.length&&!data.trees.length&&!data.supports?.length)add(area,'p','muted','目前沒有共耕紀錄。');
 
-cropTimeline(data,area);
+if(data.orchardCare){
+    const card=add(area,'section','card');add(card,'h2','','果園共同照顧紀錄');
+    if(!data.orchardCare.length)add(card,'p','muted','目前尚無可查看的全區照顧紀錄。');
+    data.orchardCare.forEach(x=>{const article=add(card,'article','story');add(article,'small','',`${x.date} · ${x.area}`);add(article,'p','',x.text);photo(article,x.photo)});
+  }
+  cropTimeline(data,area);
   participation(data,area);
 
 }
