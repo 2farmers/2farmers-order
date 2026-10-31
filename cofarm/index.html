@@ -192,6 +192,7 @@ button{background:#315f44;color:white;border:0;border-radius:9px;padding:11px 20
 .crop-harvest.uncertain{background:repeating-linear-gradient(135deg,#87afc7 0,#87afc7 4px,#d5e5ef 4px,#d5e5ef 8px)}
 .crop-swatch.period{background:#87afc7}
 
+.ecology-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.ecology-record{min-width:0;padding:16px;border:1px solid #dfe8dc;border-radius:14px;overflow-wrap:anywhere}.ecology-record h3{margin:8px 0}.ecology-record .chip{margin:0 6px 6px 0}.ecology-record summary{cursor:pointer;color:#315f44;font-weight:600}.ecology-notes{white-space:pre-wrap}.ecology-record .photo{width:100%;height:210px;object-fit:contain;background:#f4f6ef}.ecology-record details .photo{height:auto;max-height:400px}@media(max-width:600px){.ecology-grid{grid-template-columns:1fr}}
 </style></head><body><main>
 
 <header><div class="eyebrow">倆口田 · 共耕</div><h1>倆口田共耕</h1><div class="muted">一起種、一起等、一起收成。</div></header>
@@ -894,6 +895,47 @@ function participation(data,area){
 
 function boxList(parent,boxes,fruit){if(!boxes.length){add(parent,'p','muted','目前尚無已送達紀錄');return}const ul=add(parent,'ul','list');boxes.forEach((b,i)=>{const li=add(ul,'li');add(li,'strong','',`${b.date||(b.month?b.month+' 寄出（送達日未記錄）':'日期未記錄')} · ${b.id||`第 ${boxes.length-i} 箱`}`);if(fruit&&b.weight)add(li,'span','muted',` · ${b.weight} 斤`);if(fruit&&b.kind)add(li,'span','chip',b.kind);if(b.items)add(li,'div','',b.items);photo(li,b.photo)})}
 
+
+/** 田間鄰居：資料僅由已驗證的 lookupMember 回傳。 */
+function ecologySection(data,area){
+  if(!Array.isArray(data.ecology))return;
+  const card=add(area,'section','card ecology-section');
+  add(card,'h2','','🦋 田間鄰居');
+  add(card,'p','muted','一起認識生活在倆口田的鄰居，留下每一次相遇與觀察。');
+  const records=data.ecology;
+  if(!records.length){add(card,'p','muted','目前尚無可查看的生態紀錄，田間的新發現會陸續放在這裡。');return;}
+  const controls=add(card,'div','row');
+  const nameLabel=add(controls,'label','','搜尋生物或觀察');
+  const query=add(nameLabel,'input');query.type='search';query.placeholder='例如：金花蟲、停在葉上';
+  const categoryLabel=add(controls,'label','','類別'),category=add(categoryLabel,'select');
+  const fieldLabel=add(controls,'label','','田區'),field=add(fieldLabel,'select');
+  [[category,'全部類別','category'],[field,'全部田區','area']].forEach(([select,title,key])=>{
+    const all=add(select,'option','',title);all.value='';
+    [...new Set(records.map(r=>r[key]).filter(Boolean))].sort().forEach(v=>{const option=add(select,'option','',v);option.value=v;});
+  });
+  const count=add(card,'p','muted');count.setAttribute('role','status');
+  const list=add(card,'div','ecology-grid');
+  function render(){
+    list.replaceChildren();const term=query.value.trim().toLocaleLowerCase();
+    const visible=records.filter(r=>(!category.value||r.category===category.value)&&(!field.value||r.area===field.value)&&(!term||[r.name,r.text,r.category].join(' ').toLocaleLowerCase().includes(term)));
+    count.textContent='顯示 '+visible.length+' / '+records.length+' 筆觀察';
+    if(!visible.length){add(list,'p','muted','目前沒有符合條件的紀錄。');return;}
+    visible.forEach(r=>{
+      const article=add(list,'article','ecology-record');
+      const urls=String(r.photo||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      if(urls.length)photo(article,urls[0]);
+      add(article,'h3','',r.name||'待辨識');
+      add(article,'small','',[r.date,r.area].filter(Boolean).join(' · '));
+      const tags=add(article,'p');if(r.category)add(tags,'span','chip',r.category);
+      if(r.identification)add(tags,'span','chip',r.identification);
+      const detail=add(article,'details');add(detail,'summary','','查看觀察紀錄');
+      add(detail,'p','ecology-notes',r.text||'');
+      urls.slice(1).forEach(url=>photo(detail,url));
+    });
+  }
+  query.addEventListener('input',render);category.addEventListener('change',render);field.addEventListener('change',render);render();
+}
+
 function display(data){const area=$('#sections');area.replaceChildren();$('#welcome').textContent=`${data.name||'會員'}，您好`;$('#result').classList.remove('hidden');
 
   (data.supports||[]).forEach(s=>{
@@ -926,6 +968,7 @@ if(data.orchardCare){
     if(!data.orchardCare.length)add(card,'p','muted','目前尚無可查看的全區照顧紀錄。');
     data.orchardCare.forEach(x=>{const article=add(card,'article','story');add(article,'small','',`${x.date} · ${x.area}`);add(article,'p','',x.text);photo(article,x.photo)});
   }
+  ecologySection(data,area);
   cropTimeline(data,area);
   participation(data,area);
 
