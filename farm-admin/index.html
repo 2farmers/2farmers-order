@@ -1,0 +1,295 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>倆口田｜田間管理</title><meta name="theme-color" content="#426c4d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="referrer" content="no-referrer"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png"><link rel="icon" href="./icons/icon-192.png"><script src="./pwa-client.js"></script><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+*{box-sizing:border-box}body{margin:0;background:#f5f6f1;color:#26382b;font:17px Arial,'Noto Sans TC',sans-serif}header{background:#426c4d;color:white;padding:24px 18px}h1{font-size:25px;margin:0}header p{font-size:14px;margin:7px 0 0}main{max-width:650px;margin:auto;padding:16px}.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tabs{gap:5px}.tab{border:2px solid #dce5d9;border-radius:14px;background:white;padding:13px 3px;font-size:14px;font-weight:bold;color:#426c4d}.tab.active{background:#e5efe2;border-color:#426c4d}.card{background:white;border-radius:16px;margin-top:16px;padding:20px}h2{font-size:21px;margin:0 0 16px}label{display:block;font-weight:bold;margin:18px 0 8px}input,select,textarea{width:100%;padding:13px;border:1px solid #ccd5ca;border-radius:10px;background:white;color:#26382b;font:inherit}textarea{min-height:125px}.hint{color:#647568;font-size:13px;margin:7px 0}.check{display:flex;align-items:center;gap:10px;margin:10px 0}.check input{width:22px;height:22px;flex:none}.check label{margin:0;font-weight:normal}.options{border:1px solid #ccd5ca;border-radius:10px;padding:10px;max-height:250px;overflow:auto}.save{background:#426c4d;color:white;border:0;border-radius:12px;padding:16px;width:100%;font-size:18px;font-weight:bold;margin-top:22px}.save:disabled{opacity:.5}.journal-item{border:1px solid #dce5d9;border-radius:12px;padding:14px;margin:10px 0}.journal-item summary{cursor:pointer;font-weight:bold}.journal-meta{font-size:13px;color:#647568;margin:5px 0}.journal-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;margin-top:12px}.journal-link{display:block;overflow-wrap:anywhere;margin:6px 0}.notice{padding:12px;border-radius:10px;background:#fff3d6;font-size:14px;margin-top:15px}.status{font-size:15px;margin-top:12px;white-space:pre-wrap}[hidden]{display:none!important}
+.photo-preview{display:flex;gap:10px;flex-wrap:wrap}.photo-preview img{width:100px;height:100px;object-fit:cover;border-radius:10px}.photo-preview button{display:block;margin-top:4px}
+
+.home-grid,.usage-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.home-grid button{margin:0;text-align:left;min-height:92px;border:1px solid #dce5d9;background:#f6f8f2;color:#315f44;border-radius:12px;padding:15px;font:inherit;font-weight:bold}
+.home-grid small{display:block;font-weight:normal;font-size:13px;margin-top:7px}
+.usage-metrics div{background:#edf3e8;border-radius:12px;padding:14px;font-size:13px}.usage-metrics strong{display:block;font-size:27px;margin-top:4px}
+.usage-table{overflow:auto}.usage-table table{width:100%;border-collapse:collapse;font-size:14px;white-space:nowrap}.usage-table td,.usage-table th{text-align:left;padding:12px 8px;border-bottom:1px solid #e1e8dd}.usage-table th{color:#536a55}
+.plain{padding:12px;background:#edf3e8;color:#315f44;border:1px solid #cedbc8;border-radius:9px;font:inherit;min-height:44px}.tab{min-height:48px}.tabs{grid-template-columns:repeat(4,minmax(0,1fr))}.usage-controls{display:flex;gap:8px;align-items:center;margin-top:12px}.usage-controls button{flex:1}
+@media(max-width:380px){.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+body{padding-bottom:env(safe-area-inset-bottom)}header{padding-top:max(22px,env(safe-area-inset-top))}.pwa-strip{max-width:650px;margin:12px auto;padding:0 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px}.offline{color:#91561a;font-weight:bold}.pwa-auth{max-width:618px;margin:16px auto;padding:24px;background:white;border-radius:16px}.pwa-auth p{line-height:1.7}.pwa-auth button{margin:10px 0}.pwa-auth summary{cursor:pointer;padding:12px 0}.pwa-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}.pwa-bar button{background:white;color:#315f44;border:0;border-radius:9px;padding:9px 13px;min-height:44px;font:inherit}.pwa-auth input{font-size:16px}.pwa-auth details{margin-top:15px}.pwa-auth a{color:#315f44}.pwa-note{margin:8px 0;line-height:1.6}@media(max-width:650px){.pwa-auth{margin:16px;}}
+</style></head><body><header><h1>🌿 倆口田｜田間管理</h1><p>農務紀錄・手機管理後台</p><div class="pwa-bar"><span id="pwaSession">管理員專用</span><button id="pwaLogout" hidden>登出</button></div></header>
+<div class="pwa-strip"><span id="pwaConnection" role="status">確認連線中</span><button class="plain" id="pwaInstall" hidden>安裝到主畫面</button></div>
+<div class="pwa-strip" id="pwaUpdate" hidden><span>有新版管理畫面可用</span><button class="plain" id="pwaReload">更新</button></div>
+<section class="pwa-auth" id="pwaAuth"><h2>開始今天的田間紀錄</h2><p>使用原本田間管理後台的 Google 帳號登入。</p><button class="save" id="pwaLogin">使用 Google 帳號登入</button><p class="status" id="pwaAuthStatus" role="status"></p>
+<p class="hint" id="pwaInstallHint">iPhone：用 Safari 開啟，點「分享」→「加入主畫面」。第一版需連線操作；重新開啟後需再次登入。</p>
+<details id="pwaSetup"><summary>首次設定：資料連線網址</summary><p class="hint">貼上同一田間管理 Apps Script 專案新建立的 PWA API 部署網址。原本私人後台網址用來登入，與這個資料網址用途不同。</p><label for="pwaEndpoint">PWA API 正式網址</label><input id="pwaEndpoint" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"><button class="plain" id="pwaSaveEndpoint">儲存連線設定</button><p class="hint">只在這部裝置保存連線網址；登入憑證不存入裝置儲存空間。</p></details>
+<p class="hint"><a href="https://script.google.com/macros/s/AKfycbyseJZzdU4i9w8v6mDyge1Vfc0-V6TlVaLYexk7Av9HSg3aPiyON_D5gdYdKiSYYoLsBg/exec" target="_blank" rel="noopener noreferrer">開啟原本私人後台</a></p></section><main id="pwaWorkspace" hidden>
+<div class="tabs"><button class="tab active" id="homeTab" onclick="switchMode('home')">⌂ 管理首頁</button><button class="tab" id="usageTab" onclick="switchMode('usage')">👥 會員使用</button><button class="tab" id="cropTab" onclick="switchMode('crop')">🌱 田間紀錄</button><button class="tab" id="treeTab" onclick="switchMode('tree')">🌳 果樹照顧</button><button class="tab" id="historyTab" onclick="switchMode('history')">📖 工作日誌</button><button class="tab" id="newCropTab" onclick="switchMode('newcrop')">➕ 新增作物</button><button class="tab" id="newTreeTab" onclick="switchMode('newtree')">🌳 新增果樹</button><button class="tab" id="ecologyTab" onclick="switchMode('ecology')">🦋 田間鄰居</button></div>
+
+<section class="card" id="homePanel"><h2>今天要記錄什麼？</h2><div class="home-grid">
+<button onclick="switchMode('crop')">🌱 田間紀錄<small>作物觀察與田間照片</small></button><button onclick="switchMode('tree')">🌳 果樹照顧<small>整區或指定果樹紀錄</small></button>
+<button onclick="switchMode('ecology')">🦋 田間鄰居<small>拍照留下生態觀察</small></button><button onclick="switchMode('history')">📖 查詢工作日誌<small>依樹號與作物找履歷</small></button></div>
+<h2 style="margin-top:24px">會員使用概況</h2><p id="usageHomeSummary" class="hint" role="status">尚未讀取</p><button class="plain" onclick="switchMode('usage')">查看會員使用紀錄</button></section>
+<section class="card" id="usagePanel" hidden><h2>會員使用紀錄</h2><p class="hint">記錄成功開啟「我的共耕」資料的情況。同一天重複查詢只算 1 個使用日；不代表閱讀時間或參與程度。</p>
+<div class="usage-metrics"><div>會員總數<strong id="usageTotal">—</strong></div><div>近 30 天有使用<strong id="usageActive">—</strong></div><div>尚無使用紀錄<strong id="usageNone">—</strong></div></div>
+<p class="hint" id="usageStarted"></p><p class="hint" id="usageRange"></p><button class="plain" onclick="loadMemberUsage()">重新整理</button><p class="status" id="usageStatus" role="status"></p>
+<label for="usageQuery">搜尋會員編號或名稱</label><input id="usageQuery" oninput="usagePage=0;renderMemberUsage()" placeholder="例如 LK-0056">
+<label for="usageFilter">使用狀況</label><select id="usageFilter" onchange="usagePage=0;renderMemberUsage()"><option value="all">全部會員</option><option>近30天有使用</option><option>尚無使用紀錄</option><option>近30天無使用</option></select>
+<div class="usage-table" tabindex="0" role="region" aria-label="會員使用紀錄，可橫向滑動"><table><thead><tr><th>會員</th><th>最近使用</th><th>30天使用日數</th><th>首次記錄</th></tr></thead><tbody id="usageRows"></tbody></table></div>
+<div class="usage-controls"><button class="plain" id="usagePrev" onclick="usagePage--;renderMemberUsage()">上一頁</button><span id="usagePageText"></span><button class="plain" id="usageNext" onclick="usagePage++;renderMemberUsage()">下一頁</button></div>
+<p class="hint">「尚無使用紀錄」不代表以前從未登入。統計從安裝新版後第一次成功查詢起累積，不包含安裝前的歷史；統計忙碌或故障時也可能漏記。</p></section>
+<section class="card" id="cropPanel" hidden><h2>新增田間紀錄</h2>
+<label for="cropDate">紀錄日期</label><input type="date" id="cropDate">
+<label for="cropField">田區</label><select id="cropField" onchange="renderProjects()"><option>北田</option><option>南田</option><option>酪梨園</option></select>
+<label>關聯蔬果專案（可複選）</label><div class="options" id="projectOptions">正在讀取……</div><p class="hint" id="projectStatus">正在連接 Google Sheets</p>
+<label for="cropTitle">紀錄標題</label><input id="cropTitle" maxlength="150" placeholder="例如：高麗菜開始長出新葉">
+<label for="cropContent">田間觀察</label><textarea id="cropContent" maxlength="4000" placeholder="今天觀察到什麼？做了哪些管理工作？"></textarea>
+<label for="cropPhoto">田間照片</label><input type="file" id="cropPhoto" accept="image/*" multiple><p class="hint">每筆最多 3 張。手機照片會縮小後上傳；勾選公開時，照片連結也會開放給持有連結的人觀看。</p>
+<div class="check"><input type="checkbox" id="cropPublic" checked><label for="cropPublic">公開給共耕會員</label></div>
+<button class="save" id="saveCrop" onclick="saveCropRecord()" disabled>儲存田間紀錄</button><div id="cropStatus" class="status" role="status"></div></section>
+<section class="card" id="treePanel" hidden><h2>新增果樹照顧紀錄</h2>
+<label for="treeDate">紀錄日期</label><input type="date" id="treeDate">
+<label for="treeField">田區</label><select id="treeField" onchange="renderTreeChoices()"><option>酪梨園</option><option>北田</option><option>南田</option></select>
+<label for="treeScope">適用範圍</label><select id="treeScope" onchange="renderTreeScope()"><option>整個田區</option><option>單株果樹</option><option>指定多株</option></select>
+<div id="treeNumbersArea" hidden><label for="treeSearch">搜尋樹號、品種或果樹名稱</label><input id="treeSearch" placeholder="例如 TREE-018、酪梨、黎音" oninput="renderTreeChoices()"><p class="hint" id="treeListStatus">正在讀取果樹資料……</p><div class="options" id="treeChoices"></div><p class="hint" id="treeSelectedCount">已選擇 0 棵果樹</p></div>
+<label for="treeWork">工作內容（公開欄位）</label><textarea id="treeWork" maxlength="4000" placeholder="例如：年度修枝、補充有機質、檢查新芽"></textarea><p class="hint">這個欄位可能會被既有共耕會員系統讀取；請勿填入私人資訊。</p>
+<label for="treeNotes">內部備註（僅供管理）</label><textarea id="treeNotes" maxlength="4000" placeholder="只有自己需要知道的細節"></textarea>
+<label for="treePhoto">果樹照片</label><input type="file" id="treePhoto" accept="image/*" multiple><p class="hint">每筆最多 3 張；預設照片不公開。</p>
+<div class="check"><input type="checkbox" id="treePhotoPublic"><label for="treePhotoPublic">公開照片連結（持有連結者可檢視）</label></div>
+<button class="save" id="saveTree" onclick="saveTreeRecord()">儲存果樹照顧紀錄</button><div id="treeStatus" class="status" role="status"></div></section>
+<section class="card" id="historyPanel" hidden><h2>📖 工作日誌</h2><p class="hint">唯讀查詢，資料仍保留在原本兩張工作表。</p>
+<label for="historyType">紀錄類型</label><select id="historyType" onchange="renderHistorySubjects()"><option value="all">全部</option><option value="crop">蔬果</option><option value="tree">果樹</option></select>
+<label for="historyField">田區</label><select id="historyField" onchange="renderHistorySubjects()"><option value="all">全部田區</option><option>北田</option><option>南田</option><option>酪梨園</option></select>
+<label for="historySubject">指定履歷對象</label><select id="historySubject" onchange="renderHistory()"><option value="">全部對象（不指定）</option></select><p class="hint">選擇蔬果專案或果樹，可查看其相關管理歷史；整區果樹紀錄也會納入。</p>
+<label for="historyQuery">搜尋作物專案 ID、樹號或內容</label><input id="historyQuery" oninput="renderHistory()" placeholder="例如 TREE-018、修枝、高麗菜">
+<button class="save" type="button" onclick="loadHistory()">重新整理紀錄</button><p class="hint" id="historyStatus">尚未讀取</p><div id="historyList"></div></section>
+<section class="card" id="newCropPanel" hidden><h2>➕ 新增蔬果專案</h2><p class="hint">直接新增到「蔬果專案」，預設不公開；新增後會更新田間紀錄的作物清單。</p>
+<label for="newCropName">作物名稱</label><input id="newCropName" maxlength="100" placeholder="例如：韓國櫛瓜－第一批">
+<label for="newCropField">田區</label><select id="newCropField"><option>北田</option><option>南田</option><option>酪梨園</option></select>
+<label for="newCropStage">目前進度</label><select id="newCropStage" disabled><option>正在讀取工作表選項……</option></select><p class="hint" id="newCropOptionStatus">讀取工作表下拉選單中……</p>
+<label for="newCropPlanted">種植日期（整批完成時再填）</label><input type="date" id="newCropPlanted"><p class="hint">規劃中、育苗中可留空，不把育苗日期當成正式種植完成日。</p>
+<label for="newCropStart">預估開始採收：最早日期</label><input type="date" id="newCropStart">
+<label for="newCropEnd">預估開始採收：最晚日期</label><input type="date" id="newCropEnd"><p class="hint">以上兩個日期是「開始採收的預估區間」，不是整段採收期間。</p>
+<label for="newCropDays">預估採收天數（選填）</label><input type="number" id="newCropDays" min="1" max="3650" step="1" placeholder="例如：21">
+<label for="newCropObservation">最近觀察（選填）</label><textarea id="newCropObservation" maxlength="4000" placeholder="例如：育苗進度、預計定植方式"></textarea>
+<div class="check"><input type="checkbox" id="newCropPublic"><label for="newCropPublic">公開給共耕會員（預設不公開）</label></div>
+<button class="save" id="saveNewCrop" type="button" onclick="saveNewCropProject()" disabled>建立蔬果專案</button><div class="status" id="newCropStatus" role="status"></div></section>
+<section class="card" id="newTreePanel" hidden><h2>🌳 新增果樹</h2><p class="hint">樹號由系統自動編排；不會自動建立共耕認購或命名。</p>
+<label for="newTreeVariety">果樹品種</label><input id="newTreeVariety" maxlength="100" placeholder="例如：紅心芭樂、酪梨、手指檸檬">
+<label for="newTreeField">田區</label><select id="newTreeField"><option>酪梨園</option><option>北田</option><option>南田</option></select>
+<label for="newTreeDate">定植日期（可留空）</label><input id="newTreeDate" type="date">
+<label for="newTreeNotes">內部備註（選填）</label><textarea id="newTreeNotes" maxlength="4000" placeholder="例如：種植位置、苗木來源"></textarea>
+<label for="newTreePhoto">果樹照片（最多3張）</label><input type="file" id="newTreePhoto" accept="image/*" multiple><div id="newTreePhotoPreview" class="photo-preview"></div><div class="check"><input type="checkbox" id="newTreePhotoPublic"><label for="newTreePhotoPublic">公開照片給會員（持有連結者也可檢視）</label></div><p class="hint">預設私人；私人照片只保存在內部欄位。</p><p class="hint" id="newTreePreview">尚未讀取候選樹號。</p>
+<button class="save" type="button" id="saveNewTree" onclick="saveNewTree()" disabled>新增果樹</button><div class="status" id="newTreeStatus" role="status"></div></section>
+<section class="card" id="ecologyPanel" hidden><h2>🦋 田間鄰居</h2><p class="hint">記錄非植物生物。同一種生物可以再次記錄；不確定名稱就先填待辨識。</p>
+<label>發現日期</label><input type="date" id="ecoDate"><label>田區</label><select id="ecoField"><option>北田</option><option>南田</option><option>酪梨園</option></select>
+<label>生物名稱</label><input id="ecoName" maxlength="100" placeholder="例如：待辨識金花蟲"><label>類別</label><select id="ecoCategory"><option>昆蟲</option><option>蜘蛛與其他節肢動物</option><option>鳥類</option><option>兩棲爬蟲</option><option>哺乳類</option><option>其他非植物生物</option></select>
+<label>辨識狀態</label><select id="ecoIdentification"><option>待辨識</option><option>暫定</option><option>已確認</option></select><label>觀察筆記</label><textarea id="ecoNotes" maxlength="4000" placeholder="在哪裡發現？正在做什麼？數量大約多少？"></textarea><label>照片（最多3張）</label><input type="file" id="ecoPhoto" accept="image/*" multiple><div class="photo-preview" id="ecoPhotoPreview"></div><div class="check"><input type="checkbox" id="ecoPublic"><label for="ecoPublic">公開給共耕會員（照片也會開放連結檢視）</label></div><button class="save" id="saveEco" onclick="saveEcology()">儲存生態紀錄</button><div class="status" id="ecoStatus" role="status"></div></section><div class="notice">果樹資料寫入「果樹照顧紀錄」；會員端是否顯示整區與多株紀錄，需另外驗證。測試時請先使用私人照片與不涉及隱私的工作內容。</div></main><script>
+let projects=[],trees=[],treeSelection=new Set(),treesLoaded=false,busy=false,cropRequestId=null,treeRequestId=null;
+const el=id=>document.getElementById(id);
+function localDate(){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const v=k=>p.find(x=>x.type===k).value;return `${v('year')}-${v('month')}-${v('day')}`;}
+el('cropDate').value=localDate();el('treeDate').value=localDate();
+function switchMode(mode){el('homePanel').hidden=mode!=='home';el('usagePanel').hidden=mode!=='usage';el('homeTab').classList.toggle('active',mode==='home');el('usageTab').classList.toggle('active',mode==='usage');if(mode==='usage'&&!usageData)loadMemberUsage();el('ecologyPanel').hidden=mode!=='ecology';el('ecologyTab').classList.toggle('active',mode==='ecology');const c=mode==='crop',t=mode==='tree',h=mode==='history',n=mode==='newcrop',nt=mode==='newtree';el('cropPanel').hidden=!c;el('treePanel').hidden=!t;el('historyPanel').hidden=!h;el('newCropPanel').hidden=!n;el('newTreePanel').hidden=!nt;el('cropTab').classList.toggle('active',c);el('treeTab').classList.toggle('active',t);el('historyTab').classList.toggle('active',h);el('newCropTab').classList.toggle('active',n);el('newTreeTab').classList.toggle('active',nt);if(h&&!historyLoaded)loadHistory();}
+function renderTreeScope(){
+  const scope=el('treeScope').value;
+  el('treeNumbersArea').hidden=scope==='整個田區';
+  treeSelection.clear();el('treeSearch').value='';renderTreeChoices();
+}
+function renderTreeChoices(){
+  const field=el('treeField').value, scope=el('treeScope').value;
+  const search=el('treeSearch').value.trim().toLowerCase();
+  const allowed=new Set(trees.filter(t=>t.field===field).map(t=>t.id));
+  treeSelection=new Set([...treeSelection].filter(id=>allowed.has(id)));
+  const container=el('treeChoices');container.replaceChildren();
+  const matching=trees.filter(t=>t.field===field && [t.id,t.variety,t.name].join(' ').toLowerCase().includes(search));
+  el('treeListStatus').textContent=treesLoaded?`此田區共 ${trees.filter(t=>t.field===field).length} 棵，符合搜尋 ${matching.length} 棵。`:'果樹資料尚未載入，暫時不能儲存單株或多株紀錄。';
+  matching.forEach(t=>{
+    const line=document.createElement('div');line.className='check';
+    const input=document.createElement('input');input.type='checkbox';input.id='tree-choice-'+t.id;input.value=t.id;input.checked=treeSelection.has(t.id);
+    input.addEventListener('change',()=>{
+      if(input.checked){if(scope==='單株果樹')treeSelection.clear();treeSelection.add(t.id);}else treeSelection.delete(t.id);
+      renderTreeChoices();
+    });
+    const label=document.createElement('label');label.htmlFor=input.id;
+    label.textContent=t.id+'｜'+t.variety+(t.name?'｜'+t.name:'');
+    line.append(input,label);container.append(line);
+  });
+  if(treesLoaded&&!matching.length)container.textContent='目前沒有符合的果樹。';
+  el('treeSelectedCount').textContent=`已選擇 ${treeSelection.size} 棵果樹`;
+}
+function loadTrees(){
+  farmPwaRun.withSuccessHandler(data=>{trees=data;treesLoaded=true;renderTreeChoices();renderHistorySubjects();})
+    .withFailureHandler(err=>{treesLoaded=false;el('treeListStatus').textContent='果樹資料讀取失敗：'+err.message;})
+    .farmAdminGetTrees();
+}
+function renderProjects(){const field=el('cropField').value,container=el('projectOptions');const checked=new Set([...container.querySelectorAll('input:checked')].map(e=>e.value));container.replaceChildren();const matching=projects.filter(p=>p.field===field);if(!matching.length){container.textContent='這個田區目前沒有蔬果專案，可直接記錄一般田間近況。';return;}matching.forEach(p=>{const line=document.createElement('div');line.className='check';const input=document.createElement('input');input.type='checkbox';input.value=p.id;input.id='project-'+p.id;input.checked=checked.has(p.id);const label=document.createElement('label');label.htmlFor=input.id;label.textContent=p.name;line.append(input,label);container.append(line);});}
+function loadProjects(){farmPwaRun.withSuccessHandler(data=>{projects=data;renderProjects();renderHistorySubjects();el('projectStatus').textContent=`已載入 ${data.length} 筆正式蔬果專案；依田區篩選。`;el('saveCrop').disabled=false;}).withFailureHandler(err=>{el('projectStatus').textContent='讀取失敗：'+err.message;}).farmAdminGetProjects();}
+function uuid(){if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.floor(Math.random()*16);return(c==='x'?r:(r&3|8)).toString(16);});}
+function compressPhoto(file){return new Promise((resolve,reject)=>{if(!file.type.startsWith('image/')){reject(new Error('只能選擇圖片'));return;}const img=new Image(),objectUrl=URL.createObjectURL(file);img.onload=()=>{try{const scale=Math.min(1,1600/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const data=canvas.toDataURL('image/jpeg',0.72).split(',')[1];URL.revokeObjectURL(objectUrl);if(data.length>3000000)throw new Error('照片壓縮後仍過大，請選擇較小照片');resolve({mime:'image/jpeg',data});}catch(e){URL.revokeObjectURL(objectUrl);reject(e);}};img.onerror=()=>{URL.revokeObjectURL(objectUrl);reject(new Error('無法讀取照片，請改用 JPG 圖片'));};img.src=objectUrl;});}
+async function selectedPhotos(id){const files=[...el(id).files];if(files.length>3)throw new Error('每筆最多選擇3張照片');const photos=[];for(const f of files)photos.push(await compressPhoto(f));return photos;}
+function setBusy(value){busy=value;el('saveCrop').disabled=value||!projects.length&&el('projectStatus').textContent.startsWith('讀取失敗');el('saveTree').disabled=value;}
+async function saveCropRecord(){if(busy)return;const get=id=>el(id).value.trim();const ids=[...document.querySelectorAll('#projectOptions input:checked')].map(e=>e.value);if(!get('cropDate')||!get('cropTitle')||!get('cropContent')){alert('請填寫日期、標題和田間觀察。');return;}const names=projects.filter(p=>ids.includes(p.id)).map(p=>p.name).join('、')||'無';if(!confirm(`確認儲存？\n日期：${get('cropDate')}\n田區：${get('cropField')}\n關聯：${names}\n標題：${get('cropTitle')}\n公開：${el('cropPublic').checked?'是':'否'}\n\n送出後將寫入正式 Google Sheets。`))return;setBusy(true);el('cropStatus').textContent='處理照片並儲存中，請勿重複送出……';try{const photos=await selectedPhotos('cropPhoto');const payload={date:get('cropDate'),field:get('cropField'),title:get('cropTitle'),content:get('cropContent'),isPublic:el('cropPublic').checked,projectIds:ids,photos,requestId:cropRequestId||(cropRequestId=uuid())};farmPwaRun.withSuccessHandler(res=>{setBusy(false);el('cropStatus').textContent=res.duplicate?'這筆資料先前已儲存，沒有重複新增。':'儲存成功！紀錄ID：'+res.id;if(!res.duplicate){cropRequestId=null;el('cropTitle').value='';el('cropContent').value='';el('cropPhoto').value='';}}).withFailureHandler(err=>{setBusy(false);el('cropStatus').textContent='儲存未確認：'+err.message+'。請先查看工作表是否新增紀錄，再決定是否重試。';}).farmAdminSaveCrop(payload);}catch(e){setBusy(false);el('cropStatus').textContent='照片處理失敗：'+e.message;}}
+async function saveTreeRecord(){if(busy)return;const get=id=>el(id).value.trim();const scope=get('treeScope');const numbers=[...treeSelection].join(',');if(!get('treeDate')||!get('treeWork')){alert('請填寫日期與工作內容');return;}if(scope==='單株果樹'&&treeSelection.size!==1){alert('請勾選一棵果樹');return;}if(scope==='指定多株'&&(treeSelection.size<2||treeSelection.size>50)){alert('請勾選 2 至 50 棵果樹');return;}if(!confirm(`確認儲存果樹照顧紀錄？\n日期：${get('treeDate')}\n田區：${get('treeField')}\n範圍：${scope}\n樹號：${numbers||'整個田區'}\n照片公開：${el('treePhotoPublic').checked?'是':'否'}\n\n工作內容寫入公開欄位，內部備註不公開。`))return;setBusy(true);el('treeStatus').textContent='處理照片並儲存中，請勿重複送出……';try{const photos=await selectedPhotos('treePhoto');const payload={date:get('treeDate'),field:get('treeField'),scope,treeNumbers:scope==='整個田區'?'':numbers,work:get('treeWork'),notes:get('treeNotes'),photoPublic:el('treePhotoPublic').checked,photos,requestId:treeRequestId||(treeRequestId=uuid())};farmPwaRun.withSuccessHandler(res=>{setBusy(false);el('treeStatus').textContent=res.duplicate?'這筆果樹紀錄先前已儲存，沒有重複新增。':`儲存成功！第 ${res.row} 列，紀錄ID：${res.id}`;if(!res.duplicate){treeRequestId=null;el('treeWork').value='';el('treeNotes').value='';el('treePhoto').value='';}}).withFailureHandler(err=>{setBusy(false);el('treeStatus').textContent='儲存未確認：'+err.message+'。請先查看「果樹照顧紀錄」工作表是否已有紀錄，再決定是否重試。';}).farmAdminSaveTree(payload);}catch(e){setBusy(false);el('treeStatus').textContent='照片處理失敗：'+e.message;}}
+
+let historyRows=[],historyLoaded=false;
+function renderHistorySubjects(){
+  const selector=el('historySubject'), previous=selector.value;
+  const type=el('historyType').value, field=el('historyField').value;
+  selector.replaceChildren();
+  const empty=document.createElement('option');empty.value='';empty.textContent='全部對象（不指定）';selector.append(empty);
+  if(type==='all'||type==='crop'){
+    const group=document.createElement('optgroup');group.label='🌱 蔬果專案';
+    projects.filter(p=>field==='all'||p.field===field).forEach(p=>{
+      const o=document.createElement('option');o.value='crop:'+p.id;o.textContent=p.name+'｜'+p.field+'（'+p.id+'）';group.append(o);
+    });
+    if(group.children.length)selector.append(group);
+  }
+  if(type==='all'||type==='tree'){
+    const group=document.createElement('optgroup');group.label='🌳 果樹';
+    trees.filter(t=>field==='all'||t.field===field).forEach(t=>{
+      const o=document.createElement('option');o.value='tree:'+t.id;o.textContent=t.id+'｜'+t.variety+(t.name?'｜'+t.name:'');group.append(o);
+    });
+    if(group.children.length)selector.append(group);
+  }
+  if([...selector.options].some(o=>o.value===previous))selector.value=previous;
+  renderHistory();
+}
+function historySubjectMatches(r,subject){
+  if(!subject)return true;
+  const pos=subject.indexOf(':'),type=subject.slice(0,pos),id=subject.slice(pos+1);
+  if(r.type!==type)return false;
+  if(type==='crop')return (r.projectIds||[]).includes(id);
+  const tree=trees.find(t=>t.id===id);
+  return (r.treeId||'')===id || (r.treeIds||[]).includes(id) ||
+    (r.scope==='整個田區'&&!!tree&&tree.field===r.field);
+}
+
+function loadHistory(){el('historyStatus').textContent='讀取歷史紀錄中……';farmPwaRun.withSuccessHandler(data=>{historyRows=data;historyLoaded=true;renderHistory();}).withFailureHandler(err=>{el('historyStatus').textContent='讀取失敗：'+err.message;}).farmAdminGetHistory();}
+function renderHistory(){
+ const type=el('historyType').value,field=el('historyField').value,q=el('historyQuery').value.trim().toLowerCase(),subject=el('historySubject').value;
+ const list=el('historyList');list.replaceChildren();
+ const filtered=historyRows.filter(r=>{
+  if((type!=='all'&&r.type!==type)||(field!=='all'&&r.field!==field)||!historySubjectMatches(r,subject))return false;
+  const relatedTree= r.type==='tree'&&q&&/^tree-\d+$/i.test(q)&&((r.treeId||'').toLowerCase()===q||(r.treeIds||[]).some(id=>id.toLowerCase()===q)||(r.scope==='整個田區'&&trees.some(t=>t.id.toLowerCase()===q&&t.field===r.field)));
+  const searchable=[r.date,r.field,r.title,r.content,r.notes,r.treeId,...r.treeIds,...r.projectIds,r.scope].join(' ').toLowerCase();
+  return !q||searchable.includes(q)||relatedTree;
+ });
+ el('historyStatus').textContent=`共 ${filtered.length} 筆符合條件（全部 ${historyRows.length} 筆）。`;
+ filtered.slice(0,150).forEach(r=>{
+  const details=document.createElement('details');details.className='journal-item';
+  const summary=document.createElement('summary');summary.textContent=(r.type==='crop'?'🌱 ':'🌳 ')+(r.date||'日期未填')+'｜'+(r.title||'未命名紀錄');details.append(summary);
+  const meta=document.createElement('div');meta.className='journal-meta';meta.textContent=[r.field,r.type==='tree'?r.scope:(r.isPublic?'公開':'未公開'),r.type==='tree'?[r.treeId,...r.treeIds].filter(Boolean).join('、'):r.projectIds.join('、')].filter(Boolean).join(' · ');details.append(meta);
+  const body=document.createElement('div');body.className='journal-body';body.textContent=r.content||'';details.append(body);
+  if(r.notes){const note=document.createElement('div');note.className='journal-body';note.textContent='內部備註：'+r.notes;details.append(note);}
+  (r.photos||[]).forEach((url,i)=>{const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.className='journal-link';a.textContent='查看照片 '+(i+1);details.append(a);});
+  list.append(details);
+ });
+ if(filtered.length>150){const p=document.createElement('p');p.className='hint';p.textContent='目前只顯示前150筆，請縮小篩選條件。';list.append(p);}
+}
+
+
+let newCropBusy=false,newCropRequestId=null;
+function loadNewCropOptions(){
+  farmPwaRun.withSuccessHandler(data=>{
+    const select=el('newCropStage');select.replaceChildren();
+    data.stages.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;select.append(o);});
+    select.disabled=false;el('saveNewCrop').disabled=false;
+    el('newCropOptionStatus').textContent='已載入工作表的 '+data.stages.length+' 個進度選項。';
+  }).withFailureHandler(err=>{el('newCropOptionStatus').textContent='讀取失敗：'+err.message;}).farmAdminGetNewCropOptions();
+}
+function saveNewCropProject(){
+  if(newCropBusy)return;
+  const v=id=>el(id).value.trim();
+  const payload={name:v('newCropName'),field:v('newCropField'),stage:v('newCropStage'),plantedDate:v('newCropPlanted'),harvestStart:v('newCropStart'),harvestEnd:v('newCropEnd'),harvestDays:v('newCropDays'),observation:v('newCropObservation'),isPublic:el('newCropPublic').checked,requestId:newCropRequestId||(newCropRequestId=uuid())};
+  if(!payload.name||!payload.stage){alert('請填寫作物名稱並選擇目前進度');return;}
+  if(payload.harvestStart&&payload.harvestEnd&&payload.harvestEnd<payload.harvestStart){alert('最晚採收開始日期不能早於最早日期');return;}
+  if(!confirm(`確定建立蔬果專案？\n名稱：${payload.name}\n田區：${payload.field}\n進度：${payload.stage}\n種植日期：${payload.plantedDate||'尚未完成'}\n公開：${payload.isPublic?'是':'否'}\n\n將直接寫入正式「蔬果專案」工作表。`))return;
+  newCropBusy=true;el('saveNewCrop').disabled=true;el('newCropStatus').textContent='建立中，請勿重複送出……';
+  farmPwaRun.withSuccessHandler(res=>{
+    newCropBusy=false;el('saveNewCrop').disabled=false;
+    el('newCropStatus').textContent=res.duplicate?'這筆申請先前已建立，專案 ID：'+res.id:`建立成功！專案 ID：${res.id}，工作表第 ${res.row} 列。`;
+    if(!res.duplicate){newCropRequestId=null;['newCropName','newCropPlanted','newCropStart','newCropEnd','newCropDays','newCropObservation'].forEach(id=>el(id).value='');el('newCropPublic').checked=false;}
+    loadProjects();
+  }).withFailureHandler(err=>{
+    newCropBusy=false;el('saveNewCrop').disabled=false;
+    el('newCropStatus').textContent='建立結果未確認：'+err.message+'。請先查看「蔬果專案」是否已有新資料，再決定是否重試。';
+  }).farmAdminCreateCropProject(payload);
+}
+
+
+let newTreeBusy=false,newTreeRequestId=null;
+function loadNewTreePreview(){
+  farmPwaRun.withSuccessHandler(info=>{
+    el('newTreePreview').textContent='候選樹號：'+info.id+'（儲存時會重新檢查並自動編號）';
+    el('saveNewTree').disabled=false;
+  }).withFailureHandler(err=>{
+    el('newTreePreview').textContent='無法讀取果樹資料：'+err.message;
+    el('saveNewTree').disabled=true;
+  }).farmAdminGetNewTreePreview();
+}
+async function saveNewTree(){
+  if(newTreeBusy)return;
+  const v=id=>el(id).value.trim();
+  if(!v('newTreeVariety')){alert('請填寫果樹品種');return;}
+  newTreeBusy=true;el('saveNewTree').disabled=true;el('newTreeStatus').textContent='處理照片並新增中……';
+  try{
+    const photos=await selectedPhotos('newTreePhoto');
+    const payload={variety:v('newTreeVariety'),field:v('newTreeField'),plantedDate:v('newTreeDate'),notes:v('newTreeNotes'),photos,photoPublic:el('newTreePhotoPublic').checked,requestId:newTreeRequestId||(newTreeRequestId=uuid())};
+    farmPwaRun.withSuccessHandler(res=>{
+      newTreeBusy=false;el('saveNewTree').disabled=false;
+      el('newTreeStatus').textContent='已新增果樹：'+res.id+(res.duplicate?'（沒有重複新增）':'');
+      newTreeRequestId=null;el('newTreeVariety').value='';el('newTreeNotes').value='';el('newTreePhoto').value='';el('newTreePhotoPublic').checked=false;renderPhotoPreview('newTreePhoto');
+      loadTrees();loadNewTreePreview();
+    }).withFailureHandler(err=>{newTreeBusy=false;el('saveNewTree').disabled=false;el('newTreeStatus').textContent='新增結果未確認：'+err.message+'。重試會沿用同一識別碼，請勿更改內容。';}).farmAdminCreateTree(payload);
+  }catch(e){newTreeBusy=false;el('saveNewTree').disabled=false;el('newTreeStatus').textContent=e.message;}
+}
+const previewUrls={};
+function renderPhotoPreview(id){
+  (previewUrls[id]||[]).forEach(URL.revokeObjectURL);previewUrls[id]=[];
+  const box=el(id+'Preview');box.replaceChildren();
+  [...el(id).files].forEach((file,index)=>{
+    const item=document.createElement('div'),img=document.createElement('img'),remove=document.createElement('button');
+    const url=URL.createObjectURL(file);previewUrls[id].push(url);img.src=url;img.alt='待上傳照片 '+(index+1);remove.type='button';remove.textContent='移除';
+    remove.onclick=()=>{const dt=new DataTransfer();[...el(id).files].forEach((f,i)=>{if(i!==index)dt.items.add(f);});el(id).files=dt.files;renderPhotoPreview(id);};item.append(img,remove);box.append(item);
+  });
+}
+el('newTreePhoto').addEventListener('change',()=>renderPhotoPreview('newTreePhoto'));
+let ecoBusy=false,ecoRequestId=null;
+el('ecoDate').value=localDate();el('ecoPhoto').addEventListener('change',()=>renderPhotoPreview('ecoPhoto'));
+async function saveEcology(){
+ if(ecoBusy)return;
+ const v=id=>el(id).value.trim();if(!v('ecoName')||!v('ecoNotes')||!v('ecoDate')){alert('請填寫日期、生物名稱與觀察筆記');return;}
+ ecoBusy=true;el('saveEco').disabled=true;el('ecoStatus').textContent='處理照片並儲存中……';
+ try{const photos=await selectedPhotos('ecoPhoto');const payload={requestId:ecoRequestId||(ecoRequestId=uuid()),date:v('ecoDate'),field:v('ecoField'),name:v('ecoName'),category:v('ecoCategory'),identification:v('ecoIdentification'),notes:v('ecoNotes'),isPublic:el('ecoPublic').checked,photos};
+ farmPwaRun.withSuccessHandler(r=>{ecoBusy=false;el('saveEco').disabled=false;el('ecoStatus').textContent='已儲存：'+r.id+(r.duplicate?'（沒有重複新增）':'');ecoRequestId=null;el('ecoName').value='';el('ecoNotes').value='';el('ecoPhoto').value='';el('ecoPublic').checked=false;renderPhotoPreview('ecoPhoto');}).withFailureHandler(e=>{ecoBusy=false;el('saveEco').disabled=false;el('ecoStatus').textContent='儲存結果未確認：'+e.message+'。重試請保持內容相同。';}).farmAdminSaveEcology(payload);
+ }catch(e){ecoBusy=false;el('saveEco').disabled=false;el('ecoStatus').textContent=e.message;}
+}
+el('newTreeDate').value=localDate();
+
+
+let usageData=null,usagePage=0,usageLoading=false;
+function loadMemberUsage(){
+ if(usageLoading)return;usageLoading=true;el('usageStatus').textContent='讀取中……';
+ farmPwaRun.withSuccessHandler(data=>{
+  usageLoading=false;usageData=data;usagePage=0;
+  el('usageTotal').textContent=data.total;el('usageActive').textContent=data.active30;el('usageNone').textContent=data.noRecord;
+  el('usageStarted').textContent=data.startedAt?'統計起始：'+data.startedAt+'（台灣時間）':'尚未開始記錄，請確認會員端已安裝更新，再以會員帳號查詢一次。';
+  el('usageRange').textContent='近 30 天：'+data.rangeStart+' 至 '+data.rangeEnd+'（包含今天）';
+  el('usageStatus').textContent='更新時間：'+data.generatedAt;
+  el('usageHomeSummary').textContent=data.startedAt?'近 30 天有 '+data.active30+' 位會員使用；'+data.noRecord+' 位尚無使用紀錄。':'尚未開始累積會員使用紀錄。';
+  renderMemberUsage();
+ }).withFailureHandler(err=>{usageLoading=false;el('usageStatus').textContent='讀取失敗：'+err.message;el('usageHomeSummary').textContent='會員使用紀錄暫時無法讀取，請進入會員使用頁面重新整理。';}).farmAdminGetMemberUsage();
+}
+function renderMemberUsage(){
+ if(!usageData)return;const q=el('usageQuery').value.trim().toLowerCase(),filter=el('usageFilter').value;
+ const rows=usageData.members.filter(m=>(filter==='all'||m.status===filter)&&(!q||(m.id+' '+m.name).toLowerCase().includes(q)));
+ const pages=Math.max(1,Math.ceil(rows.length/30));usagePage=Math.max(0,Math.min(usagePage,pages-1));
+ const body=el('usageRows');body.replaceChildren();
+ rows.slice(usagePage*30,(usagePage+1)*30).forEach(m=>{
+  const tr=document.createElement('tr');[m.id+' '+m.name,m.last||'尚無紀錄',String(m.days30),m.first||'尚無紀錄'].forEach(text=>{const td=document.createElement('td');td.textContent=text;tr.append(td);});body.append(tr);
+ });
+ if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.textContent='沒有符合條件的會員。';tr.append(td);body.append(tr);}
+ el('usagePrev').disabled=usagePage===0;el('usageNext').disabled=usagePage===pages-1;el('usagePageText').textContent=(usagePage+1)+' / '+pages+'（'+rows.length+'位）';
+}
+
+window.farmPwaHasPending=()=>busy||newCropBusy||newTreeBusy||ecoBusy;
+window.addEventListener('beforeunload',event=>{
+ const ids=['cropTitle','cropContent','treeWork','treeNotes','newCropName','newCropObservation','newTreeVariety','newTreeNotes','ecoName','ecoNotes'];
+ const unsaved=ids.some(id=>el(id).value.trim())||['cropPhoto','treePhoto','newTreePhoto','ecoPhoto'].some(id=>el(id).files.length);
+ if(!window.farmPwaAllowLeave&&(unsaved||window.farmPwaHasPending())){event.preventDefault();event.returnValue='';}
+});
+</script></body></html>
