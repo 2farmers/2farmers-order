@@ -1,5 +1,5 @@
 'use strict';
-const CACHE='liangkou-farm-shell-v1-20261031';
+const CACHE='liangkou-farm-shell-v2-20261103';
 const SHELL=['./','./index.html','./pwa-client.js','./auth.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('liangkou-farm-shell-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
