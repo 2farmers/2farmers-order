@@ -1,8 +1,8 @@
 /* Session credentials live in memory only. No member records or photos are cached. */
 (() => {
  'use strict';
- const methods=['farmAdminGetProjects','farmAdminGetTrees','farmAdminGetHistory','farmAdminGetHistoryBySubject','farmAdminGetNewCropOptions','farmAdminGetNewTreePreview','farmAdminNewTreePreview','farmAdminCreateCropProject','farmAdminCreateTree','farmAdminSaveCrop','farmAdminSaveTree','farmAdminSaveEcology','farmAdminGetMemberUsage'];
- const writes=new Set(['farmAdminCreateCropProject','farmAdminCreateTree','farmAdminSaveCrop','farmAdminSaveTree','farmAdminSaveEcology']);
+ const methods=['farmAdminGetProjects','farmAdminGetTrees','farmAdminGetHistory','farmAdminGetHistoryBySubject','farmAdminGetNewCropOptions','farmAdminGetNewTreePreview','farmAdminNewTreePreview','farmAdminCreateCropProject','farmAdminCreateTree','farmAdminSaveCrop','farmAdminSaveTree','farmAdminSaveEcology','farmAdminGetMemberUsage','farmAdminGetMistakes','farmAdminSaveMistake'];
+ const writes=new Set(['farmAdminCreateCropProject','farmAdminCreateTree','farmAdminSaveCrop','farmAdminSaveTree','farmAdminSaveEcology','farmAdminSaveMistake']);
  const loginUrl='https://script.google.com/macros/s/AKfycbyseJZzdU4i9w8v6mDyge1Vfc0-V6TlVaLYexk7Av9HSg3aPiyON_D5gdYdKiSYYoLsBg/exec?pwaLogin=1';
  const key='liangkou-farm-pwa-api-v1';let token='',endpoint='',popup=null,expiry=0,started=false,pending=0,loggingOut=false;
  const $=id=>document.getElementById(id);
