@@ -806,6 +806,21 @@
         </div>
       </div>
 
+      <details class="notice-box" id="cofarmOrderLink">
+        <summary>將這筆訂單連結到我的共耕（選填）</summary>
+        <p>使用共耕會員編號與專屬查詢碼。兩欄留空即可直接下單。</p>
+        <div class="form-grid">
+          <div class="field">
+            <label for="cofarmMemberId">共耕會員編號</label>
+            <input id="cofarmMemberId" type="text" autocomplete="off" maxlength="32" spellcheck="false" />
+          </div>
+          <div class="field">
+            <label for="cofarmMemberCode">專屬查詢碼</label>
+            <input id="cofarmMemberCode" type="password" autocomplete="off" maxlength="32" />
+          </div>
+        </div>
+      </details>
+
       <div class="notice-box payment">
         付款說明：倆口田保留彈性付款方式，收到貨品前後都可以付款。送出訂單後即可直接看到你選擇的付款資訊，不必等待我們另外傳帳號。
       </div>
@@ -1629,6 +1644,10 @@
         }))
       };
 
+      const memberId = document.getElementById('cofarmMemberId').value.trim().toUpperCase();
+      const memberCode = document.getElementById('cofarmMemberCode').value.trim().toLowerCase();
+      if (memberId || memberCode) payload.cofarmMember = { id: memberId, code: memberCode };
+
       const res = await fetch(gasUrl, {
         method: 'POST',
         headers: {
@@ -1701,6 +1720,12 @@
     if (isSubmittingOrder || unresolvedSubmission) return null;
 
     const orderData = getOrderData();
+    const memberId = document.getElementById('cofarmMemberId').value.trim();
+    const memberCode = document.getElementById('cofarmMemberCode').value.trim();
+    if ((memberId || memberCode) && (!/^[a-z0-9-]{3,32}$/i.test(memberId) || !/^[a-f0-9]{32}$/i.test(memberCode))) {
+      showError('請填寫正確格式的共耕會員編號和查詢碼，或將兩欄清空後下單。');
+      return null;
+    }
     const error = validateOrder(orderData);
 
     if (error) {
@@ -1719,6 +1744,9 @@
       setLineButtonsEnabled(false);
 
       const response = await saveOrderToGoogleSheet(orderData);
+      document.getElementById('cofarmMemberCode').value = '';
+      document.getElementById('cofarmMemberId').value = '';
+      document.getElementById('cofarmOrderLink').open = false;
       const savedData = reconcileSavedOrder(orderData, response);
       const rawId = response.orderId ?? response.orderNumber ?? response.orderNo;
       const orderId = typeof rawId === 'string' || typeof rawId === 'number' ? String(rawId) : '';
