@@ -917,23 +917,23 @@
 
   function getLowTempShippingDescription() {
     const s = websiteSettings;
-    if (!hasTieredLowTempShipping()) return `低溫宅配滿 ${s.lowTempFreeShippingThreshold} 元免運，未滿運費 ${s.lowTempShippingFee} 元。`;
-    return `低溫宅配運費 ${s.lowTempShippingFee} 元，滿 ${s.lowTempDiscountThreshold} 元運費優惠 ${s.lowTempDiscountFee} 元，滿 ${s.lowTempTieredFreeThreshold} 元免運。`;
+    if (!hasTieredLowTempShipping()) return `冷凍宅配滿 ${s.lowTempFreeShippingThreshold} 元免運，未滿運費 ${s.lowTempShippingFee} 元。`;
+    return `冷凍宅配運費 ${s.lowTempShippingFee} 元，水餃滿 ${s.lowTempDiscountThreshold} 元運費降為 ${s.lowTempDiscountFee} 元，滿 ${s.lowTempTieredFreeThreshold} 元免運。`;
   }
 
   function getLowTempShippingHint(subtotal) {
     const s = websiteSettings;
     if (hasTieredLowTempShipping()) {
       if (subtotal >= s.lowTempTieredFreeThreshold) return '本筆已達免運門檻 🎉';
-      if (subtotal < s.lowTempDiscountThreshold) return `本筆低溫商品再買 ${s.lowTempDiscountThreshold - subtotal} 元，運費降為 ${s.lowTempDiscountFee} 元；滿 ${s.lowTempTieredFreeThreshold} 元免運。`;
+      if (subtotal < s.lowTempDiscountThreshold) return `本筆冷凍商品再買 ${s.lowTempDiscountThreshold - subtotal} 元，運費降為 ${s.lowTempDiscountFee} 元；滿 ${s.lowTempTieredFreeThreshold} 元免運。`;
       return `本筆已享運費優惠 ${s.lowTempDiscountFee} 元，倆口田補貼 ${s.lowTempShippingFee - s.lowTempDiscountFee} 元；再買 ${s.lowTempTieredFreeThreshold - subtotal} 元免運。`;
     }
     if (subtotal >= s.lowTempFreeShippingThreshold) return '本筆已達免運門檻 🎉';
-    return `本筆低溫商品再買 ${s.lowTempFreeShippingThreshold - subtotal} 元即可免運`;
+    return `本筆冷凍商品再買 ${s.lowTempFreeShippingThreshold - subtotal} 元即可免運`;
   }
 
   function getCartGroups() {
-    const groups = { normal: { label: '常溫', items: [], subtotal: 0 }, lowTemp: { label: '低溫（冷藏／冷凍）', items: [], subtotal: 0 } };
+    const groups = { normal: { label: '常溫', items: [], subtotal: 0 }, lowTemp: { label: '冷凍', items: [], subtotal: 0 } };
     products.forEach(product => {
       const qty = isSoldOutProduct(product) ? 0 : clampQty(product, state.quantities[product.id] || 0);
       if (!qty) return;
@@ -951,7 +951,7 @@
     const keys = Object.keys(groups).filter(key => groups[key].items.length);
     const notice = document.getElementById('cartNotice');
     notice.hidden = keys.length < 2;
-    notice.textContent = '本次分為常溫、低溫兩筆配送，各自計算運費，也需要分別確認送出。收件資料只要填一次，另一筆商品會保留在購物車。';
+    notice.textContent = '本次分為常溫、冷凍兩筆配送，各自計算運費，也需要分別確認送出。收件資料只要填一次，另一筆商品會保留在購物車。';
     const progress = document.getElementById('checkoutProgress');
     progress.hidden = savedOrders.length === 0;
     const completed = savedOrders.map(receipt => receipt.data.hasLowTemp ? '低溫' : '常溫').join('、');
@@ -1115,15 +1115,12 @@
 
   function renderProducts() {
     const normal = sortedProducts.filter(product => product.shippingType === 'normal');
-    const chilled = sortedProducts.filter(product => product.shippingType === 'chilled');
     const frozen = sortedProducts.filter(product => product.shippingType === 'frozen');
 
     const normalHtml = renderProductGroup(normal, '常溫蔬菜', `常溫商品可與其他常溫商品一起結帳，宅配滿 ${websiteSettings.normalFreeShippingThreshold} 元免運。`);
-    const lowTempDescription = `冷藏／冷凍商品可合併下單。${getLowTempShippingDescription()}`;
-    const chilledHtml = renderProductGroup(chilled, '冷藏料理', lowTempDescription);
-    const frozenHtml = renderProductGroup(frozen, '冷凍料理', lowTempDescription);
+    const frozenHtml = renderProductGroup(frozen, '農場水餃（冷凍配送）', getLowTempShippingDescription());
 
-    productList.innerHTML = [normalHtml, chilledHtml, frozenHtml].filter(Boolean).join('');
+    productList.innerHTML = normalHtml + frozenHtml;
   }
 
   function renderProductGroup(list, title, note) {
@@ -1212,15 +1209,15 @@
     groups = getCartGroups();
     const group = groups[checkoutGroup];
     const hasItems = group.items.length > 0;
-    document.getElementById('homeDeliveryLabel').textContent = lowTemp ? '低溫宅配' : '宅配（常溫）';
-    document.getElementById('deliveryHint').textContent = lowTemp ? `本筆為低溫訂單，冷藏／冷凍合併宅配。${getLowTempShippingDescription()}` : `本筆常溫商品可選宅配或面交，宅配滿 ${websiteSettings.normalFreeShippingThreshold} 元免運，未滿 ${websiteSettings.normalShippingFee} 元。`;
+    document.getElementById('homeDeliveryLabel').textContent = lowTemp ? '冷凍宅配' : '宅配（常溫）';
+    document.getElementById('deliveryHint').textContent = lowTemp ? getLowTempShippingDescription() : `本筆常溫商品可選宅配或面交，宅配滿 ${websiteSettings.normalFreeShippingThreshold} 元免運，未滿 ${websiteSettings.normalShippingFee} 元。`;
     document.querySelector('label[for="customerAddress"]').textContent = pickup.checked ? '地址（面交免填）' : '地址 *';
     subtotalEl.textContent = formatMoney(group.subtotal);
     shippingFeeEl.textContent = hasItems ? formatMoney(group.shipping) : '尚未選購商品';
-    document.getElementById('shippingFeeLabel').textContent = pickup.checked ? '面交' : (lowTemp ? '低溫運費' : '常溫運費');
+    document.getElementById('shippingFeeLabel').textContent = pickup.checked ? '面交' : (lowTemp ? '冷凍運費' : '常溫運費');
     grandTotalEl.textContent = formatMoney(group.subtotal + group.shipping);
-    const threshold = lowTemp ? websiteSettings.lowTempFreeShippingThreshold : websiteSettings.normalFreeShippingThreshold;
-    document.getElementById('freeShippingHint').textContent = !hasItems ? `常溫滿 ${websiteSettings.normalFreeShippingThreshold} 元免運。${getLowTempShippingDescription()}` : pickup.checked ? '本筆已選擇面交自取' : lowTemp ? getLowTempShippingHint(group.subtotal) : group.shipping === 0 ? '本筆已達免運門檻 🎉' : `本筆${lowTemp ? '低溫' : '常溫'}商品再買 ${threshold - group.subtotal} 元即可免運`;
+    const threshold = websiteSettings.normalFreeShippingThreshold;
+    document.getElementById('freeShippingHint').textContent = !hasItems ? `常溫滿 ${websiteSettings.normalFreeShippingThreshold} 元免運。${getLowTempShippingDescription()}` : pickup.checked ? '本筆已選擇面交自取' : lowTemp ? getLowTempShippingHint(group.subtotal) : group.shipping === 0 ? '本筆已達免運門檻 🎉' : `本筆常溫商品再買 ${threshold - group.subtotal} 元即可免運`;
     renderCart(groups);
   }
 
@@ -1346,10 +1343,10 @@
 
   function validateOrder(data) {
     if (data.selectedItems.length === 0) return '請至少選擇一項商品。';
-    if (data.hasNormal && data.hasLowTemp) return '常溫商品與低溫商品請分開下單。冷藏與冷凍可以合併低溫宅配。';
+    if (data.hasNormal && data.hasLowTemp) return '常溫商品與冷凍商品請分開下單。';
     if (!data.customerName) return '請填寫收件人姓名。';
     if (!data.customerPhone) return '請填寫電話。';
-    if (data.hasLowTemp && data.shippingMethod !== '低溫宅配') return '冷藏／冷凍商品只能使用低溫宅配。';
+    if (data.hasLowTemp && data.shippingMethod !== '低溫宅配') return '冷凍商品只能使用冷凍宅配。';
     if (!data.customerAddress && data.shippingMethod !== '面交') return '請填寫地址。';
     if (data.receiptDateMode === '指定日期' && !data.preferredReceiptDate) return '請選擇希望收貨日。';
     return '';
